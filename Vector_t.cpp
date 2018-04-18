@@ -94,3 +94,6 @@ string Vector_t::toString(){
   return "Vector [" + to_string(this->x) + "," + to_string(this->y) + "," + to_string(this->z) + "] Length: " + to_string(this->mod());
 }
 
+string Vector_t::toStringData() {
+  return to_string(this->x) + "," + to_string(this->y) + "," + to_string(this->z);
+}

@@ -81,12 +81,8 @@ int main() {
    * Construct all buildings in the area.
    * ====================================
    */
-  std::ifstream file(strDataBuildings);
-  std::string str;
-  while (std::getline(file, str))
-  {
-    cout << str << endl;
-  }
+  std::vector<Building_t*> buildingSet = getBuildingInfoFromFile(strDataBuildings, strDataBuildingVertices, sysParams);
+
 
 
   return 0;

@@ -55,6 +55,7 @@ public:
   /* Cross product: u x v = (u2v3-u3v2, u3v1-u1v3, u1v2-u2v1) */
   Vector_t* cross(Vector_t& v);
   std::string toString();
+  std::string toStringData();
 
 
 };

@@ -61,6 +61,7 @@ public:
   bool sameAs(Point_t& p);
   /* Print out string */
   string toString();
+  string toStringData();
 };
 
 

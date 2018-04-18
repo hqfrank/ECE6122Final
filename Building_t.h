@@ -56,6 +56,7 @@ public:
 
   /* Print out string */
   std::string toString();
+  std::string toStringData();
 
 
 

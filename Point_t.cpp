@@ -77,3 +77,7 @@ bool Point_t::sameAs(Point_t& p){
 string Point_t::toString(){
   return "Point [" + to_string(this->x) + "," + to_string(this->y) + "," + to_string(this->z) + "]";
 }
+
+string Point_t::toStringData() {
+  return to_string(this->x) + "," + to_string(this->y) + "," + to_string(this->z);
+}

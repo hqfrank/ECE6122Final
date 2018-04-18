@@ -158,3 +158,10 @@ std::string Building_t::toString() {
     "Vts: " + this->Vts.at(0)->toString() + ", " + this->Vts.at(1)->toString() + ", " + this->Vts.at(2)->toString() +
     ", " + this->Vts.at(3)->toString();
 }
+
+std::string Building_t::toStringData() {
+  return this->Vbs.at(0)->toStringData() + "\t" + this->Vbs.at(1)->toStringData() + "\t" +
+    this->Vbs.at(2)->toStringData() + "\t" + this->Vbs.at(3)->toStringData() + "\t" +
+    this->Vts.at(0)->toStringData() + "\t" + this->Vts.at(1)->toStringData() + "\t" +
+    this->Vts.at(2)->toStringData() + "\t" + this->Vts.at(3)->toStringData();
+}
