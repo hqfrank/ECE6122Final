@@ -1,12 +1,18 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <cmath>
+#include <chrono>
+#include <ctime>
 #include "Point_t.h"
 #include "Vector_t.h"
 #include "Line_t.h"
 #include "3DModeling.h"
 #include "Plane_t.h"
 #include "Building_t.h"
+#include "SystemParameters.h"
+
+using namespace std;
 
 int main() {
   std::cout << "Hello, World!" << std::endl;
@@ -36,5 +42,52 @@ int main() {
   cout << b1.getRelays().size() << endl;
   cout << b1.getRelays().at(0)->toString() << endl;
   cout << b1.getRelays().at(b1.getRelays().size() - 1)->toString() << endl;
+//  std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
+//  std::time_t strTime = chrono::system_clock::to_time_t(t0);
+//  cout << ctime(&strTime) << endl;
+
+  /*
+   *  MAIN FUNCTION
+   */
+  /*
+   * ===============================================================================
+   * Get current time, which is used to identify the name of the simulation results.
+   * ===============================================================================
+   */
+  std::chrono::microseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(
+    std::chrono::system_clock::now().time_since_epoch()
+  );
+  std::string strTime = std::to_string(ms.count()/1000);
+//  cout << strTime << endl;
+  /*
+   * ===========================================
+   * Set up simulation configuration parameters.
+   * ===========================================
+   */
+  SystemParameters sysParams;
+//  cout << "randomSeed in use is " + std::to_string(sysParams.randomSeed) << endl;
+  /*
+   * ======================
+   * Files addresses in use
+   * ======================
+   */
+  /* Building raw data file */
+  std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
+  /* File to store the vertices of each building */
+  std::string strDataBuildingVertices = "../Data/Output/Building_Vertices/Data_BuildingVertices_" + std::to_string(sysParams.randomSeed) +".txt";
+
+  /*
+   * ====================================
+   * Construct all buildings in the area.
+   * ====================================
+   */
+  std::ifstream file(strDataBuildings);
+  std::string str;
+  while (std::getline(file, str))
+  {
+    cout << str << endl;
+  }
+
+
   return 0;
 }

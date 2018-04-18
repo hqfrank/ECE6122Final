@@ -28,3 +28,48 @@ Vector_t* cross(Vector_t& v1, Vector_t& v2){
 Vector_t* normalize(Vector_t& v){
   return v.divide(v.mod());
 }
+
+/*
+  * Read in building information from data files.
+  */
+std::vector<Building_t*> getBuildingInfoFromFile(std::string dataBuildings, std::string dataBuildingVertices, SystemParameters parameters) {
+  std::ifstream fileIn(dataBuildings);
+  std::string str;
+  while (std::getline(fileIn, str))
+  {
+    cout << str << endl;
+  }
+  File  = new File(); // To store building vertices
+  boolean fileExist = fileBuildingVertices.exists();
+  Building_t[] buildings;
+  try{
+    /* Read all lines in the file. */
+    List<String> filelines = Files.readAllLines(Paths.get(dataBuildings), StandardCharsets.UTF_8);
+    int numLines = filelines.size();
+    System.out.println(numLines+"\tbuildings");
+    buildings = new Building_t[numLines];
+    int index = 0;
+    while(index < numLines){
+      String[] data = filelines.get(index).split("\t");
+      double[] center = new double[]{Double.parseDouble(data[0]),Double.parseDouble(data[1])};
+      double length_m = Double.parseDouble(data[2]);
+      double width_m = Double.parseDouble(data[3]);
+      double topHeight_m = Double.parseDouble(data[4]);
+      double baseLevel_m = Double.parseDouble(data[5]);
+      double[] lwhbg = new double[]{length_m, width_m, topHeight_m, baseLevel_m + parameters.minHeightForRelay_m, parameters.groundLevel_m};
+      double orientation_rad = degreeToRad(Double.parseDouble(data[6]));
+      /* Generate each building object. */
+      buildings[index] = new Building_t(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m, parameters.densityRelayOnBuilding, parameters.randomSeed);
+      /* Write building vertices information to file. */
+      if (!fileExist){
+        PrintWriter printWriter = new PrintWriter(new FileOutputStream(dataBuildingVertices, true));
+        printWriter.println(buildings[index].toString());
+        printWriter.close();
+      }
+      index++;
+    }
+    return buildings;
+  } catch (IOException e){
+    return null;
+  }
+}
