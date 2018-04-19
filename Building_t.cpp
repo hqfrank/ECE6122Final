@@ -74,6 +74,18 @@ std::vector<Point_t*> Building_t::getRelays() {
   return this->Relays;
 }
 
+double Building_t::getHeight() {
+  return this->Height;
+}
+
+double Building_t::getHeightBase() {
+  return this->HeightBase;
+}
+
+void Building_t::setHasBS(bool has) {
+  this->hasBS = has;
+}
+
 std::vector<Point_t*> Building_t::GenerateRelayOnFace(Point_t& va, Point_t& vb, Point_t& vc, Point_t& vd, double density, int randomSeed){
   // va and vb are two bottom vertices, vd and vc are two top vertices, and (va->vb).(vb->vc) = 0
   /*

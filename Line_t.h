@@ -7,7 +7,6 @@
 
 #include "Point_t.h"
 #include "Vector_t.h"
-#include "3DModeling.h"
 
 class Point_t;
 class Vector_t;
@@ -25,6 +24,7 @@ public:
   /* ------ Constructors ------ */
   Line_t(Point_t& s, Point_t& d);
   /* ------ Methods ------ */
+  Vector_t* normalize();
   /* Get member variables */
   Point_t* getSrc();
   Point_t* getDst();

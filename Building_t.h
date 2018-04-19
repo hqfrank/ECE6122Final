@@ -51,6 +51,10 @@ public:
   std::vector<Point_t*> getVgs();
   std::vector<Point_t*> getVts();
   std::vector<Point_t*> getRelays();
+  double getHeight();
+  double getHeightBase();
+  /* Set member variables. */
+  void setHasBS(bool has);
 
 
 

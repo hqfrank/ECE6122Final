@@ -8,7 +8,7 @@ Line_t::Line_t(Point_t& s, Point_t& d){
   this->src = new Point_t(s);
   this->dst = new Point_t(d);
   this->sd = new Vector_t(s,d);
-  this->dir = normalize(*sd);
+  this->dir = normalize();
 }
 
 Point_t* Line_t::getSrc() {
@@ -25,6 +25,10 @@ Vector_t* Line_t::getSd() {
 
 Vector_t* Line_t::getDir() {
   return this->dir;
+}
+
+Vector_t* Line_t::normalize(){
+  return this->sd->divide(this->sd->mod());
 }
 
 std::string Line_t::toString() {

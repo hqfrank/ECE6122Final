@@ -74,7 +74,12 @@ int main() {
   /* Building raw data file */
   std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
   /* File to store the vertices of each building */
-  std::string strDataBuildingVertices = "../Data/Output/Building_Vertices/Data_BuildingVertices_" + std::to_string(sysParams.randomSeed) +".txt";
+  std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices_" + std::to_string(sysParams.randomSeed) +".txt";
+  /**/
+  std::string dataRelayNeighbors = "../Data/Relay_Neighbors/Data_RelayNeighbors_"+ std::to_string(sysParams.randomSeed)
+                                   + "_" + std::to_string(sysParams.maxNumRelaysInGrid)
+                                   + "_" + std::to_string(sysParams.phyLinkDistMax_m)
+                                   + "_" + sysParams.relayType + ".txt";
 
   /*
    * ====================================
@@ -82,6 +87,52 @@ int main() {
    * ====================================
    */
   std::vector<Building_t*> buildingSet = getBuildingInfoFromFile(strDataBuildings, strDataBuildingVertices, sysParams);
+
+  /*
+   * ===================================================
+   * Generate candidate base station locations randomly.
+   * ===================================================
+   */
+  std::vector<Point_t*> roofTopRelays;
+  std::vector<Point_t*> bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
+//  cout << to_string(roofTopRelays.size()) << endl;
+  /*
+   * ==================================================
+   * Select base stations based on the grid constraint.
+   * ==================================================
+   */
+  selectBaseStationPerGrid(bsSet, sysParams);
+//  cout << to_string(bsSet.size()) << endl;
+  /*
+   * =========================================
+   * Collect all candidate relays in the area.
+   * =========================================
+   */
+  std::vector<Point_t*> allRelays = collectAllRelays(buildingSet);
+  /*
+   * =======================================================================================
+   * If roof top relays are in use, select roof top relays according to the grid constraint.
+   * =======================================================================================
+   */
+  if (sysParams.relayType.compare("Top") == 0) {
+    selectRelayPerGrid(roofTopRelays, sysParams);
+  }
+  /*
+   * ==================================================================================================================
+   * Check if connectivity information exists, if not, generate connectivity information; otherwise, read existed info.
+   * ==================================================================================================================
+   */
+  std::ifstream fileConnect(dataRelayNeighbors);
+  std::vector<std::vector<int>> relayNeighborList;
+  if (fileConnect.good()){
+    // read the relay neighborList
+//    relayNeighborList = getRelayNeighborInfoFromFile(dataRelayNeighbors);
+  } else {
+    relayNeighborList = exploreConnectivity(allRelays, buildingSet, dataRelayNeighbors);
+  }
+
+
+
 
 
 
