@@ -5,7 +5,7 @@
 #include "Building_t.h"
 
 Building_t::Building_t(double center[2], double lwhbg[5], double orientation, double threshold, double density, int randomSeed){
-  this->Center = new Point_t(center[0], center[1], 0);
+  this->Center = Point_t(center[0], center[1], 0);
   this->Length = lwhbg[0];
   this->Width  = lwhbg[1];
   this->Height = lwhbg[2];
@@ -20,33 +20,33 @@ Building_t::Building_t(double center[2], double lwhbg[5], double orientation, do
 
 void Building_t::VertexGenerator() {
   double c1[] {
-    this->Center->getX() + this->Width/2*std::cos(this->Orientation),
-    this->Center->getY() - this->Width/2*std::sin(this->Orientation)
+    this->Center.getX() + this->Width/2*std::cos(this->Orientation),
+    this->Center.getY() - this->Width/2*std::sin(this->Orientation)
   };
   double c2[] {
-    this->Center->getX() + this->Length/2*std::sin(this->Orientation),
-    this->Center->getY() + this->Length/2*std::cos(this->Orientation)
+    this->Center.getX() + this->Length/2*std::sin(this->Orientation),
+    this->Center.getY() + this->Length/2*std::cos(this->Orientation)
   };
   double c3[] {
-    this->Center->getX() - this->Width/2*std::cos(this->Orientation),
-    this->Center->getY() + this->Width/2*std::sin(this->Orientation)
+    this->Center.getX() - this->Width/2*std::cos(this->Orientation),
+    this->Center.getY() + this->Width/2*std::sin(this->Orientation)
   };
   double c4[] {
-    this->Center->getX() - this->Length/2*std::sin(this->Orientation),
-    this->Center->getY() - this->Length/2*std::cos(this->Orientation)
+    this->Center.getX() - this->Length/2*std::sin(this->Orientation),
+    this->Center.getY() - this->Length/2*std::cos(this->Orientation)
   };
-  this->Vbs.push_back(new Point_t(c1[0]+c4[0]-this->Center->getX(), c1[1]+c4[1]-this->Center->getY(), this->HeightBase)); // add VAb
-  this->Vbs.push_back(new Point_t(c1[0]+c2[0]-this->Center->getX(), c1[1]+c2[1]-this->Center->getY(), this->HeightBase)); // add VBb
-  this->Vbs.push_back(new Point_t(c2[0]+c3[0]-this->Center->getX(), c2[1]+c3[1]-this->Center->getY(), this->HeightBase)); // add VCb
-  this->Vbs.push_back(new Point_t(c3[0]+c4[0]-this->Center->getX(), c3[1]+c4[1]-this->Center->getY(), this->HeightBase)); // add VDb
-  this->Vgs.push_back(new Point_t(c1[0]+c4[0]-this->Center->getX(), c1[1]+c4[1]-this->Center->getY(), this->GroundLevel)); // add VAg
-  this->Vgs.push_back(new Point_t(c1[0]+c2[0]-this->Center->getX(), c1[1]+c2[1]-this->Center->getY(), this->GroundLevel)); // add VBg
-  this->Vgs.push_back(new Point_t(c2[0]+c3[0]-this->Center->getX(), c2[1]+c3[1]-this->Center->getY(), this->GroundLevel)); // add VCg
-  this->Vgs.push_back(new Point_t(c3[0]+c4[0]-this->Center->getX(), c3[1]+c4[1]-this->Center->getY(), this->GroundLevel)); // add VDg
-  this->Vts.push_back(new Point_t(c1[0]+c4[0]-this->Center->getX(), c1[1]+c4[1]-this->Center->getY(), this->Height)); // add VAt
-  this->Vts.push_back(new Point_t(c1[0]+c2[0]-this->Center->getX(), c1[1]+c2[1]-this->Center->getY(), this->Height)); // add VBt
-  this->Vts.push_back(new Point_t(c2[0]+c3[0]-this->Center->getX(), c2[1]+c3[1]-this->Center->getY(), this->Height)); // add VCt
-  this->Vts.push_back(new Point_t(c3[0]+c4[0]-this->Center->getX(), c3[1]+c4[1]-this->Center->getY(), this->Height)); // add VDt
+  this->Vbs.push_back(new Point_t(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->HeightBase)); // add VAb
+  this->Vbs.push_back(new Point_t(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->HeightBase)); // add VBb
+  this->Vbs.push_back(new Point_t(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->HeightBase)); // add VCb
+  this->Vbs.push_back(new Point_t(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->HeightBase)); // add VDb
+  this->Vgs.push_back(new Point_t(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->GroundLevel)); // add VAg
+  this->Vgs.push_back(new Point_t(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->GroundLevel)); // add VBg
+  this->Vgs.push_back(new Point_t(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->GroundLevel)); // add VCg
+  this->Vgs.push_back(new Point_t(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->GroundLevel)); // add VDg
+  this->Vts.push_back(new Point_t(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->Height)); // add VAt
+  this->Vts.push_back(new Point_t(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->Height)); // add VBt
+  this->Vts.push_back(new Point_t(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->Height)); // add VCt
+  this->Vts.push_back(new Point_t(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->Height)); // add VDt
 
   // Try to use openGL to draw the figure.
 //  StdDraw.setPenRadius(0.001);

@@ -27,42 +27,42 @@ class Line_t;
 class Plane_t {
 private:
   /* === Member variables === */
-  Vector_t* normal;		// The normal of this plane
+  Vector_t normal;		// The normal of this plane
   double dVal;			// The value of d in the plane equation ax+by+cz+d = 0
-  Point_t* v1;			// A vertex on the plane
-  Point_t* v2;
-  Point_t* v3;
-  Point_t* v4;
+  Point_t v1;			// A vertex on the plane
+  Point_t v2;
+  Point_t v3;
+  Point_t v4;
 
 public:
   /* === Member methods === */
   /* ------ Constructors ------ */
   /* Given the normal n of the plane and a point p in the plane. */
-  Plane_t(Vector_t& n, Point_t& p);
+  Plane_t(const Vector_t& n, const Point_t& p);
   /* Given 4 nodes of a plane. */
-  Plane_t(Point_t& p1, Point_t& p2, Point_t& p3, Point_t& p4);
+  Plane_t(const Point_t& p1, const Point_t& p2, const Point_t& p3, const Point_t& p4);
 
   /* ------ Methods ------ */
   /*
    * Find the intersect point between a line segment and a plane.
    */
-  Point_t* planeIntersectLine(Line_t& l);
+  Point_t planeIntersectLine(const Line_t& l) const;
   /*
    * Determine whether a point is in a rectangle area.
    * It is known that the point is in the same plane of
    * the rectangle defined by the four vertices:
    * v1, v2, v3, and v4.
    */
-  bool pointInRectangle(Point_t& p);
+  bool pointInRectangle(const Point_t& p) const;
   /* Get members */
-  Vector_t* getNormal();
-  double getDval();
-  Point_t* getV1();
-  Point_t* getV2();
-  Point_t* getV3();
-  Point_t* getV4();
+  Vector_t getNormal() const;
+  double getDval() const;
+  Point_t getV1() const;
+  Point_t getV2() const;
+  Point_t getV3() const;
+  Point_t getV4() const;
   /* Print out string */
-  std::string toString();
+  std::string toString() const;
 
 };
 

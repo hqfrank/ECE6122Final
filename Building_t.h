@@ -15,7 +15,7 @@ class Point_t;
 class Building_t {
 private:
   /* === Member variables === */
-  Point_t* Center;    // Center of the building from the top view, i.e., (x,y,0)
+  Point_t Center;    // Center of the building from the top view, i.e., (x,y,0)
   double Length;			// length of the building from the top view
   double Width;			  // width of the building from the top view
   double Height;			// top level of the building

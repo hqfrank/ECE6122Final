@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cmath>
 #include <random>
+#include <memory>
 #include "Point_t.h"
 #include "Vector_t.h"
 #include "Line_t.h"
@@ -18,13 +19,13 @@
 #include "Plane_t.h"
 
 
-Point_t* proportionalPoint(Point_t& p1, Point_t& p2, double pro);
+Point_t proportionalPoint(const Point_t& p1, const Point_t& p2, double pro);
 
-double dot(Vector_t& v1, Vector_t& v2);
+double dot(const Vector_t& v1, const Vector_t& v2);
 
-Vector_t* cross(Vector_t& v1, Vector_t& v2);
+Vector_t cross(const Vector_t& v1, const Vector_t& v2);
 
-Vector_t* normalize(Vector_t& v);
+Vector_t normalize(const Vector_t& v);
 
 std::vector<Building_t*> getBuildingInfoFromFile(std::string dataBuildings, std::string dataBuildingVertices, SystemParameters parameters);
 

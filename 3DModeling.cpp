@@ -7,25 +7,28 @@
 /*
  * Calculate the point at the position p between p1 and p2, such that |p1p|= pro*|p1p2|
  */
-Point_t* proportionalPoint(Point_t& p1, Point_t& p2, double pro){
+Point_t proportionalPoint(const Point_t& p1, const Point_t& p2, double pro){
   assert(pro >= 0);
-  Vector_t* v12 = new Vector_t(p1, p2);
-  Vector_t* v = new Vector_t(*v12, pro);
-  return p1.destinationTo(*v);
+  Vector_t v12(p1, p2);
+  Vector_t v(v12, pro);
+  Point_t p = p1.destinationTo(v);
+  return p;
 }
 
 /*
  * Dot product of two vectors
  */
-double dot(Vector_t& v1, Vector_t& v2){
+double dot(const Vector_t& v1, const Vector_t& v2){
   return (v1.getX() * v2.getX()) + (v1.getY() * v2.getY()) + (v1.getZ() * v2.getZ());
 }
 
-Vector_t* cross(Vector_t& v1, Vector_t& v2){
-  return new Vector_t(v1.getY() * v2.getZ() - v1.getZ() * v2.getY(), v1.getZ() * v2.getX() - v1.getX() * v2.getZ(), v1.getX() * v2.getY() - v1.getY() * v2.getX());
+Vector_t cross(const Vector_t& v1, const Vector_t& v2){
+  Vector_t v(v1.getY() * v2.getZ() - v1.getZ() * v2.getY(), v1.getZ() * v2.getX() - v1.getX() * v2.getZ(), v1.getX() * v2.getY() - v1.getY() * v2.getX());
+
+  return v;
 }
 
-Vector_t* normalize(Vector_t& v){
+Vector_t normalize(const Vector_t& v) {
   return v.divide(v.mod());
 }
 
@@ -110,10 +113,10 @@ std::vector<Point_t*> generateCandidateBaseStations(std::vector<Building_t*> bui
       // Read all 4 top vertices of building i
       std::vector<Point_t *> topVertices = buildingSet.at(i)->getVts();
       std::vector<Point_t *> baseVertices = buildingSet.at(i)->getVbs();
-      poolBS.push_back(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro));
-      roofTopRelays.push_back(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro));
-      roofTopRelays.push_back(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro));
-      roofTopRelays.push_back(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro));
+      poolBS.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
+      roofTopRelays.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
+      roofTopRelays.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
+      roofTopRelays.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
       // System.out.println("No. "+ countBS+ "\t BS candidate position at " + candiBS);
       // StdDraw.point(candiBS.x, candiBS.y);
     }
@@ -234,8 +237,8 @@ std::vector<int> searchNonBlockLink(std::vector<Building_t*>& buildings, Point_t
 
 bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
   Point_t onfacePoint(-10000.0,-10000.0,-10000.0);
-  Point_t* s = sd.getSrc();
-  Point_t* d = sd.getDst();
+  Point_t s = sd.getSrc();
+  Point_t d = sd.getDst();
   bool testResult = false; // by default, false means no blockages
   /*
    * The rule is:
@@ -255,112 +258,112 @@ bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
     bool topfaceIC = false;
     bool sIsTopV = false;        // true: s is one of the top vertices of the building.
     bool dIsTopV = false;        // true: d is one of the top vertices of the building.
-    Point_t* testIntersect;   // A Point_t object to store the intersection point if it exists.
+    Point_t testIntersect;   // A Point_t object to store the intersection point if it exists.
     /* --- Determine whether s or d is one of the top vertices of this building. --- */
-    if(s->sameAs(*(curVts.at(0))) || s->sameAs(*(curVts.at(1)))
-       || s->sameAs(*(curVts.at(2))) || s->sameAs(*(curVts.at(3)))){
+    if(s.sameAs(*(curVts.at(0))) || s.sameAs(*(curVts.at(1)))
+       || s.sameAs(*(curVts.at(2))) || s.sameAs(*(curVts.at(3)))){
       sIsTopV = true;
     }
-    if(d->sameAs(*(curVts.at(0))) || d->sameAs(*(curVts.at(1)))
-       || d->sameAs(*(curVts.at(2))) || d->sameAs(*(curVts.at(3)))){
+    if(d.sameAs(*(curVts.at(0))) || d.sameAs(*(curVts.at(1)))
+       || d.sameAs(*(curVts.at(2))) || d.sameAs(*(curVts.at(3)))){
       dIsTopV = true;
     }
     /* --- Test whether the line segement sd intersects with each face of the building. --- */
     /* ------ plane1 is one of the side face of the building. ------ */
-    Plane_t* plane1 = new Plane_t(*(curVgs.at(0)), *(curVgs.at(1)), *(curVts.at(1)), *(curVts.at(0)));
-    testIntersect = plane1->planeIntersectLine(sd);
-    if(testIntersect != nullptr){
+    Plane_t plane1(*(curVgs.at(0)), *(curVgs.at(1)), *(curVts.at(1)), *(curVts.at(0)));
+    testIntersect = plane1.planeIntersectLine(sd);
+    if(testIntersect.getValid()){
       /* sd has one intersection with this face. */
       /* Test whether the intersection point is s or d. */
-      if(!(testIntersect->sameAs(*s) || testIntersect->sameAs(*d))){
+      if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         /* The intersection point is neither s or d of the line segment, thus there is blockage! */
         return true;
       } else{
         /* s or d is the intersection point. Note that, s and d cannot be the same point. */
         faceIntersectCount++; // This face intersect with sd
         /* Test whether this intersection point is on the edge or not. */
-        if(std::abs(testIntersect->getZ() - curVts.at(1)->getZ()) < 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(1)->getZ()) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(1)->getX()) + std::abs(testIntersect->getY() - curVts.at(1)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(1)->getX()) + std::abs(testIntersect.getY() - curVts.at(1)->getY())) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(0)->getX()) + std::abs(testIntersect->getY() - curVts.at(0)->getY())) < 1E-5){
-          sdOnEdgeCount++;
-        }
-      }
-    }
-
-    Plane_t* plane2 = new Plane_t(*(curVgs.at(1)), *(curVgs.at(2)), *(curVts.at(2)), *(curVts.at(1)));
-    testIntersect = plane2->planeIntersectLine(sd);
-    if(testIntersect != nullptr){
-      if(!(testIntersect->sameAs(*s) || testIntersect->sameAs(*d))){
-        return true;
-      } else{
-        faceIntersectCount++;
-        if(std::abs(testIntersect->getZ() - curVts.at(1)->getZ()) < 1E-5){
-          sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(1)->getX()) + std::abs(testIntersect->getY() - curVts.at(1)->getY())) < 1E-5){
-          sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(2)->getX()) + std::abs(testIntersect->getY() - curVts.at(2)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(0)->getX()) + std::abs(testIntersect.getY() - curVts.at(0)->getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
 
-    Plane_t* plane3 = new Plane_t(*(curVgs.at(2)), *(curVgs.at(3)), *(curVts.at(3)), *(curVts.at(2)));
-    testIntersect = plane3->planeIntersectLine(sd);
-    if(testIntersect != nullptr){
-      if(!(testIntersect->sameAs(*s) || testIntersect->sameAs(*d))){
+    Plane_t plane2(*(curVgs.at(1)), *(curVgs.at(2)), *(curVts.at(2)), *(curVts.at(1)));
+    testIntersect = plane2.planeIntersectLine(sd);
+    if(testIntersect.getValid()){
+      if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;
-        if(std::abs(testIntersect->getZ() - curVts.at(2)->getZ()) < 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(1)->getZ()) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(2)->getX()) + std::abs(testIntersect->getY() - curVts.at(2)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(1)->getX()) + std::abs(testIntersect.getY() - curVts.at(1)->getY())) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(3)->getX()) + std::abs(testIntersect->getY() - curVts.at(3)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(2)->getX()) + std::abs(testIntersect.getY() - curVts.at(2)->getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
 
-    Plane_t* plane4 = new Plane_t(*(curVgs.at(3)), *(curVgs.at(0)), *(curVts.at(0)), *(curVts.at(3)));
-    testIntersect = plane4->planeIntersectLine(sd);
-    if(testIntersect != nullptr){
-      if(!(testIntersect->sameAs(*s) || testIntersect->sameAs(*d))){
+    Plane_t plane3(*(curVgs.at(2)), *(curVgs.at(3)), *(curVts.at(3)), *(curVts.at(2)));
+    testIntersect = plane3.planeIntersectLine(sd);
+    if(testIntersect.getValid()){
+      if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;
-        if(std::abs(testIntersect->getZ() - curVts.at(0)->getZ()) < 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(2)->getZ()) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(3)->getX()) + std::abs(testIntersect->getY() - curVts.at(3)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(2)->getX()) + std::abs(testIntersect.getY() - curVts.at(2)->getY())) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect->getX() - curVts.at(0)->getX()) + std::abs(testIntersect->getY() - curVts.at(0)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(3)->getX()) + std::abs(testIntersect.getY() - curVts.at(3)->getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
 
-    Plane_t* plane5 = new Plane_t(*(curVts.at(0)), *(curVts.at(1)), *(curVts.at(2)), *(curVts.at(3)));
-    testIntersect = plane5->planeIntersectLine(sd);
-    if(testIntersect != nullptr){
-      if(!(testIntersect->sameAs(*s) || testIntersect->sameAs(*d))){
+    Plane_t plane4(*(curVgs.at(3)), *(curVgs.at(0)), *(curVts.at(0)), *(curVts.at(3)));
+    testIntersect = plane4.planeIntersectLine(sd);
+    if(testIntersect.getValid()){
+      if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;
-        Vector_t* AI = new Vector_t(*(curVts.at(0)), *testIntersect);
-        Vector_t* AB = new Vector_t(*(curVts.at(0)), *(curVts.at(1)));
-        Vector_t* AD = new Vector_t(*(curVts.at(0)), *(curVts.at(3)));
-        double Ix = AB->dot(*AI)/AB->mod();  // the x value of p
-        double Iy = AD->dot(*AI)/AD->mod();  // the y value of p
-        if(std::abs(Ix) <= 1E-5 || std::abs(Ix-AB->mod()) <= 1E-5 || std::abs(Iy) <= 1E-5 || std::abs(Iy-AD->mod()) <= 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(0)->getZ()) < 1E-5){
+          sdOnEdgeCount++;
+        } else if((std::abs(testIntersect.getX() - curVts.at(3)->getX()) + std::abs(testIntersect.getY() - curVts.at(3)->getY())) < 1E-5){
+          sdOnEdgeCount++;
+        } else if((std::abs(testIntersect.getX() - curVts.at(0)->getX()) + std::abs(testIntersect.getY() - curVts.at(0)->getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
-    Plane_t* plane6 = new Plane_t(*(curVgs.at(0)), *(curVgs.at(1)), *(curVgs.at(2)), *(curVgs.at(3)));
-    testIntersect = plane6->planeIntersectLine(sd);
-    if(testIntersect != nullptr){
-      if(!(testIntersect->sameAs(*s) || testIntersect->sameAs(*d))){
+
+    Plane_t plane5(*(curVts.at(0)), *(curVts.at(1)), *(curVts.at(2)), *(curVts.at(3)));
+    testIntersect = plane5.planeIntersectLine(sd);
+    if(testIntersect.getValid()){
+      if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
+        return true;
+      } else{
+        faceIntersectCount++;
+        Vector_t AI(*(curVts.at(0)), testIntersect);
+        Vector_t AB(*(curVts.at(0)), *(curVts.at(1)));
+        Vector_t AD(*(curVts.at(0)), *(curVts.at(3)));
+        double Ix = AB.dot(AI)/AB.mod();  // the x value of p
+        double Iy = AD.dot(AI)/AD.mod();  // the y value of p
+        if(std::abs(Ix) <= 1E-5 || std::abs(Ix-AB.mod()) <= 1E-5 || std::abs(Iy) <= 1E-5 || std::abs(Iy-AD.mod()) <= 1E-5){
+          sdOnEdgeCount++;
+        }
+      }
+    }
+    Plane_t plane6(*(curVgs.at(0)), *(curVgs.at(1)), *(curVgs.at(2)), *(curVgs.at(3)));
+    testIntersect = plane6.planeIntersectLine(sd);
+    if(testIntersect.getValid()){
+      if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;

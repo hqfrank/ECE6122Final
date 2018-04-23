@@ -4,6 +4,7 @@
 #include <cmath>
 #include <chrono>
 #include <ctime>
+#include <memory>
 #include "Point_t.h"
 #include "Vector_t.h"
 #include "Line_t.h"
