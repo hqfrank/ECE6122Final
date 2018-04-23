@@ -427,3 +427,69 @@ bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
 
   return false;
 }
+
+void getRelayNeighborInfoFromFile(const std::vector<std::vector<int>>& relayNeighborList, std::string dataRelayNeighbors){
+  std::ifstream fileIn(dataRelayNeighbors);
+  std::string str;
+  std::vector<std::string> data;
+  while (std::getline(fileIn, str, '\t'))
+  {
+    if (str.find('\n') != std::string::npos){
+      data.push_back(str.substr(0, str.find('\n')));
+      data.push_back(str.substr(str.find('\n')+1));
+    } else {
+      data.push_back(str);
+    }
+  }
+//  try{
+//    List<String> fileLines = Files.readAllLines(Paths.get(dataRelayNeighbors), StandardCharsets.UTF_8);
+//    int numLines = fileLines.size();
+//    System.out.println(numLines+"\trelays");
+//    ArrayList<ArrayList<Integer>> relayNeighborList = new ArrayList<ArrayList<Integer>>();
+//    for (int i = 0; i < numLines; ++i){
+//      String[] data = fileLines.get(i).split("\t");
+//      ArrayList<Integer> curRelayNeighbors = new ArrayList<Integer>();
+//      for (int j = 0; j < data.length; ++j){
+//        if (data[j].equals("")) continue;
+//        curRelayNeighbors.add(Integer.parseInt(data[j]));
+//      }
+//      System.out.println("The No.\t" + i + "\tnode has\t" + curRelayNeighbors.size() + "\tnon-block neighbors.");
+//      relayNeighborList.add(curRelayNeighbors);
+//    }
+//    return relayNeighborList;
+//  } catch (IOException e){
+//    System.out.println("Error!!! Failed reading from file to get relay neighbor list information.");
+//    return null;
+//  }
+}
+
+//std::ifstream fileIn(dataBuildings);
+//std::ofstream fileOut;
+//
+//
+//
+////  cout<< data.size() << endl;
+//// Create each building objects and store them.
+//std::vector<Building_t*> buildings;
+//fileOut.open(dataBuildingVertices, std::ios_base::app);
+//if (fileOut.is_open()){
+//cout << "Ready to write building vertices information to file." << endl;
+//} else {
+//cout << "Fail to open the file where building vertices information should be stored." << endl;
+//}
+//for (int i = 0; i < data.size(); i = i+7){
+//double center[2] {std::stod(data.at(i)), std::stod(data.at(i+1))};
+//double length_m = std::stod(data.at(i+2));
+//double width_m = std::stod(data.at(i+3));
+//double topHeight_m = std::stod(data.at(i+4));
+//double baseLevel_m = std::stod(data.at(i+5));
+//double lwhbg[] {length_m, width_m, topHeight_m, baseLevel_m + parameters.minHeightForRelay_m, parameters.groundLevel_m};
+//double orientation_rad = (std::stod(data.at(i+6)))/180.0*M_PI;
+///* Generate each building object. */
+//buildings.push_back(new Building_t(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m, parameters.densityRelayOnBuilding, parameters.randomSeed));
+//fileOut << (buildings.at(buildings.size()-1)->toStringData()+"\n");
+////    cout << buildings.at(buildings.size()-1)->toStringData() << endl;
+//}
+//
+//fileOut.close();
+//return buildings;

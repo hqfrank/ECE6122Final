@@ -127,7 +127,7 @@ int main() {
   std::vector<std::vector<int>> relayNeighborList;
   if (fileConnect.good()){
     // read the relay neighborList
-//    relayNeighborList = getRelayNeighborInfoFromFile(dataRelayNeighbors);
+    getRelayNeighborInfoFromFile(relayNeighborList, dataRelayNeighbors);
   } else {
     relayNeighborList = exploreConnectivity(allRelays, buildingSet, dataRelayNeighbors);
   }
