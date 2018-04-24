@@ -132,6 +132,10 @@ int main() {
     relayNeighborList = exploreConnectivity(allRelays, buildingSet, dataRelayNeighbors);
   }
 
+  cout << "==================================" << endl;
+  cout << "This is the end of the simulation." << endl;
+  cout << "==================================" << endl;
+
 
 
 

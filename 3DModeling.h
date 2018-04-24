@@ -51,6 +51,6 @@ std::vector<int> searchNonBlockLink(std::vector<Building_t*>& buildings, Point_t
 bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd);
 
 /* Read the connectivity information from file. */
-void getRelayNeighborInfoFromFile(const std::vector<std::vector<int>>& relayNeighborList, std::string dataRelayNeighbors);
+void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborList, const std::string dataRelayNeighbors);
 
 #endif //FINALPROJECT_3DMODELING_H
