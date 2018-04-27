@@ -35,7 +35,7 @@ public:
   const double exponent = 2.0;
   const double linkMargin_dB = 10;
   const int hopLimit = 10; // the maximum hop number allowed
-  const double lowerBound_Gbps = 0;
+  double lowerBound_Gbps = 0;
 };
 
 

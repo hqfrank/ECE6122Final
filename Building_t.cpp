@@ -35,18 +35,33 @@ void Building_t::VertexGenerator() {
     this->Center.getX() - this->Length/2*std::sin(this->Orientation),
     this->Center.getY() - this->Length/2*std::cos(this->Orientation)
   };
-  this->Vbs.push_back(new Point_t(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->HeightBase)); // add VAb
-  this->Vbs.push_back(new Point_t(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->HeightBase)); // add VBb
-  this->Vbs.push_back(new Point_t(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->HeightBase)); // add VCb
-  this->Vbs.push_back(new Point_t(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->HeightBase)); // add VDb
-  this->Vgs.push_back(new Point_t(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->GroundLevel)); // add VAg
-  this->Vgs.push_back(new Point_t(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->GroundLevel)); // add VBg
-  this->Vgs.push_back(new Point_t(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->GroundLevel)); // add VCg
-  this->Vgs.push_back(new Point_t(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->GroundLevel)); // add VDg
-  this->Vts.push_back(new Point_t(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->Height)); // add VAt
-  this->Vts.push_back(new Point_t(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->Height)); // add VBt
-  this->Vts.push_back(new Point_t(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->Height)); // add VCt
-  this->Vts.push_back(new Point_t(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->Height)); // add VDt
+  // Calculate the 4 vertices at the base level
+  Point_t VAb(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->HeightBase);
+  this->Vbs.push_back(VAb); // add VAb
+  Point_t VBb(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->HeightBase);
+  this->Vbs.push_back(VBb); // add VBb
+  Point_t VCb(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->HeightBase);
+  this->Vbs.push_back(VCb); // add VCb
+  Point_t VDb(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->HeightBase);
+  this->Vbs.push_back(VDb); // add VDb
+  // Calculate the 4 vertices at the ground level
+  Point_t VAg(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->GroundLevel);
+  this->Vgs.push_back(VAg); // add VAg
+  Point_t VBg(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->GroundLevel);
+  this->Vgs.push_back(VBg); // add VBg
+  Point_t VCg(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->GroundLevel);
+  this->Vgs.push_back(VCg); // add VCg
+  Point_t VDg(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->GroundLevel);
+  this->Vgs.push_back(VDg); // add VDg
+  // Calculate the 4 vertices at the top level
+  Point_t VAt(c1[0]+c4[0]-this->Center.getX(), c1[1]+c4[1]-this->Center.getY(), this->Height);
+  this->Vts.push_back(VAt); // add VAt
+  Point_t VBt(c1[0]+c2[0]-this->Center.getX(), c1[1]+c2[1]-this->Center.getY(), this->Height);
+  this->Vts.push_back(VBt); // add VBt
+  Point_t VCt(c2[0]+c3[0]-this->Center.getX(), c2[1]+c3[1]-this->Center.getY(), this->Height);
+  this->Vts.push_back(VCt); // add VCt
+  Point_t VDt(c3[0]+c4[0]-this->Center.getX(), c3[1]+c4[1]-this->Center.getY(), this->Height);
+  this->Vts.push_back(VDt); // add VDt
 
   // Try to use openGL to draw the figure.
 //  StdDraw.setPenRadius(0.001);
@@ -58,27 +73,27 @@ void Building_t::VertexGenerator() {
 }
 
 
-std::vector<Point_t*> Building_t::getVbs() {
+std::vector<Point_t> Building_t::getVbs() const {
   return this->Vbs;
 }
 
-std::vector<Point_t*> Building_t::getVgs() {
+std::vector<Point_t> Building_t::getVgs() const {
   return this->Vgs;
 }
 
-std::vector<Point_t*> Building_t::getVts() {
+std::vector<Point_t> Building_t::getVts() const {
   return this->Vts;
 }
 
-std::vector<Point_t*> Building_t::getRelays() {
+std::vector<Point_t> Building_t::getRelays() const {
   return this->Relays;
 }
 
-double Building_t::getHeight() {
+double Building_t::getHeight() const {
   return this->Height;
 }
 
-double Building_t::getHeightBase() {
+double Building_t::getHeightBase() const {
   return this->HeightBase;
 }
 
@@ -86,7 +101,7 @@ void Building_t::setHasBS(bool has) {
   this->hasBS = has;
 }
 
-std::vector<Point_t*> Building_t::GenerateRelayOnFace(Point_t& va, Point_t& vb, Point_t& vc, Point_t& vd, double density, int randomSeed){
+std::vector<Point_t> Building_t::GenerateRelayOnFace(const Point_t& va, const Point_t& vb, const Point_t& vc, const Point_t& vd, double density, int randomSeed){
   // va and vb are two bottom vertices, vd and vc are two top vertices, and (va->vb).(vb->vc) = 0
   /*
    *   (vd) *--------* (vc)
@@ -102,7 +117,7 @@ std::vector<Point_t*> Building_t::GenerateRelayOnFace(Point_t& va, Point_t& vb, 
   // Every face has at least one relay, the number of additional relays are generated based on density.
   int numRelayOnFace = (int) floor(density * side1 * side2) + 1;
   // Initialize relayPosOnFace to store the pointers to each relay node.
-  std::vector<Point_t*> relayPosOnFace;
+  std::vector<Point_t> relayPosOnFace;
   // Random generator
   // Seed with a real random value, if available
   std::random_device r;
@@ -123,18 +138,19 @@ std::vector<Point_t*> Building_t::GenerateRelayOnFace(Point_t& va, Point_t& vb, 
       va.getY() + ratioad * (vd.getY() - va.getY()),
       va.getZ() + ratioad * (vd.getZ() - va.getZ())
     };
-    relayPosOnFace.push_back(new Point_t( pab[0] + pad[0] - va.getX(), pab[1] + pad[1] - va.getY(), pab[2] + pad[2] - va.getZ()));
+    Point_t newRelay( pab[0] + pad[0] - va.getX(), pab[1] + pad[1] - va.getY(), pab[2] + pad[2] - va.getZ());
+    relayPosOnFace.push_back(newRelay);
   }
   return relayPosOnFace;
 }
 
-std::vector<Point_t*> Building_t::RelayGenerator(double threshold, double density, int randomSeed) {
+std::vector<Point_t> Building_t::RelayGenerator(double threshold, double density, int randomSeed) {
   // {Ab, Bb, Bt, At}, {Bb, Cb, Ct, Bt}, {Cb, Db, Dt, Ct}, {Db, Ab, At, Dt}, and {At, Bt, Ct, Dt}
-  std::vector<Point_t*> relayF1 = GenerateRelayOnFace(*(this->Vbs.at(0)), *(this->Vbs.at(1)), *(this->Vts.at(1)), *(this->Vts.at(0)), density, randomSeed);
-  std::vector<Point_t*> relayF2 = GenerateRelayOnFace(*(this->Vbs.at(1)), *(this->Vbs.at(2)), *(this->Vts.at(2)), *(this->Vts.at(1)), density, randomSeed);
-  std::vector<Point_t*> relayF3 = GenerateRelayOnFace(*(this->Vbs.at(2)), *(this->Vbs.at(3)), *(this->Vts.at(3)), *(this->Vts.at(2)), density, randomSeed);
-  std::vector<Point_t*> relayF4 = GenerateRelayOnFace(*(this->Vbs.at(3)), *(this->Vbs.at(0)), *(this->Vts.at(0)), *(this->Vts.at(3)), density, randomSeed);
-  std::vector<Point_t*> relayF5;
+  std::vector<Point_t> relayF1 = GenerateRelayOnFace((this->Vbs.at(0)), (this->Vbs.at(1)), (this->Vts.at(1)), (this->Vts.at(0)), density, randomSeed);
+  std::vector<Point_t> relayF2 = GenerateRelayOnFace((this->Vbs.at(1)), (this->Vbs.at(2)), (this->Vts.at(2)), (this->Vts.at(1)), density, randomSeed);
+  std::vector<Point_t> relayF3 = GenerateRelayOnFace((this->Vbs.at(2)), (this->Vbs.at(3)), (this->Vts.at(3)), (this->Vts.at(2)), density, randomSeed);
+  std::vector<Point_t> relayF4 = GenerateRelayOnFace((this->Vbs.at(3)), (this->Vbs.at(0)), (this->Vts.at(0)), (this->Vts.at(3)), density, randomSeed);
+  std::vector<Point_t> relayF5;
   // There must be relays on the 4 side faces
   int numRelayOnBuilding = relayF1.size() + relayF2.size() + relayF3.size() + relayF4.size();
   /*
@@ -143,11 +159,11 @@ std::vector<Point_t*> Building_t::RelayGenerator(double threshold, double densit
    * the threshold.
    */
   if ((this->Height - this->HeightBase) <= threshold){
-    relayF5 = GenerateRelayOnFace(*(this->Vts.at(0)), *(this->Vts.at(1)), *(this->Vts.at(2)), *(this->Vts.at(3)), density, randomSeed);
+    relayF5 = GenerateRelayOnFace((this->Vts.at(0)), (this->Vts.at(1)), (this->Vts.at(2)), (this->Vts.at(3)), density, randomSeed);
     numRelayOnBuilding += relayF5.size();
   }
 
-  std::vector<Point_t*> relayPosOnBuilding;
+  std::vector<Point_t> relayPosOnBuilding;
 //  /* Relays are drawn in blue color. */
 //  StdDraw.setPenRadius(0.005);
 //  StdDraw.setPenColor(StdDraw.BLUE);
@@ -164,16 +180,16 @@ std::vector<Point_t*> Building_t::RelayGenerator(double threshold, double densit
   return relayF1;
 }
 
-std::string Building_t::toString() {
-  return "Building:\nVbs: " + this->Vbs.at(0)->toString() + ", " + this->Vbs.at(1)->toString() + ", " +
-    this->Vbs.at(2)->toString() + ", " + this->Vbs.at(3)->toString() + "\n" +
-    "Vts: " + this->Vts.at(0)->toString() + ", " + this->Vts.at(1)->toString() + ", " + this->Vts.at(2)->toString() +
-    ", " + this->Vts.at(3)->toString();
+std::string Building_t::toString() const {
+  return "Building:\nVbs: " + this->Vbs.at(0).toString() + ", " + this->Vbs.at(1).toString() + ", " +
+    this->Vbs.at(2).toString() + ", " + this->Vbs.at(3).toString() + "\n" +
+    "Vts: " + this->Vts.at(0).toString() + ", " + this->Vts.at(1).toString() + ", " + this->Vts.at(2).toString() +
+    ", " + this->Vts.at(3).toString();
 }
 
-std::string Building_t::toStringData() {
-  return this->Vbs.at(0)->toStringData() + "\t" + this->Vbs.at(1)->toStringData() + "\t" +
-    this->Vbs.at(2)->toStringData() + "\t" + this->Vbs.at(3)->toStringData() + "\t" +
-    this->Vts.at(0)->toStringData() + "\t" + this->Vts.at(1)->toStringData() + "\t" +
-    this->Vts.at(2)->toStringData() + "\t" + this->Vts.at(3)->toStringData();
+std::string Building_t::toStringData() const {
+  return this->Vbs.at(0).toStringData() + "\t" + this->Vbs.at(1).toStringData() + "\t" +
+    this->Vbs.at(2).toStringData() + "\t" + this->Vbs.at(3).toStringData() + "\t" +
+    this->Vts.at(0).toStringData() + "\t" + this->Vts.at(1).toStringData() + "\t" +
+    this->Vts.at(2).toStringData() + "\t" + this->Vts.at(3).toStringData();
 }

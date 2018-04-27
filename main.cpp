@@ -16,39 +16,10 @@
 using namespace std;
 
 int main() {
-  std::cout << "Hello, World!" << std::endl;
-  Point_t p1(3,10,15);
-  Point_t p2(10,15,2);
-  cout << p1.toString() << endl;
-  cout << p2.toString() << endl;
-  Vector_t v1(p1, p2);
-  cout << v1.toString() << endl;
-  Line_t l1(p1, p2);
-  cout << l1.toString() << endl;
-  Point_t p3(5,13,19);
-  Point_t p4(12,18,6);
-  cout << p3.toString() << endl;
-  cout << p4.toString() << endl;
-  Plane_t pl1(p1, p2, p3, p4);
-  cout << pl1.toString() << endl;
-  Point_t center(0,0,0);
-  double c[] {center.getX(), center.getY()};
-  double lwhbg[] {40, 30, 60, 4, -1};
-  double o = 45 / 180.0 * M_PI;
-  double t = 100;
-  double d = 0.01;
-  double r = 1;
-  Building_t b1(c, lwhbg, o, t, d, r);
-  cout << b1.toString() << endl;
-  cout << b1.getRelays().size() << endl;
-  cout << b1.getRelays().at(0)->toString() << endl;
-  cout << b1.getRelays().at(b1.getRelays().size() - 1)->toString() << endl;
-//  std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
-//  std::time_t strTime = chrono::system_clock::to_time_t(t0);
-//  cout << ctime(&strTime) << endl;
-
   /*
-   *  MAIN FUNCTION
+   *  ***************************************
+   *  ************ MAIN FUNCTION ************
+   *  ***************************************
    */
   /*
    * ===============================================================================
@@ -76,26 +47,28 @@ int main() {
   std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
   /* File to store the vertices of each building */
   std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices_" + std::to_string(sysParams.randomSeed) +".txt";
-  /**/
+  /* File to store the connectivity information of the relay nodes. */
   std::string dataRelayNeighbors = "../Data/Relay_Neighbors/Data_RelayNeighbors_"+ std::to_string(sysParams.randomSeed)
                                    + "_" + std::to_string(sysParams.maxNumRelaysInGrid)
                                    + "_" + std::to_string(sysParams.phyLinkDistMax_m)
                                    + "_" + sysParams.relayType + ".txt";
+  /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
+  std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
   /*
    * ====================================
    * Construct all buildings in the area.
    * ====================================
    */
-  std::vector<Building_t*> buildingSet = getBuildingInfoFromFile(strDataBuildings, strDataBuildingVertices, sysParams);
+  std::vector<Building_t> buildingSet = getBuildingInfoFromFile(strDataBuildings, strDataBuildingVertices, sysParams);
 
   /*
    * ===================================================
    * Generate candidate base station locations randomly.
    * ===================================================
    */
-  std::vector<Point_t*> roofTopRelays;
-  std::vector<Point_t*> bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
+  std::vector<Point_t> roofTopRelays;
+  std::vector<Point_t> bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
 //  cout << to_string(roofTopRelays.size()) << endl;
   /*
    * ==================================================
@@ -109,7 +82,7 @@ int main() {
    * Collect all candidate relays in the area.
    * =========================================
    */
-  std::vector<Point_t*> allRelays = collectAllRelays(buildingSet);
+  std::vector<Point_t> allRelays = collectAllRelays(buildingSet);
   /*
    * =======================================================================================
    * If roof top relays are in use, select roof top relays according to the grid constraint.
@@ -131,6 +104,51 @@ int main() {
   } else {
     relayNeighborList = exploreConnectivity(allRelays, buildingSet, dataRelayNeighbors);
   }
+
+  /*
+   * ==============================================================================================================
+   * Select 100 pairs of source and destination base stations, the distance between which is in a certain category.
+   * ==============================================================================================================
+   */
+  std::vector<Point_t> bsPairs = generateBaseStationPairs(bsSet, sysParams);
+
+  /*
+   * ==============================================================================================
+   * For each pair of source and destination base stations, run the optimal path finding algorithm.
+   * ==============================================================================================
+   */
+  std::ofstream fileOutTimeStamp;
+  fileOutTimeStamp.open(strTimeStampFile, std::ios_base::app);
+  if (!fileOutTimeStamp.is_open()) {
+    cerr << "Error!!!The file to store time stamp is not open!!" << endl;
+    exit(errno);
+  }
+  for (int i = 0; i < sysParams.numBSPairs; i++) {
+    /* Get current time as time stamp of the i th loop. */
+    std::chrono::microseconds curMs = std::chrono::duration_cast< std::chrono::milliseconds >(
+      std::chrono::system_clock::now().time_since_epoch()
+    );
+    std::string strTimeI = std::to_string(curMs.count()/1000);
+    /* Write the time stamp to the file which stores all time stamps. */
+    fileOutTimeStamp << strTimeI << "\n";
+    /* Print out the current source and destination */
+    Point_t srcTemp = bsPairs.at(i*2);
+    Point_t dstTemp = bsPairs.at(i*2 + 1);
+    cout << "=================== The " + std::to_string(i) + "-th pair s-d ==================" << endl;
+    cout << "source:      " + srcTemp.toString() << endl;
+    cout << "destination: " + dstTemp.toString() << endl;
+    /* Add source node to the graph. */
+    std::vector<std::vector<int>> nodeNeighborList = addNodeToConnectivityList(relayNeighborList, srcTemp, allRelays, buildingSet);
+    std::vector<Point_t> allNodes = allRelays;
+    allNodes.push_back(srcTemp);
+    /* Add destination node to the graph. */
+    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, dstTemp, allNodes, buildingSet);
+    allNodes.push_back(dstTemp);
+
+    std::vector<std::vector<int>> allPaths = findPathDecodeForward(nodeNeighborList, allNodes, 2, sysParams);
+
+  }
+  fileOutTimeStamp.close();
 
   cout << "==================================" << endl;
   cout << "This is the end of the simulation." << endl;

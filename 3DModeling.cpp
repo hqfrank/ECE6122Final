@@ -35,7 +35,7 @@ Vector_t normalize(const Vector_t& v) {
 /*
  * Read in building information from data files.
  */
-std::vector<Building_t*> getBuildingInfoFromFile(std::string dataBuildings, std::string dataBuildingVertices, SystemParameters parameters) {
+std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::string dataBuildingVertices, SystemParameters& parameters) {
   std::ifstream fileIn(dataBuildings);
   std::ofstream fileOut;
   std::string str;
@@ -51,7 +51,7 @@ std::vector<Building_t*> getBuildingInfoFromFile(std::string dataBuildings, std:
   }
 //  cout<< data.size() << endl;
   // Create each building objects and store them.
-  std::vector<Building_t*> buildings;
+  std::vector<Building_t> buildings;
   fileOut.open(dataBuildingVertices, std::ios_base::app);
   if (fileOut.is_open()){
     cout << "Ready to write building vertices information to file." << endl;
@@ -67,8 +67,9 @@ std::vector<Building_t*> getBuildingInfoFromFile(std::string dataBuildings, std:
     double lwhbg[] {length_m, width_m, topHeight_m, baseLevel_m + parameters.minHeightForRelay_m, parameters.groundLevel_m};
     double orientation_rad = (std::stod(data.at(i+6)))/180.0*M_PI;
     /* Generate each building object. */
-    buildings.push_back(new Building_t(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m, parameters.densityRelayOnBuilding, parameters.randomSeed));
-    fileOut << (buildings.at(buildings.size()-1)->toStringData()+"\n");
+    Building_t newBuilding(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m, parameters.densityRelayOnBuilding, parameters.randomSeed);
+    buildings.push_back(newBuilding);
+    fileOut << (buildings.at(buildings.size()-1).toStringData()+"\n");
 //    cout << buildings.at(buildings.size()-1)->toStringData() << endl;
   }
 
@@ -76,7 +77,7 @@ std::vector<Building_t*> getBuildingInfoFromFile(std::string dataBuildings, std:
   return buildings;
 }
 
-std::vector<Point_t*> generateCandidateBaseStations(std::vector<Building_t*> buildingSet, std::vector<Point_t*>& roofTopRelays, SystemParameters parameters){
+std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buildingSet, std::vector<Point_t>& roofTopRelays, SystemParameters& parameters){
   /* Set up random generator. */
   // Seed with a real random value, if available
   std::random_device r;
@@ -84,39 +85,43 @@ std::vector<Point_t*> generateCandidateBaseStations(std::vector<Building_t*> bui
   std::uniform_int_distribution<int> uniform_dist(0, 999);
 
   /* Initialize variables for storing BSs' locations. */
-  std::vector<Point_t*> poolBS;
+  std::vector<Point_t> poolBS;
   int numBuildings = buildingSet.size();
   int countBS = 0;
   /* Pick one of the vertices of a building satisfying the height requirement as a candidate BS. */
   for(unsigned int i=0; i<numBuildings; i++){
     /* Test the building's height. */
-    double minHeightBuilding = buildingSet.at(i)->getHeightBase() - parameters.minHeightForRelay_m + parameters.minHeightForBS_m;
-    double maxHeightBuilding = buildingSet.at(i)->getHeightBase() - parameters.minHeightForRelay_m + parameters.maxHeightForBS_m;
+    double minHeightBuilding = buildingSet.at(i).getHeightBase() - parameters.minHeightForRelay_m + parameters.minHeightForBS_m;
+    double maxHeightBuilding = buildingSet.at(i).getHeightBase() - parameters.minHeightForRelay_m + parameters.maxHeightForBS_m;
     double randomDouble = uniform_dist(e) / 1000.0;
     auto caseId = (unsigned int) floor(randomDouble * 4.0);
-    if (buildingSet.at(i)->getHeight() >= minHeightBuilding && buildingSet.at(i)->getHeight() <= maxHeightBuilding) {
+    if (buildingSet.at(i).getHeight() >= minHeightBuilding && buildingSet.at(i).getHeight() <= maxHeightBuilding) {
       // Read all 4 top vertices of building i
-      std::vector<Point_t *> topVertices = buildingSet.at(i)->getVts();
+      std::vector<Point_t> topVertices = buildingSet.at(i).getVts();
       poolBS.push_back(topVertices.at((caseId++) % 4));
       // This building has a candidate BS location.
-      buildingSet.at(i)->setHasBS(true);
+      buildingSet.at(i).setHasBS(true);
       // Add the other 3 top corners as the roof top relay locations.
       roofTopRelays.push_back(topVertices.at((caseId++) % 4));
       roofTopRelays.push_back(topVertices.at((caseId++) % 4));
       roofTopRelays.push_back(topVertices.at((caseId++) % 4));
     }
-    if (buildingSet.at(i)->getHeight() > maxHeightBuilding){
+    if (buildingSet.at(i).getHeight() > maxHeightBuilding){
       // Calculate the effective building height.
-      double buildingHeight = buildingSet.at(i)->getHeight() - buildingSet.at(i)->getHeightBase();
+      double buildingHeight = buildingSet.at(i).getHeight() - buildingSet.at(i).getHeightBase();
       double randomHeight = uniform_dist(e) / 1000.0 * (parameters.maxHeightForBS_m-parameters.minHeightForBS_m) + parameters.minHeightForBS_m;
       double pro = randomHeight / buildingHeight;
       // Read all 4 top vertices of building i
-      std::vector<Point_t *> topVertices = buildingSet.at(i)->getVts();
-      std::vector<Point_t *> baseVertices = buildingSet.at(i)->getVbs();
-      poolBS.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
-      roofTopRelays.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
-      roofTopRelays.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
-      roofTopRelays.push_back(new Point_t(proportionalPoint(*baseVertices.at(caseId % 4), *topVertices.at((caseId++) % 4), pro)));
+      std::vector<Point_t> topVertices = buildingSet.at(i).getVts();
+      std::vector<Point_t> baseVertices = buildingSet.at(i).getVbs();
+      Point_t newBS(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      poolBS.push_back(newBS);
+      Point_t newRelay0(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      roofTopRelays.push_back(newRelay0);
+      Point_t newRelay1(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      roofTopRelays.push_back(newRelay1);
+      Point_t newRelay2(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      roofTopRelays.push_back(newRelay2);
       // System.out.println("No. "+ countBS+ "\t BS candidate position at " + candiBS);
       // StdDraw.point(candiBS.x, candiBS.y);
     }
@@ -127,7 +132,7 @@ std::vector<Point_t*> generateCandidateBaseStations(std::vector<Building_t*> bui
   return poolBS;
 }
 
-void selectBaseStationPerGrid(std::vector<Point_t*>& bsSet, SystemParameters parameters){
+void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, SystemParameters& parameters){
   /* Number of grids. */
   auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
   auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
@@ -141,7 +146,7 @@ void selectBaseStationPerGrid(std::vector<Point_t*>& bsSet, SystemParameters par
   /* Iterating each candidate BS. */
   unsigned int i = 0;
   while(i < bsSet.size()){
-    Point_t currentBS = *(bsSet.at(i));
+    Point_t currentBS = (bsSet.at(i));
     auto gridIndexX = (unsigned int) floor((currentBS.getX() - parameters.areaXRange_m[0])/parameters.gridSize_m);
     auto gridIndexY = (unsigned int) floor((currentBS.getY() - parameters.areaYRange_m[0])/parameters.gridSize_m);
     if (gridHasBS.at(gridIndexX*numGridAlongY + gridIndexY)){
@@ -155,7 +160,7 @@ void selectBaseStationPerGrid(std::vector<Point_t*>& bsSet, SystemParameters par
  cout << "(3) There are " + to_string(bsSet.size()) + " candidate base stations being selected." << endl;
 }
 
-void selectRelayPerGrid(std::vector<Point_t*>& relays, SystemParameters parameters){
+void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters){
   /* Number of grids. */
   auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
   auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
@@ -170,7 +175,7 @@ void selectRelayPerGrid(std::vector<Point_t*>& relays, SystemParameters paramete
   unsigned int i = 0;
   while(i < relays.size()){
     // System.out.println(i);
-    Point_t currentRelay = *(relays.at(i));
+    Point_t currentRelay = (relays.at(i));
     auto gridIndexX = (unsigned int) floor((currentRelay.getX() - parameters.areaXRange_m[0])/parameters.gridSize_m);
     auto gridIndexY = (unsigned int) floor((currentRelay.getY() - parameters.areaYRange_m[0])/parameters.gridSize_m);
     if (gridHasRelay.at(gridIndexX*numGridAlongY + gridIndexY) >= parameters.maxNumRelaysInGrid){
@@ -184,17 +189,17 @@ void selectRelayPerGrid(std::vector<Point_t*>& relays, SystemParameters paramete
   cout << "(5) There are " + to_string(relays.size()) + " candidate roof top relays being selected." << endl;
 }
 
-std::vector<Point_t*> collectAllRelays(std::vector<Building_t*> buildings){
-  std::vector<Point_t*> allRelays;
-  for (auto bldg : buildings){
-    std::vector<Point_t*> curRelays = bldg->getRelays();
+std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings){
+  std::vector<Point_t> allRelays;
+  for (const Building_t& bldg : buildings){
+    std::vector<Point_t> curRelays = bldg.getRelays();
     allRelays.insert(allRelays.begin(), curRelays.begin(), curRelays.end());
   }
   cout << "(4) There are " + to_string(allRelays.size()) + " candidate relays on the surfaces of buildings." << endl;
   return allRelays;
 }
 
-std::vector<std::vector<int>> exploreConnectivity(std::vector<Point_t*>& nodes, std::vector<Building_t*>& buildings, const std::string& fileRelayNeighbors){
+std::vector<std::vector<int>> exploreConnectivity(const std::vector<Point_t>& nodes, const std::vector<Building_t>& buildings, const std::string& fileRelayNeighbors){
   std::vector<std::vector<int>> neighborList;
   std::ofstream fileOut;
   fileOut.open(fileRelayNeighbors, std::ios_base::app);
@@ -204,7 +209,7 @@ std::vector<std::vector<int>> exploreConnectivity(std::vector<Point_t*>& nodes, 
     cout << "Fail to open the file where neighbors information should be stored." << endl;
   }
   for (unsigned int i = 0; i < nodes.size(); i++) {
-    std::vector<int> curRelayNeighbors = searchNonBlockLink(buildings, *(nodes.at(i)), nodes);
+    std::vector<int> curRelayNeighbors = searchNonBlockLink(buildings, (nodes.at(i)), nodes);
     neighborList.push_back(curRelayNeighbors);
     std::string outputToFile = "";
     for (unsigned int j = 0; j < curRelayNeighbors.size(); ++j){
@@ -213,19 +218,20 @@ std::vector<std::vector<int>> exploreConnectivity(std::vector<Point_t*>& nodes, 
     fileOut << outputToFile + "\n";
     cout << "The No.\t" + std::to_string(i) + "\tnode has\t" + std::to_string(neighborList.at(i).size()) + "\tnon-block neighbors." << endl;
   }
+  fileOut.close();
   return neighborList;
 }
 
 
-std::vector<int> searchNonBlockLink(std::vector<Building_t*>& buildings, Point_t& s, std::vector<Point_t*>& nodes){
+std::vector<int> searchNonBlockLink(const std::vector<Building_t>& buildings, const Point_t& s, const std::vector<Point_t>& nodes){
   std::vector<int> nonBlockNodes;
   for(unsigned int i = 0; i < nodes.size(); i++){
     // for each node in the topology, determine whether there is a non-blocked path between s and nodes[i]
-    double dist = nodes.at(i)->distanceTo(s); // the distance between s and nodes[i]
+    double dist = nodes.at(i).distanceTo(s); // the distance between s and nodes[i]
     if(dist >= 1){
       // the link length is valid; otherwise that relays[i] will not be added to the list
-      Line_t* sd = new Line_t(s, *(nodes.at(i)));
-      bool blockTest = blockageTest(buildings, *sd);
+      Line_t sd(s, (nodes.at(i)));
+      bool blockTest = blockageTest(buildings, sd);
       if(!blockTest){
         // there is no blockage between s and relays[i]
         nonBlockNodes.push_back(i); // add the index of node to the list
@@ -235,7 +241,7 @@ std::vector<int> searchNonBlockLink(std::vector<Building_t*>& buildings, Point_t
   return nonBlockNodes;
 }
 
-bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
+bool blockageTest(const std::vector<Building_t>& buildingSet, const Line_t& sd){
   Point_t onfacePoint(-10000.0,-10000.0,-10000.0);
   Point_t s = sd.getSrc();
   Point_t d = sd.getDst();
@@ -249,9 +255,9 @@ bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
    */
   /* === Iterate each building === */
   for(unsigned int i = 0; i < buildingSet.size(); i++){
-    Building_t* curBldg = buildingSet.at(i);
-    std::vector<Point_t*> curVgs = curBldg->getVgs();
-    std::vector<Point_t*> curVts = curBldg->getVts();
+    Building_t curBldg = buildingSet.at(i);
+    std::vector<Point_t> curVgs = curBldg.getVgs();
+    std::vector<Point_t> curVts = curBldg.getVts();
     /* --- Initialize the local variables used to determine the status. --- */
     int faceIntersectCount = 0;
     int sdOnEdgeCount = 0;
@@ -260,17 +266,17 @@ bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
     bool dIsTopV = false;        // true: d is one of the top vertices of the building.
     Point_t testIntersect;   // A Point_t object to store the intersection point if it exists.
     /* --- Determine whether s or d is one of the top vertices of this building. --- */
-    if(s.sameAs(*(curVts.at(0))) || s.sameAs(*(curVts.at(1)))
-       || s.sameAs(*(curVts.at(2))) || s.sameAs(*(curVts.at(3)))){
+    if(s.sameAs((curVts.at(0))) || s.sameAs((curVts.at(1)))
+       || s.sameAs((curVts.at(2))) || s.sameAs((curVts.at(3)))){
       sIsTopV = true;
     }
-    if(d.sameAs(*(curVts.at(0))) || d.sameAs(*(curVts.at(1)))
-       || d.sameAs(*(curVts.at(2))) || d.sameAs(*(curVts.at(3)))){
+    if(d.sameAs((curVts.at(0))) || d.sameAs((curVts.at(1)))
+       || d.sameAs((curVts.at(2))) || d.sameAs((curVts.at(3)))){
       dIsTopV = true;
     }
     /* --- Test whether the line segement sd intersects with each face of the building. --- */
     /* ------ plane1 is one of the side face of the building. ------ */
-    Plane_t plane1(*(curVgs.at(0)), *(curVgs.at(1)), *(curVts.at(1)), *(curVts.at(0)));
+    Plane_t plane1((curVgs.at(0)), (curVgs.at(1)), (curVts.at(1)), (curVts.at(0)));
     testIntersect = plane1.planeIntersectLine(sd);
     if(testIntersect.getValid()){
       /* sd has one intersection with this face. */
@@ -282,77 +288,77 @@ bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
         /* s or d is the intersection point. Note that, s and d cannot be the same point. */
         faceIntersectCount++; // This face intersect with sd
         /* Test whether this intersection point is on the edge or not. */
-        if(std::abs(testIntersect.getZ() - curVts.at(1)->getZ()) < 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(1).getZ()) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(1)->getX()) + std::abs(testIntersect.getY() - curVts.at(1)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(1).getX()) + std::abs(testIntersect.getY() - curVts.at(1).getY())) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(0)->getX()) + std::abs(testIntersect.getY() - curVts.at(0)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(0).getX()) + std::abs(testIntersect.getY() - curVts.at(0).getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
 
-    Plane_t plane2(*(curVgs.at(1)), *(curVgs.at(2)), *(curVts.at(2)), *(curVts.at(1)));
+    Plane_t plane2((curVgs.at(1)), (curVgs.at(2)), (curVts.at(2)), (curVts.at(1)));
     testIntersect = plane2.planeIntersectLine(sd);
     if(testIntersect.getValid()){
       if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;
-        if(std::abs(testIntersect.getZ() - curVts.at(1)->getZ()) < 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(1).getZ()) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(1)->getX()) + std::abs(testIntersect.getY() - curVts.at(1)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(1).getX()) + std::abs(testIntersect.getY() - curVts.at(1).getY())) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(2)->getX()) + std::abs(testIntersect.getY() - curVts.at(2)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(2).getX()) + std::abs(testIntersect.getY() - curVts.at(2).getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
 
-    Plane_t plane3(*(curVgs.at(2)), *(curVgs.at(3)), *(curVts.at(3)), *(curVts.at(2)));
+    Plane_t plane3((curVgs.at(2)), (curVgs.at(3)), (curVts.at(3)), (curVts.at(2)));
     testIntersect = plane3.planeIntersectLine(sd);
     if(testIntersect.getValid()){
       if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;
-        if(std::abs(testIntersect.getZ() - curVts.at(2)->getZ()) < 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(2).getZ()) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(2)->getX()) + std::abs(testIntersect.getY() - curVts.at(2)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(2).getX()) + std::abs(testIntersect.getY() - curVts.at(2).getY())) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(3)->getX()) + std::abs(testIntersect.getY() - curVts.at(3)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(3).getX()) + std::abs(testIntersect.getY() - curVts.at(3).getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
 
-    Plane_t plane4(*(curVgs.at(3)), *(curVgs.at(0)), *(curVts.at(0)), *(curVts.at(3)));
+    Plane_t plane4((curVgs.at(3)), (curVgs.at(0)), (curVts.at(0)), (curVts.at(3)));
     testIntersect = plane4.planeIntersectLine(sd);
     if(testIntersect.getValid()){
       if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;
-        if(std::abs(testIntersect.getZ() - curVts.at(0)->getZ()) < 1E-5){
+        if(std::abs(testIntersect.getZ() - curVts.at(0).getZ()) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(3)->getX()) + std::abs(testIntersect.getY() - curVts.at(3)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(3).getX()) + std::abs(testIntersect.getY() - curVts.at(3).getY())) < 1E-5){
           sdOnEdgeCount++;
-        } else if((std::abs(testIntersect.getX() - curVts.at(0)->getX()) + std::abs(testIntersect.getY() - curVts.at(0)->getY())) < 1E-5){
+        } else if((std::abs(testIntersect.getX() - curVts.at(0).getX()) + std::abs(testIntersect.getY() - curVts.at(0).getY())) < 1E-5){
           sdOnEdgeCount++;
         }
       }
     }
 
-    Plane_t plane5(*(curVts.at(0)), *(curVts.at(1)), *(curVts.at(2)), *(curVts.at(3)));
+    Plane_t plane5((curVts.at(0)), (curVts.at(1)), (curVts.at(2)), (curVts.at(3)));
     testIntersect = plane5.planeIntersectLine(sd);
     if(testIntersect.getValid()){
       if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
         return true;
       } else{
         faceIntersectCount++;
-        Vector_t AI(*(curVts.at(0)), testIntersect);
-        Vector_t AB(*(curVts.at(0)), *(curVts.at(1)));
-        Vector_t AD(*(curVts.at(0)), *(curVts.at(3)));
+        Vector_t AI((curVts.at(0)), testIntersect);
+        Vector_t AB((curVts.at(0)), (curVts.at(1)));
+        Vector_t AD((curVts.at(0)), (curVts.at(3)));
         double Ix = AB.dot(AI)/AB.mod();  // the x value of p
         double Iy = AD.dot(AI)/AD.mod();  // the y value of p
         if(std::abs(Ix) <= 1E-5 || std::abs(Ix-AB.mod()) <= 1E-5 || std::abs(Iy) <= 1E-5 || std::abs(Iy-AD.mod()) <= 1E-5){
@@ -360,7 +366,7 @@ bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
         }
       }
     }
-    Plane_t plane6(*(curVgs.at(0)), *(curVgs.at(1)), *(curVgs.at(2)), *(curVgs.at(3)));
+    Plane_t plane6((curVgs.at(0)), (curVgs.at(1)), (curVgs.at(2)), (curVgs.at(3)));
     testIntersect = plane6.planeIntersectLine(sd);
     if(testIntersect.getValid()){
       if(!(testIntersect.sameAs(s) || testIntersect.sameAs(d))){
@@ -428,7 +434,7 @@ bool blockageTest(const std::vector<Building_t*>& buildingSet, Line_t& sd){
   return false;
 }
 
-void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborList, const std::string dataRelayNeighbors){
+void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborList, std::string dataRelayNeighbors){
   std::ifstream fileIn(dataRelayNeighbors);
   std::string str;
   std::vector<int>* data = new std::vector<int>();
@@ -448,4 +454,367 @@ void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborLi
   }
 
   cout << "Connectivity information loaded!" << endl;
+}
+
+std::vector<Point_t> generateBaseStationPairs(const std::vector<Point_t>& bsSet, SystemParameters& parameters){
+  /* Set up random generator. */
+  // Seed with a real random value, if available
+  std::random_device r;
+  std::default_random_engine e(r());
+  std::uniform_int_distribution<int> uniform_dist(0, bsSet.size()-1);
+  /* Initialize the (source,destination) pair */
+  std::vector<Point_t> sdPair((unsigned) parameters.numBSPairs * 2);
+  // This is a function to generate different base station pairs to complete the simulation, which is very useful
+  /* Initialize counter */
+  int countPair = 0;
+  double lowerBound = parameters.bsDistanceRange_m[0];
+  double upperBound = parameters.bsDistanceRange_m[1];
+  while(countPair<100) {
+    Point_t srcRnd = bsSet.at((unsigned) uniform_dist(e));
+    Point_t dstRnd = bsSet.at((unsigned) uniform_dist(e));
+    double distTemp = srcRnd.distanceTo(dstRnd);
+    if(distTemp > lowerBound && distTemp <= upperBound){
+      sdPair.at((unsigned) countPair * 2) = srcRnd;
+      sdPair.at((unsigned) countPair * 2 + 1) = dstRnd;
+      countPair++;
+    }
+  }
+  return sdPair;
+}
+
+std::vector<std::vector<int>> addNodeToConnectivityList(const std::vector<std::vector<int>>& relayNeighborList,
+                                                                      const Point_t& newNode, const std::vector<Point_t>& oldNodes,
+                                                                      const std::vector<Building_t>& buildings){
+  std::vector<std::vector<int>> currentList = relayNeighborList;
+  /* Vector which stores the index of nodes which are connected to the new node */
+  std::vector<int> nonBlockNodes;
+  /* Test the connection between the new node and each of the old node. */
+  for (int i=0; i<oldNodes.size(); i++){
+    Line_t sd(newNode, oldNodes.at(i));
+    bool blockTest = blockageTest(buildings, sd);
+    if (!blockTest){
+      nonBlockNodes.push_back(i);
+      currentList.at(i).push_back(oldNodes.size());
+    }
+  }
+  currentList.push_back(nonBlockNodes);
+  return currentList;
+}
+
+std::vector<std::vector<int>> findPathDecodeForward(const std::vector<std::vector<int>>& nodeNeighborList,
+                                                    const std::vector<Point_t>& nodes, int addHop,
+                                                    SystemParameters& parameters){
+  /*
+   * Get source and destination.
+   */
+  int numNodes = nodes.size();
+  int srcIndex = numNodes - 2;
+  int dstIndex = numNodes - 1;
+  Point_t src = nodes[srcIndex];
+  Point_t dst = nodes[dstIndex];
+
+  /*
+   * Initialization: allPaths store: shortest hop optimal path; plus 1 optimal path; ...
+   * in total there are "addHop + 1" paths, but one more path will be added if shortest path is LoS path
+   */
+  std::vector<std::vector<int>> allPaths; // to store all final optimal paths with different number of hops
+  parameters.lowerBound_Gbps = 0; // Reset the lower bound of the path throughput as 0.
+
+  /*
+   * Find a path with the minimum number of hops. Using Dijkstra algorithm with type "hop"
+   */
+  std::string pathFileDijkstra = "../Data/Paths/Dijkstra.txt";
+  std::vector<int> pathDijkstraHop = Dijkstra(nodeNeighborList, nodes, pathFileDijkstra, "hop");
+  if (pathDijkstraHop.empty()){
+    cout << "Warning!!! There is no path from current source to destination!!\n";
+    return allPaths;  // the return value is also null
+  }
+  cout << "The minimum number of hops path has " + std::to_string(pathDijkstraHop.size()-1) + " hops." << endl;
+
+  /*
+   * Calculate the current end-to-end throughput.
+   */
+  double pathThroughput_Gbps = 40.0;  // Even the shortest link cannot exceed 35.6 Gbps throughput due to upper limit on SNR
+  int minHop = pathDijkstraHop.size() - 1;
+  if (minHop == 1) {
+    // Special case: LoS path exists
+    allPaths.push_back(pathDijkstraHop);  // the LoS path is added to allPaths.
+    minHop = 2; // In the later search, directly start to search path with 2 hops.
+    /*
+     * Do not update the parameters.lowerBound_Gbps, because the los path usually has very high throughput due to no primary constraint.
+     */
+  } else {
+    // At least 2 hops in the path with smallest number of hops
+    // Update the current path throughput.
+    for (int i = 0; i < minHop - 1; ++i) {
+      // current hop is i to i+1
+      // next hop is i+1 to i+2
+      double linkLengthCurrent_m = nodes[pathDijkstraHop.at(i)].distanceTo(nodes[pathDijkstraHop.at(i+1)]);
+      double linkLengthNext_m = nodes[pathDijkstraHop.at(i+1)].distanceTo(nodes[pathDijkstraHop.at(i+2)]);
+      double capacityCurrent_Gbps = calculateLinkCapacity_Gbps(linkLengthCurrent_m, parameters);
+      double capacityNext_Gbps = calculateLinkCapacity_Gbps(linkLengthNext_m, parameters);
+      double throughputCurrent_Gbps = capacityCurrent_Gbps * capacityNext_Gbps / (capacityCurrent_Gbps + capacityNext_Gbps);
+      // A path's throughput is the smallest throughput of a pair of consecutive links
+      if (throughputCurrent_Gbps < pathThroughput_Gbps){
+        pathThroughput_Gbps = throughputCurrent_Gbps;
+      }
+    }
+    parameters.lowerBound_Gbps = pathThroughput_Gbps; // As long as a path is found, update the lowerBound_Gbps
+  }
+
+  if (pathThroughput_Gbps >= 20.0 && pathThroughput_Gbps != 40.0) {
+    cerr << "Warning!!! There is something wrong with the calculation on capacity.\n";
+    exit(errno);
+  }
+
+  /* Iterate the path find process "addHop" times to obtain the path with different lengths. */
+  std::chrono::microseconds curMs = std::chrono::duration_cast< std::chrono::milliseconds >(
+    std::chrono::system_clock::now().time_since_epoch()
+  );
+  std::string curTime = std::to_string(curMs.count()/1000);
+  std::string pathFileDF = "../Data/Paths/" + curTime + "DF.txt";
+  std::ofstream fileOutDF;
+  fileOutDF.open(pathFileDF, std::ios_base::app);
+  // do not allow the number of hops to exceed 10 hops.
+  for (int i = 0; i <= addHop && i <= parameters.hopLimit - minHop; ++i) {
+    int maxHop = minHop + i;
+    cout << "============ " + std::to_string(maxHop) + " hop case ============\n";
+    // Find the path with no more than maxHop hops which has the optimal throughput.
+    std::vector<int> path = findPathDecodeForwardMaxHop(nodeNeighborList, nodes, maxHop, parameters);
+    if (path.empty()){
+      cout << "Warning!!! There is no path with no more than " + std::to_string(maxHop) + " hops\n";
+      addHop++;
+    } else {
+      allPaths.push_back(path);   // allPaths may contain null path.
+      for (int j : path){
+        fileOutDF << nodes.at(j).toStringData() << "\n";
+      }
+    }
+  }
+  fileOutDF.close();
+
+  return allPaths;
+}
+
+std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>& nodeNeighborList,
+                                             const std::vector<Point_t>& nodes, int maxHop,
+                                             SystemParameters& parameters){
+  /*
+   * Get source and destination.
+  */
+  int numNodes = nodes.size();
+  int srcIndex = numNodes - 2;
+  int dstIndex = numNodes - 1;
+  Point_t src = nodes[srcIndex];
+  Point_t dst = nodes[dstIndex];
+
+  /*
+   * Initialization: path is used to store the final result.
+   */
+  std::vector<int> pathMaxHop;
+  double preHopCap_Gbps = 40.0; // At the very beginning, there is no previous hop, so the preHopCap_Gbps is set as a value which cannot be achieved.
+  std::vector<std::vector<int>> pathList = findNextHopNode(nodeNeighborList, nodes, maxHop, parameters, srcIndex, 0, 40.0, 40.0);
+  if (!pathList.empty()){
+    int maxThroughtput = 0;
+    int indexMax = 0;
+    for (int i = 0; i < pathList.size(); ++i) {
+      if (maxHop > 1 && pathList.at(i).size() == 2) continue;
+      if (pathList.at(i).at(0) > maxThroughtput){
+        // System.out.println("Find the optimal path under the maximum hop limit.");
+        maxThroughtput = pathList.at(i).at(0);
+        indexMax = i;
+      }
+    }
+    if (maxThroughtput == 0){
+      cerr << "Error!!! No path has above 0 throughput!!\n";
+      exit(errno);
+    } else {
+      pathMaxHop.push_back(srcIndex);
+      for (int j = pathList.at(indexMax).size()-1; j >= 1; --j){
+        pathMaxHop.push_back(pathList.at(indexMax).at(j));
+      }
+    }
+    if (pathMaxHop.empty()){
+      cerr << "Error!!! Do not find the best path.\n";
+      return pathMaxHop;
+    }
+  }
+
+  return pathMaxHop;
+}
+
+std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>>& nodeNeighborList,
+                                              const std::vector<Point_t>& nodes, int maxHop, SystemParameters& parameters,
+                                              int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput){
+  // int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput
+  double prePathThroughput = pathThroughput;
+  std::vector<std::vector<int>> validPaths;
+  Point_t dst = nodes[nodes.size() - 1];  // get the destination node
+  int curHopNum = preHopNum + 1;  // the hop number of this hop
+  if (curHopNum > maxHop) { // if current hop exceeds the maximum hop number allowed, return a null path.
+    return validPaths;
+  } else {
+    // hop number is OK, get candidate nodes of this hop
+    Point_t preNode = nodes[preNodeIndex];  // the previous node
+    std::vector<int> candidates = nodeNeighborList.at(preNodeIndex); // The indices of all neighbors of the previous node
+    for (int i = 0; i < candidates.size(); ++i){
+      // iterate each candidate node
+      Point_t curNode = nodes[candidates.at(i)]; // read the i-th candidate node for this hop
+      double linkLength_m = preNode.distanceTo(curNode);
+      double distToDst_m = curNode.distanceTo(dst);
+      /* Test the link length, which should be smaller than the threshold. */
+      if (linkLength_m > parameters.phyLinkDistMax_m) continue;
+      /* Control the expansion of the route. */
+      if (candidates.at(i) != (nodes.size() - 1) && distToDst_m > parameters.phyLinkDistMax_m * (maxHop - curHopNum)) continue;
+      /* Calculate the current throughput of the consecutive link pair, when the candidate neighbor is selected. */
+      double curHopCap = calculateLinkCapacity_Gbps(linkLength_m, parameters);
+      double curThroughput = preHopCap * curHopCap / (preHopCap + curHopCap);
+      /* The throughput of the consecutive link pair should be larger than the lower bound. */
+      if (curThroughput < parameters.lowerBound_Gbps) continue;
+      if (pathThroughput < parameters.lowerBound_Gbps) continue;
+      double curPathThroughput = pathThroughput;
+      if (curThroughput < curPathThroughput) {
+        curPathThroughput = curThroughput;
+      }
+      if (candidates.at(i) == (nodes.size() -1) && curHopNum > 1){
+        // Current selected node is destination and the path throughput is larger than lowerBound_Gbps
+        std::vector<int> validSinglePath;
+        validSinglePath.push_back((int) (curPathThroughput * 10000));
+        validSinglePath.push_back(candidates.at(i));
+        parameters.lowerBound_Gbps = curPathThroughput;
+        cout << "The lower bound of the throughput in this search becomes " + std::to_string(curPathThroughput) + " Gbps.\n";
+        validPaths.push_back(validSinglePath);
+      } else {
+        // Current selected node is not the destination node.
+        std::vector<std::vector<int>> pathList = findNextHopNode(nodeNeighborList, nodes, maxHop, parameters, candidates.at(i), curHopNum, curHopCap, curPathThroughput);
+        if (pathList.empty()) {
+          // do nothing
+        } else {
+          for (int j = 0; j < pathList.size(); ++j){
+            pathList.at(j).push_back(candidates.at(i));
+            validPaths.push_back(pathList.at(j));
+          }
+        }
+      }
+    }
+    // Updated all paths found in validPaths
+    return validPaths;
+  }
+}
+
+/*
+ * Dijkstra algorithm.
+ */
+std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, const std::vector<Point_t>& nodes,
+                          std::string pathFile, std::string type){
+  /* Set up for drawing src and dst */
+//  StdDraw.point(nodes[nodes.length-2].x,nodes[nodes.length-2].y);
+//  StdDraw.point(nodes[nodes.length-1].x,nodes[nodes.length-1].y);
+
+  /* Stores the index of unvisited nodes in nodes array. */
+  std::vector<int> unvisitedSet;
+  /* Distance between src and all nodes (i.e., relays+src+dst) in the topology */
+  double distToSrc[nodes.size()];
+  /* Index of the previous node to node[i] on the shortest path */
+  int prevIndex[nodes.size()];
+  /*
+   * Initialization:
+   * The first nodes.length-2 nodes are relay nodes, then source node,
+   * and the last one is destination node.
+   */
+  for (int i=0; i<nodes.size(); i++){
+    distToSrc[i] = 1.0E10;    // 1000000 means infinity
+    prevIndex[i] = -1;     // -1 means "undefined"
+    unvisitedSet.push_back(i);    // add node i into unvisited node set.
+  }
+  /* Distance from source to source is zero. */
+  distToSrc[nodes.size() - 2] = 0;
+  /* Test each node in the unvisited set. */
+  while (!unvisitedSet.empty()){
+    /* Find the node in unvisitedSet with the min distToSrc[] */
+    double distMin = 1.0E10;   // 10 times initial distance
+    int indexOfUnvisitedSetMin = -1; // the index of the min distToSrc[] node in unvisited set
+    int nodeIndexDistMin = -1;   // the index of the node in all nodes
+    /* Find the min distToSrc[] */
+    for (int i=0; i<unvisitedSet.size(); i++){
+      if (distToSrc[unvisitedSet.at(i)] < distMin){
+        indexOfUnvisitedSetMin = i;
+        distMin = distToSrc[unvisitedSet.at(i)];
+      }
+    }
+
+    if (indexOfUnvisitedSetMin == -1) {
+      cout << "There are " + std::to_string(unvisitedSet.size()) + " nodes unvisited, but they are not reachable.\n";
+      break;
+    }
+
+    nodeIndexDistMin = unvisitedSet.at(indexOfUnvisitedSetMin);
+    /* Remove the node of min distToSrc[] from unvisited set. */
+    unvisitedSet.erase(unvisitedSet.begin() + indexOfUnvisitedSetMin);
+    /* Get the LoS neighbors of the currently selected node. */
+    std::vector<int> nodeNeighborList = neighborList.at(nodeIndexDistMin);
+
+    /* Update the dist and prev of each neighbor. */
+    for (int i = 0; i < nodeNeighborList.size(); i++){
+      Point_t neighbor = nodes[nodeNeighborList.at(i)];
+      double alt = 0.0;
+      if (type == "distance"){
+        alt = distToSrc[nodeIndexDistMin] + nodes[nodeIndexDistMin].distanceTo(neighbor);}
+      else if (type == "hop"){
+        alt = distToSrc[nodeIndexDistMin] + 1;
+      } else {
+        alt = distToSrc[nodeIndexDistMin] + calculateWeight(nodes[nodeIndexDistMin].distanceTo(neighbor));
+      }
+      if (alt < distToSrc[nodeNeighborList.at(i)]){
+        distToSrc[nodeNeighborList.at(i)] = alt;
+        prevIndex[nodeNeighborList.at(i)] = nodeIndexDistMin;
+      }
+      if (alt > 1.0E10) {
+        cout << "Warning: The distance 'alt' is larger than 1.0E10.\n";
+        break;
+      }
+    }
+  }
+
+  std::vector<int> path;
+  int currentIndex = nodes.size() - 1; // destination node
+  while (currentIndex != (nodes.size()-2)){
+    path.push_back(currentIndex);
+    if (prevIndex[currentIndex] == -1){
+      cout << "There is no path to the destination, because the current node does not have previous hop.\n";
+      path.clear();
+      break;
+    }
+//    StdDraw.line(nodes[currentIndex].x, nodes[currentIndex].y, nodes[prevIndex[currentIndex]].x, nodes[prevIndex[currentIndex]].y);
+    currentIndex = prevIndex[currentIndex];
+  }
+  if ((!path.empty()) && (currentIndex == (nodes.size()-2))) {
+    path.push_back(currentIndex);
+    std::ofstream fileOutPath;
+    fileOutPath.open(pathFile, std::ios_base::app);
+    for (int i : path) {
+      fileOutPath << nodes[i].toStringData() << "\n";
+
+    }
+    fileOutPath.close();
+  }
+
+  return path;
+}
+
+double calculateLinkCapacity_Gbps(double linkLength_m, SystemParameters& parameters){
+  double pt_w = parameters.pt_w;
+  double pt_dBm = 10.0 * log10(pt_w * 1000.0); // dBm = 10*log10(w*1000)
+  double eirp_dBm = pt_dBm + parameters.antennaGain_dBi;
+  double pathLoss_dB = parameters.exponent * 10.0 * log10(4.0 * M_PI * linkLength_m / parameters.lambda_m);
+  double pr_dBm = eirp_dBm - pathLoss_dB - parameters.alpha * linkLength_m - parameters.linkMargin_dB + parameters.antennaGain_dBi;
+  double sinr_dB = pr_dBm - parameters.noise_dBm;
+  if (sinr_dB > 50.0) sinr_dB = 50.0;
+  double sinr = pow(10.0, sinr_dB/10.0);
+  double capacity_Gbps = 2.16 * log2(1 + sinr);
+  return capacity_Gbps;
+}
+
+double calculateWeight(double dist){
+  return exp(0.0037*dist)*dist*dist;
 }

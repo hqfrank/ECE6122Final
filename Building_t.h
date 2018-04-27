@@ -23,13 +23,13 @@ private:
   double GroundLevel;	// the height of the ground level of the building
   double Orientation;	// orientation (the angle between the "Length" side and north) in radius
 
-  std::vector<Point_t*> Vbs;	     // vertices at the base height
+  std::vector<Point_t> Vbs;	     // vertices at the base height
 
-  std::vector<Point_t*> Vgs;       // vertices at the ground level
+  std::vector<Point_t> Vgs;       // vertices at the ground level
 
-  std::vector<Point_t*> Vts;       // vertices at the top of the building
+  std::vector<Point_t> Vts;       // vertices at the top of the building
 
-  std::vector<Point_t*> Relays;   // vector to store all relays on a building.
+  std::vector<Point_t> Relays;   // vector to store all relays on a building.
 
   int NumRelays;
 
@@ -43,24 +43,24 @@ public:
   /* Function to generate 12 vertices on the building. 4 of them are on the plane with the minimum height to deploy relays. */
   void VertexGenerator();
   /* Generate randomly (uniformly) deployed relays on the building surface. */
-  std::vector<Point_t*> GenerateRelayOnFace(Point_t& va, Point_t& vb, Point_t& vc, Point_t& vd, double density, int randomSeed);
+  std::vector<Point_t> GenerateRelayOnFace(const Point_t& va, const Point_t& vb, const Point_t& vc, const Point_t& vd, double density, int randomSeed);
   /* Generate relays on a whole building. */
-  std::vector<Point_t*> RelayGenerator(double threshold, double density, int randomSeed);
+  std::vector<Point_t> RelayGenerator(double threshold, double density, int randomSeed);
   /* Get member variables. */
-  std::vector<Point_t*> getVbs();
-  std::vector<Point_t*> getVgs();
-  std::vector<Point_t*> getVts();
-  std::vector<Point_t*> getRelays();
-  double getHeight();
-  double getHeightBase();
+  std::vector<Point_t> getVbs() const;
+  std::vector<Point_t> getVgs() const;
+  std::vector<Point_t> getVts() const;
+  std::vector<Point_t> getRelays() const;
+  double getHeight() const;
+  double getHeightBase() const;
   /* Set member variables. */
   void setHasBS(bool has);
 
 
 
   /* Print out string */
-  std::string toString();
-  std::string toStringData();
+  std::string toString() const;
+  std::string toStringData() const;
 
 
 
