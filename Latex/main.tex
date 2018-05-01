@@ -91,6 +91,13 @@ In this project, I build a simulation platform for the relay-assisted millimeter
 \end{abstract}
 
 \section{Introduction}
+MmWave communication is one of the key enabling technologies in 5G cellular systems, as it has more than 10 GHz available spectrum and can support multi-Gbps ultra-high data rate. MmWave signal has its unique propagation features as compared to the traditional sub-6 GHz band signals, such as it suffers very high path loss, week diffraction or penetration ability, atmospheric absorption, and rain attenuation. Thus, in dense urban area, the length of a mmWave link is usually limited to about 100 meters or less, due to the abundant obstacles (i.e., buildings). 
+
+On the other hand, as the cell size is becoming smaller, many small cell base stations will be deployed in dense urban area to enhance the throughput and coverage performance of the cellular system. However, this brings the backhaul challenge (a.k.a., mobile fronthaul challenge) that large amount of data traffic need to be flowed between these small cell base stations and the already existing macro-cell base stations. It would be prohibitively expensive or facing construction difficulties if the backhaul or mobile fronthaul purely using wired fiber solution. Thus, mmWave backhaul becomes a promising solution to this challenge, because of its cheap price, flexibility, and the ability to support ultra-high data rate.
+
+There have been some research works on mmWave backhaul; however, most of them focusing on the so-called ``self-backhaul", in which the mmWave link only exists between base stations, even if there is no line-of-sight (LOS) path between a pair of base stations due to the blockage. This means some of the mmWave backhaul links are NLOS, and NLOS mmWave link cannot support above Gbps data rate. Thus, I propose to deploy relays between the pair of base stations in these NLOS cases, which raises the problem of how to deploy (select) relays to form a throughput optimal multi-hop relaying path between a pair of base stations.
+
+This simulation aims to simulate the process of selecting a set of limited number of relays from a set of candidate relay locations to form the relaying path which has optimal throughput among all possible relaying paths with the same number of hops. To make this simulation more accurate and closer to the practical scenario, the downtown Atlanta area is modeled in a 3D way, and any physical link between any two wireless nodes (i.e., base station or relay) must go through the blockage test to make sure it is LOS. After the environment is set up, an efficient recursive algorithm is implemented to solve the path selection problem.
 
 \section{Implementation Details}
 \subsection{Main function}
