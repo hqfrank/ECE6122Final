@@ -12,6 +12,7 @@
 #include <random>
 #include <memory>
 #include <chrono>
+#include <algorithm>
 #include "Point_t.h"
 #include "Vector_t.h"
 #include "Line_t.h"
@@ -19,6 +20,22 @@
 #include "SystemParameters.h"
 #include "Plane_t.h"
 
+class EstimatedHop {
+public:
+  const double l200g20 = 1*0.48+2*0.51+3*0.01;
+  const double l400g200 = 1*0.13 + 2*0.83 + 3*0.14;
+  const double l600g400 = 2*0.30 + 3*0.61 + 4*0.09;
+  const double l800g600 = 3*0.35 + 4*0.62 + 5*0.03;
+  const double l1000g800 = 4*0.43 + 5*0.49 + 6*0.06 + 7*0.02;
+};
+
+void printConnections(const std::vector<std::vector<int>>& nodeConnections);
+
+void primAlgorithm(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
+                   const int mBSId, std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+                   std::vector<std::vector<Point_t>>& bsPairs);
+
+void evaluateEstimateHopNumbers(std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet, const EstimatedHop& eHops);
 
 Point_t proportionalPoint(const Point_t& p1, const Point_t& p2, double pro);
 
@@ -55,7 +72,7 @@ bool blockageTest(const std::vector<Building_t>& buildingSet, const Line_t& sd);
 void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborList, std::string dataRelayNeighbors);
 
 /* Generate a number of base station pairs for the use in simulations. */
-std::vector<Point_t> generateBaseStationPairs(const std::vector<Point_t>& bsSet, SystemParameters& parameters);
+std::vector<std::vector<Point_t>> generateBaseStationPairs(const std::vector<Point_t>& bsSet, SystemParameters& parameters);
 
 /* Add a new node to the graph, update the connectivity information. */
 std::vector<std::vector<int>> addNodeToConnectivityList(const std::vector<std::vector<int>>& relayNeighborList,
@@ -87,5 +104,9 @@ double calculateLinkCapacity_Gbps(double linkLength_m, SystemParameters& paramet
 /* Estimate the link weight in AF scheme. */
 double calculateWeight(double dist);
 
+/* Check whether two paths interfere with each other. */
+bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
+                               const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
+                               const std::vector<Point_t>& nodes, const SystemParameters& parameters);
 
 #endif //FINALPROJECT_3DMODELING_H

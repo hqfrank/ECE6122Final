@@ -11,7 +11,7 @@
 class SystemParameters {
 public:
   const int randomSeed = 10;
-  const std::string relayType = "Top";
+  const std::string relayType = "Surface";
   const double minHeightForRelay_m = 5.0;
   const double maxHeightForRelay_m = 200.0;
   const double minHeightForBS_m = 10.0; // Only deploy BSs on the rooftop of buildings with height between [min,max].
@@ -24,7 +24,7 @@ public:
   const int maxNumRelaysInGrid = 1;
   const double maxLengthLOSLinkBSs_m = 100.0;
   const double phyLinkDistMax_m = 300;
-  const double bsDistanceRange_m[2] {20,200};
+  const double bsDistanceRange_m[2] {20,1000};
   const int numBSPairs = 100;
   const double antennaGain_dBi = 21.87;
   const double antennaBeamWidth_phi = 5.0/180.0*M_PI;
@@ -36,6 +36,7 @@ public:
   const double linkMargin_dB = 10;
   const int hopLimit = 10; // the maximum hop number allowed
   double lowerBound_Gbps = 0;
+  string simStartTime = "NULL";
 };
 
 

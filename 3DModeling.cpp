@@ -4,6 +4,134 @@
 
 #include "3DModeling.h"
 
+
+/*
+ * =========================================================
+ * Print out the connections on each node in a tree or mesh.
+ * =========================================================
+ */
+void printConnections(const std::vector<std::vector<int>>& nodeConnections){
+  cout << "****************************************************" << endl;
+  cout << "Print out the neighbors of each node in the network." << endl;
+  cout << "****************************************************" << endl;
+  int count = 0;
+  for (auto nodeConnection : nodeConnections){
+    cout << "BS " << count << " connects to " << nodeConnection.size() << " BSs: ";
+    for (auto node : nodeConnection) {
+      cout << node << ", ";
+    }
+    cout << endl;
+    count++;
+  }
+}
+
+/*
+ * =================================================
+ * Prim algorithm to find the minimum spanning tree.
+ * =================================================
+ */
+void primAlgorithm(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
+                   const int mBSId, std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+                   std::vector<std::vector<Point_t>>& bsPairs){
+  double key[bsSet.size()];
+  int otherEnd[bsSet.size()];
+  for (int i = 0; i < bsSet.size(); i++) {
+    key[i] = 100000;
+    otherEnd[i] = -1;
+  }
+  key[mBSId] = 0;
+  otherEnd[mBSId] = mBSId;
+  std::vector<int> unselectedBSs;
+  for (int i = 0; i < bsSet.size(); i++){
+    unselectedBSs.push_back(i);
+  }
+  std::vector<int> selectedBSs;
+  while(selectedBSs.size() < bsSet.size()){
+    // Find the node with the min key value in the unselected set.
+    double minKey = 100000;
+    int minKeyBSId = -1;
+    int posOfMinKeyBS = -1;
+    for (int i = 0; i < unselectedBSs.size(); i++) {
+      if (key[unselectedBSs.at(i)] < minKey) {
+        minKey = key[unselectedBSs.at(i)];
+        minKeyBSId = unselectedBSs.at(i);
+        posOfMinKeyBS = i;
+      }
+    }
+    if (minKeyBSId == -1) {
+      cerr << "Error! There is no valid key value in the unselected set." << endl;
+      exit(errno);
+    }
+    if (minKey > 0) {
+      connections.at(minKeyBSId).push_back(otherEnd[minKeyBSId]);
+      connections.at(otherEnd[minKeyBSId]).push_back(minKeyBSId);
+      cout << "BS " << minKeyBSId << "\t---\t" << "BS " << otherEnd[minKeyBSId] << endl;
+      // Add this connection to the tree
+      std::vector<int> curConnection;
+      curConnection.push_back(minKeyBSId);
+      curConnection.push_back(otherEnd[minKeyBSId]);
+      tree.push_back(curConnection);
+      // Add this connection to bs pairs
+      std::vector<Point_t> curBSPair;
+      curBSPair.push_back(bsSet.at(minKeyBSId));
+      curBSPair.push_back(bsSet.at(otherEnd[minKeyBSId]));
+      bsPairs.push_back(curBSPair);
+
+    }
+
+    // move the node with min key value from unselected set to selected set.
+    selectedBSs.push_back(minKeyBSId);
+    unselectedBSs.erase(unselectedBSs.begin()+posOfMinKeyBS);
+
+
+    std::vector<double> neighborDist = eHopMaps.at(minKeyBSId);
+    for (int i = 0; i < neighborDist.size(); i++) {
+      if (key[i] > neighborDist.at(i)) {
+        key[i] = neighborDist.at(i);
+        otherEnd[i] = minKeyBSId;
+      }
+    }
+  }
+
+
+}
+
+
+/*
+ * ==============================================================================================
+ * Approximately evaluate the estimated hops needed between each pair of source and destinations.
+ * ==============================================================================================
+ */
+void evaluateEstimateHopNumbers(std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet, const EstimatedHop& eHops){
+  auto numBSs = bsSet.size();
+  for (int i = 0; i < numBSs; i++){
+    Point_t pi = bsSet.at(i);
+    std::vector<double> eHopPi;
+    for (int j = 0; j < numBSs; j++) {
+      Point_t pj = bsSet.at(j);
+      double dist = pi.distanceTo(pj);
+      if (dist < 0.1) {
+        eHopPi.push_back(0);
+      } else if (dist <= 200) {
+        eHopPi.push_back(eHops.l200g20);
+      } else if (dist <= 400) {
+        eHopPi.push_back(eHops.l400g200);
+      } else if (dist <= 600) {
+        eHopPi.push_back(eHops.l600g400);
+      } else if (dist <= 800) {
+        eHopPi.push_back(eHops.l800g600);
+      } else if (dist <= 1000) {
+        eHopPi.push_back(eHops.l1000g800);
+      } else {
+        eHopPi.push_back(10000);
+      }
+    }
+    eHopMaps.push_back(eHopPi);
+  }
+
+}
+
+
 /*
  * Calculate the point at the position p between p1 and p2, such that |p1p|= pro*|p1p2|
  */
@@ -157,7 +285,18 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, SystemParameters& par
       i++;
     }
   }
- cout << "(3) There are " + to_string(bsSet.size()) + " candidate base stations being selected." << endl;
+  cout << "(3) There are " + to_string(bsSet.size()) + " candidate base stations being selected." << endl;
+  /* Write the selected base stations to file. */
+  ofstream outFile;
+  outFile.open("../Data/Base_Stations/bsSet_"+parameters.simStartTime+".txt", std::ios_base::app);
+  if (!outFile.is_open()) {
+    cerr << "Error!!!The file to store base stations is not open!!" << endl;
+    exit(errno);
+  }
+  for(auto bs : bsSet) {
+    outFile << bs.toStringData() << endl;
+  }
+  outFile.close();
 }
 
 void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters){
@@ -456,14 +595,15 @@ void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborLi
   cout << "Connectivity information loaded!" << endl;
 }
 
-std::vector<Point_t> generateBaseStationPairs(const std::vector<Point_t>& bsSet, SystemParameters& parameters){
+std::vector<std::vector<Point_t>> generateBaseStationPairs(const std::vector<Point_t>& bsSet,
+                                                           SystemParameters& parameters){
   /* Set up random generator. */
   // Seed with a real random value, if available
   std::random_device r;
   std::default_random_engine e(r());
   std::uniform_int_distribution<int> uniform_dist(0, bsSet.size()-1);
   /* Initialize the (source,destination) pair */
-  std::vector<Point_t> sdPair((unsigned) parameters.numBSPairs * 2);
+  std::vector<std::vector<Point_t>> sdPair((unsigned) parameters.numBSPairs, std::vector<Point_t>(2));
   // This is a function to generate different base station pairs to complete the simulation, which is very useful
   /* Initialize counter */
   int countPair = 0;
@@ -474,8 +614,8 @@ std::vector<Point_t> generateBaseStationPairs(const std::vector<Point_t>& bsSet,
     Point_t dstRnd = bsSet.at((unsigned) uniform_dist(e));
     double distTemp = srcRnd.distanceTo(dstRnd);
     if(distTemp > lowerBound && distTemp <= upperBound){
-      sdPair.at((unsigned) countPair * 2) = srcRnd;
-      sdPair.at((unsigned) countPair * 2 + 1) = dstRnd;
+      sdPair[(unsigned) countPair][0] = srcRnd;
+      sdPair[(unsigned) countPair][1] = dstRnd;
       countPair++;
     }
   }
@@ -618,6 +758,7 @@ std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>
     int maxThroughtput = 0;
     int indexMax = 0;
     for (int i = 0; i < pathList.size(); ++i) {
+      /* When more than one hop is needed! */
       if (maxHop > 1 && pathList.at(i).size() == 2) continue;
       if (pathList.at(i).at(0) > maxThroughtput){
         // System.out.println("Find the optimal path under the maximum hop limit.");
@@ -649,17 +790,33 @@ std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>
   // int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput
   double prePathThroughput = pathThroughput;
   std::vector<std::vector<int>> validPaths;
-  Point_t dst = nodes[nodes.size() - 1];  // get the destination node
-  int curHopNum = preHopNum + 1;  // the hop number of this hop
-  if (curHopNum > maxHop) { // if current hop exceeds the maximum hop number allowed, return a null path.
+  /* The destination node is always the last node in the "nodes" vector. */
+  Point_t dst = nodes[nodes.size() - 1];
+  /* Update the current hop number. The searching process starts from hop 0 at src. */
+  int curHopNum = preHopNum + 1;
+  /*
+   * If current hop exceeds the maximum hop number allowed, return a null path.
+   * When the returned path vector is empty, it means no path has been found.
+   */
+  if (curHopNum > maxHop) {
     return validPaths;
   } else {
-    // hop number is OK, get candidate nodes of this hop
+    /*
+     * Here, the current hop number is below hop number upper bound.
+     * It also implies that the node previously selected is not the destination.
+     * The following assertion make sure that the searching ends at the destination.
+     */
+    assert(preNodeIndex != (nodes.size() - 1));
+    /*
+     * Get candidate nodes of this hop, which are the neighboring nodes of the previous node.
+     */
     Point_t preNode = nodes[preNodeIndex];  // the previous node
-    std::vector<int> candidates = nodeNeighborList.at(preNodeIndex); // The indices of all neighbors of the previous node
+    std::vector<int> candidates = nodeNeighborList[preNodeIndex]; // The indices of all neighbors of the previous node
+    /*
+     * Iterates each candidate node for the next node to be inserted into the path.
+     */
     for (int i = 0; i < candidates.size(); ++i){
-      // iterate each candidate node
-      Point_t curNode = nodes[candidates.at(i)]; // read the i-th candidate node for this hop
+      Point_t curNode = nodes[candidates[i]]; // "candidates" only stores indices of neighboring nodes.
       double linkLength_m = preNode.distanceTo(curNode);
       double distToDst_m = curNode.distanceTo(dst);
       /* Test the link length, which should be smaller than the threshold. */
@@ -672,27 +829,46 @@ std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>
       /* The throughput of the consecutive link pair should be larger than the lower bound. */
       if (curThroughput < parameters.lowerBound_Gbps) continue;
       if (pathThroughput < parameters.lowerBound_Gbps) continue;
-      double curPathThroughput = pathThroughput;
+      /* Update the current path throughput when this node is selected. */
+      double curPathThroughput = prePathThroughput;
       if (curThroughput < curPathThroughput) {
         curPathThroughput = curThroughput;
       }
-      if (candidates.at(i) == (nodes.size() -1) && curHopNum > 1){
-        // Current selected node is destination and the path throughput is larger than lowerBound_Gbps
-        std::vector<int> validSinglePath;
-        validSinglePath.push_back((int) (curPathThroughput * 10000));
-        validSinglePath.push_back(candidates.at(i));
-        parameters.lowerBound_Gbps = curPathThroughput;
-        cout << "The lower bound of the throughput in this search becomes " + std::to_string(curPathThroughput) + " Gbps.\n";
+      if (candidates.at(i) == (nodes.size() -1)){
+        /* The currently selected node is the destination node. */
+        std::vector<int> validSinglePath; // define a vector to store the found single path.
+        /*
+         * Push back the path throughput into the path vector as the first element.
+         * If the path is LoS, the path throughput should be curHopCap.
+         * Otherwise, the path throughput should be curPathThroughput.
+         */
+        if (curHopNum == 1) {
+          /* The path is a line of sight single hop path. */
+          validSinglePath.push_back((int) (curHopCap * 10000));
+        } else {
+          validSinglePath.push_back((int) (curPathThroughput * 10000));
+          /* Only update the lower bound of the path throughput when there is no LoS path. */
+          parameters.lowerBound_Gbps = curPathThroughput;
+          cout << "The lower bound of the throughput in this search becomes " + std::to_string(curPathThroughput) + " Gbps.\n";
+        }
+        /* Push back the current node which is also the destination node into the path vector. */
+        validSinglePath.push_back(candidates[i]);
+        /* Push back the current path to the path list. */
         validPaths.push_back(validSinglePath);
       } else {
-        // Current selected node is not the destination node.
+        /*
+         * Current selected node is not the destination node. The searching process continues.
+         */
         std::vector<std::vector<int>> pathList = findNextHopNode(nodeNeighborList, nodes, maxHop, parameters, candidates.at(i), curHopNum, curHopCap, curPathThroughput);
         if (pathList.empty()) {
-          // do nothing
+          // do nothing, because no path has been found.
         } else {
-          for (int j = 0; j < pathList.size(); ++j){
-            pathList.at(j).push_back(candidates.at(i));
-            validPaths.push_back(pathList.at(j));
+          for (auto path0 : pathList){
+            /* Only return the paths which do not have duplicated nodes. */
+            if (std::find(path0.begin(), path0.end(), candidates[i]) == path0.end()){
+              path0.push_back(candidates.at(i));
+              validPaths.push_back(path0);
+            }
           }
         }
       }
@@ -817,4 +993,71 @@ double calculateLinkCapacity_Gbps(double linkLength_m, SystemParameters& paramet
 
 double calculateWeight(double dist){
   return exp(0.0037*dist)*dist*dist;
+}
+
+bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
+                               const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
+                               const std::vector<Point_t>& nodes, const SystemParameters& parameters) {
+  int hop1 = path1.size() - 1;
+  int hop2 = path2.size() - 1;
+  double halfBeam = parameters.antennaBeamWidth_phi/2.0;
+  for (int i = 0; i < hop1; i++) {
+    Point_t s1,d1;
+    if (i == 0) {
+      s1 = sd1[0];
+    } else {
+      s1 = nodes[path1[i]];
+    }
+    if (i == hop1-1) {
+      d1 = sd1[1];
+    } else {
+      d1 = nodes[path1[i+1]];
+    }
+    Vector_t s1d1(s1,d1);
+    Vector_t d1s1(d1,s1);
+    for (int j = 0; j < hop2; j++) {
+      Point_t s2,d2;
+      if (j == 0) {
+        s2 = sd2[0];
+      } else {
+        s2 = nodes[path2[j]];
+      }
+      if (j == hop2-1) {
+        d2 = sd2[1];
+      } else {
+        d2 = nodes[path2[j+1]];
+      }
+      Vector_t s2d2(s2,d2);
+      Vector_t d2s2(d2,s2);
+      // test interference signal s1-->d2, same as d2-->s1
+      Vector_t s1d2(s1,d2);
+      double a_d1s1d2 = acos(s1d1.dot(s1d2)/s1d1.mod()/s1d2.mod());
+      double a_s1d2s2 = acos(s1d2.dot(s2d2)/s1d2.mod()/s2d2.mod());
+      if (a_d1s1d2 < halfBeam || a_s1d2s2 < halfBeam) {
+        return true;
+      }
+      // test interference signal s2-->d1, same as d1-->s2
+      Vector_t s2d1(s2,d1);
+      double a_s1d1s2 = acos(s1d1.dot(s2d1)/s1d1.mod()/s2d1.mod());
+      double a_d1s2d2 = acos(s2d1.dot(s2d2)/s2d1.mod()/s2d2.mod());
+      if (a_s1d1s2 < halfBeam || a_d1s2d2 < halfBeam) {
+        return true;
+      }
+      // test interference signal d1-->d2, same as d2-->d1
+      Vector_t d1d2(d1,d2);
+      double a_s1d1d2 = acos(-1*s1d1.dot(d1d2)/s1d1.mod()/d1d2.mod());
+      double a_s2d2d1 = acos(s2d2.dot(d1d2)/s2d2.mod()/d1d2.mod());
+      if (a_s1d1d2 < halfBeam || a_s2d2d1 < halfBeam) {
+        return true;
+      }
+      // test interference signal s2-->s1, same as s1-->s2
+      Vector_t s1s2(s1,s2);
+      double a_s2s1d1 = acos(s1s2.dot(s1d1)/s1s2.mod()/s1d1.mod());
+      double a_d2s2s1 = acos(-1 * s2d2.dot(s1s2)/s2d2.mod()/s1s2.mod());
+      if (a_s2s1d1 < halfBeam || a_d2s2s1 < halfBeam) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
