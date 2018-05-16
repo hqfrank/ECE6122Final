@@ -321,7 +321,7 @@ int main() {
     for (int j = i+1; j < minHopPaths.size(); ++j) {
       std::vector<int> path2 = minHopPaths[j];
       std::vector<Point_t> sd2 = bsPairs[j];
-      bool intTest = checkTwoPathsInterference(path1, path2, sd1, sd2, allRelays, sysParams);
+      bool intTest = checkTwoPathsInterference(path1, path2, sd1, sd2, relayNeighborList, buildingSet, allRelays, sysParams);
       if(intTest) {
         cout << "Path " << i << " and Path " << j << " interfere with each other." << endl;
         countIntPairs++;

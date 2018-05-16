@@ -766,7 +766,7 @@ std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>
         indexMax = i;
       }
     }
-    if (maxThroughtput == 0){
+    if (pathList.size() > 1 && maxThroughtput == 0){
       cerr << "Error!!! No path has above 0 throughput!!\n";
       exit(errno);
     } else {
@@ -865,7 +865,7 @@ std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>
         } else {
           for (auto path0 : pathList){
             /* Only return the paths which do not have duplicated nodes. */
-            if (std::find(path0.begin(), path0.end(), candidates[i]) == path0.end()){
+            if (std::find(path0.begin(), path0.end(), candidates[i]) == path0.end() && candidates[i] != nodes.size()-2){
               path0.push_back(candidates.at(i));
               validPaths.push_back(path0);
             }
@@ -997,66 +997,199 @@ double calculateWeight(double dist){
 
 bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
                                const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
+                               const std::vector<std::vector<int>>& relayNeighborList,
+                               const std::vector<Building_t>& buildings,
                                const std::vector<Point_t>& nodes, const SystemParameters& parameters) {
   int hop1 = path1.size() - 1;
   int hop2 = path2.size() - 1;
   double halfBeam = parameters.antennaBeamWidth_phi/2.0;
+
+  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+  std::vector<std::vector<int>> nodeNeighborList = addNodeToConnectivityList(relayNeighborList, sd1[0], nodes, buildings);
+  std::vector<Point_t> allNodes = nodes;
+  allNodes.push_back(sd1[0]);
+  nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd1[1], allNodes, buildings);
+  allNodes.push_back(sd1[1]);
+  if (sd2[0].sameAs(sd1[0])){
+    int curIdx = allNodes.size();
+    int refIdx = allNodes.size()-2;
+    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+    nodeNeighborList.push_back(curNeighbors);
+    for (auto idx: curNeighbors) {
+      nodeNeighborList[idx].push_back(curIdx);
+    }
+  } else if (sd2[0].sameAs(sd1[1])){
+    int curIdx = allNodes.size();
+    int refIdx = allNodes.size()-1;
+    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+    nodeNeighborList.push_back(curNeighbors);
+    for (auto idx: curNeighbors) {
+      nodeNeighborList[idx].push_back(curIdx);
+    }
+  } else {
+    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[0], allNodes, buildings);
+  }
+  allNodes.push_back(sd2[0]);
+  if (sd2[1].sameAs(sd1[0])){
+    int curIdx = allNodes.size();
+    int refIdx = allNodes.size()-3;
+    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+    nodeNeighborList.push_back(curNeighbors);
+    for (auto idx: curNeighbors) {
+      nodeNeighborList[idx].push_back(curIdx);
+    }
+  } else if (sd2[1].sameAs(sd1[1])) {
+    int curIdx = allNodes.size();
+    int refIdx = allNodes.size()-2;
+    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+    nodeNeighborList.push_back(curNeighbors);
+    for (auto idx: curNeighbors) {
+      nodeNeighborList[idx].push_back(curIdx);
+    }
+  } else {
+    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[1], allNodes, buildings);
+  }
+  allNodes.push_back(sd2[1]);
+  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+  std::cout << "It took " << time_span.count() << " seconds to add end points to neighbor list." << endl;
+
   for (int i = 0; i < hop1; i++) {
     Point_t s1,d1;
+    int s1i,d1i;
     if (i == 0) {
       s1 = sd1[0];
+      s1i = allNodes.size()-4;
     } else {
       s1 = nodes[path1[i]];
+      s1i = path1[i];
     }
     if (i == hop1-1) {
       d1 = sd1[1];
+      d1i = allNodes.size()-3;
     } else {
       d1 = nodes[path1[i+1]];
+      d1i = path1[i+1];
     }
     Vector_t s1d1(s1,d1);
     Vector_t d1s1(d1,s1);
     for (int j = 0; j < hop2; j++) {
       Point_t s2,d2;
+      int s2i, d2i;
       if (j == 0) {
         s2 = sd2[0];
+        s2i = allNodes.size()-2;
       } else {
         s2 = nodes[path2[j]];
+        s2i = path2[j];
       }
       if (j == hop2-1) {
         d2 = sd2[1];
+        d2i = allNodes.size()-1;
       } else {
         d2 = nodes[path2[j+1]];
+        d2i = path2[j+1];
       }
       Vector_t s2d2(s2,d2);
       Vector_t d2s2(d2,s2);
+
+//      /*
+//       * If the two physical links share any of the end point:
+//       * s1 = s2, s1 = d2, d1 = s2, d1 = d2
+//       */
+//      if (s1.sameAs(s2)) {
+//        if (d1.sameAs(d2)) return true; // two physical links are the same, must interfere with each other.
+//        // d1 != d2, and as s1!=d1, s2!=d2 ==> s1!=d2, s2!=d1
+//
+//
+//      }
+//
+//      if (s1.sameAs(s2) || s1.sameAs(d2) || d1.sameAs(s2) || d1.sameAs(d2)) {
+//        if ()
+//      }
       // test interference signal s1-->d2, same as d2-->s1
-      Vector_t s1d2(s1,d2);
-      double a_d1s1d2 = acos(s1d1.dot(s1d2)/s1d1.mod()/s1d2.mod());
-      double a_s1d2s2 = acos(s1d2.dot(s2d2)/s1d2.mod()/s2d2.mod());
-      if (a_d1s1d2 < halfBeam || a_s1d2s2 < halfBeam) {
-        return true;
+//      t1 = std::chrono::high_resolution_clock::now();
+      if (std::find(nodeNeighborList[s1i].begin(),nodeNeighborList[s1i].end(),d2i) != nodeNeighborList[s1i].end()){
+        Vector_t s1d2(s1,d2);
+        if (s1d2.mod() > 0) {
+          double a_d1s1d2 = acos(s1d1.dot(s1d2)/s1d1.mod()/s1d2.mod());
+          double a_s1d2s2 = acos(s1d2.dot(s2d2)/s1d2.mod()/s2d2.mod());
+          if (a_d1s1d2 < halfBeam || a_s1d2s2 < halfBeam) {
+            return true;
+          }
+        } else {
+          double a_d1s1s2 = acos(s1d1.dot(d2s2)/s1d1.mod()/d2s2.mod());
+          if (a_d1s1s2 < 2*halfBeam || M_PI-a_d1s1s2 < 2*halfBeam) {
+            return true;
+          }
+        }
       }
+//      t2 = std::chrono::high_resolution_clock::now();
+//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+//      std::cout << "Section 1 " << time_span.count() << " seconds." << endl;
+
       // test interference signal s2-->d1, same as d1-->s2
-      Vector_t s2d1(s2,d1);
-      double a_s1d1s2 = acos(s1d1.dot(s2d1)/s1d1.mod()/s2d1.mod());
-      double a_d1s2d2 = acos(s2d1.dot(s2d2)/s2d1.mod()/s2d2.mod());
-      if (a_s1d1s2 < halfBeam || a_d1s2d2 < halfBeam) {
-        return true;
+//      t1 = std::chrono::high_resolution_clock::now();
+      if (std::find(nodeNeighborList[s2i].begin(),nodeNeighborList[s2i].end(),d1i) != nodeNeighborList[s2i].end()){
+        Vector_t s2d1(s2,d1);
+        if (s2d1.mod() > 0) {
+          double a_s1d1s2 = acos(s1d1.dot(s2d1)/s1d1.mod()/s2d1.mod());
+          double a_d1s2d2 = acos(s2d1.dot(s2d2)/s2d1.mod()/s2d2.mod());
+          if (a_s1d1s2 < halfBeam || a_d1s2d2 < halfBeam) {
+            return true;
+          }
+        } else {
+          double a_s1d1d2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
+          if (a_s1d1d2 < 2*halfBeam || M_PI-a_s1d1d2 < 2*halfBeam) {
+            return true;
+          }
+        }
       }
+//      t2 = std::chrono::high_resolution_clock::now();
+//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+//      std::cout << "Section 2 " << time_span.count() << " seconds." << endl;
+
       // test interference signal d1-->d2, same as d2-->d1
-      Vector_t d1d2(d1,d2);
-      double a_s1d1d2 = acos(-1*s1d1.dot(d1d2)/s1d1.mod()/d1d2.mod());
-      double a_s2d2d1 = acos(s2d2.dot(d1d2)/s2d2.mod()/d1d2.mod());
-      if (a_s1d1d2 < halfBeam || a_s2d2d1 < halfBeam) {
-        return true;
+//      t1 = std::chrono::high_resolution_clock::now();
+      if (std::find(nodeNeighborList[d1i].begin(),nodeNeighborList[d1i].end(),d2i) != nodeNeighborList[d1i].end()){
+        Vector_t d1d2(d1,d2);
+        if (d1d2.mod() > 0) {
+          double a_s1d1d2 = acos(-1*s1d1.dot(d1d2)/s1d1.mod()/d1d2.mod());
+          double a_s2d2d1 = acos(s2d2.dot(d1d2)/s2d2.mod()/d1d2.mod());
+          if (a_s1d1d2 < halfBeam || a_s2d2d1 < halfBeam) {
+            return true;
+          }
+        } else {
+          double a_s1d1s2 = acos(d1s1.dot(d2s2)/d1s1.mod()/d2s2.mod());
+          if (a_s1d1s2 < 2*halfBeam || M_PI-a_s1d1s2 < 2*halfBeam) {
+            return true;
+          }
+        }
       }
+//      t2 = std::chrono::high_resolution_clock::now();
+//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+//      std::cout << "Section 3 " << time_span.count() << " seconds." << endl;
+
       // test interference signal s2-->s1, same as s1-->s2
-      Vector_t s1s2(s1,s2);
-      double a_s2s1d1 = acos(s1s2.dot(s1d1)/s1s2.mod()/s1d1.mod());
-      double a_d2s2s1 = acos(-1 * s2d2.dot(s1s2)/s2d2.mod()/s1s2.mod());
-      if (a_s2s1d1 < halfBeam || a_d2s2s1 < halfBeam) {
-        return true;
+//      t1 = std::chrono::high_resolution_clock::now();
+      if (std::find(nodeNeighborList[s1i].begin(),nodeNeighborList[s1i].end(),s2i) != nodeNeighborList[s1i].end()){
+        Vector_t s1s2(s1,s2);
+        if (s1s2.mod() > 0) {
+          double a_s2s1d1 = acos(s1s2.dot(s1d1)/s1s2.mod()/s1d1.mod());
+          double a_d2s2s1 = acos(-1 * s2d2.dot(s1s2)/s2d2.mod()/s1s2.mod());
+          if (a_s2s1d1 < halfBeam || a_d2s2s1 < halfBeam) {
+            return true;
+          }
+        } else {
+          double a_d1s1d2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
+          if (a_d1s1d2 < 2*halfBeam || M_PI-a_d1s1d2 < 2*halfBeam) {
+            return true;
+          }
+        }
       }
+//      t2 = std::chrono::high_resolution_clock::now();
+//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+//      std::cout << "Section 4 " << time_span.count() << " seconds." << endl;
     }
   }
   return false;

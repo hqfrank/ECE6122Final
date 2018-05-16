@@ -107,6 +107,8 @@ double calculateWeight(double dist);
 /* Check whether two paths interfere with each other. */
 bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
                                const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
+                               const std::vector<std::vector<int>>& relayNeighborList,
+                               const std::vector<Building_t>& buildings,
                                const std::vector<Point_t>& nodes, const SystemParameters& parameters);
 
 #endif //FINALPROJECT_3DMODELING_H
