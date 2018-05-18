@@ -784,6 +784,148 @@ std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>
   return pathMaxHop;
 }
 
+
+void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
+                                   const std::vector<std::vector<int>>& nodeNeighborList,
+                                   const int& relayNum, SystemParameters& parameters){
+  /*
+   * Get source and destination of this path searching process.
+   */
+  Point_t src = nodes[paths.getSrcId()];
+  Point_t dst = nodes[paths.getDstId()];
+  /* Initialize a path with source node id in it. */
+  std::vector<int> curPath;
+  curPath.push_back(paths.getSrcId());
+
+  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 0, 0, parameters);
+}
+
+
+void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std::vector<Point_t>& nodes,
+                       const std::vector<std::vector<int>>& nodeNeighborList, const int& relayNum,
+                       const int& preHopNum, const int& maxHopNum, const double& preHopCap,
+                       const double& curPathThroughput, SystemParameters& parameters) {
+  /* Get the source and destination node of the path. */
+  Point_t src = nodes[paths.getSrcId()];
+  Point_t dst = nodes[paths.getDstId()];
+
+  /* Update the current hop number. The searching process starts from hop 0 at src. */
+  int curHopNum = preHopNum + 1;
+  /* If current hop exceeds the maximum hop number allowed, the searching process ends. */
+  if (curHopNum > maxHopNum) {
+    return;
+  } else {
+    /* The current hop number is valid. */
+    assert(curHopNum == curPath.size());
+    /* Get candidate nodes of this hop, which are the neighboring nodes of the last node in curPath. */
+    int preNodeId = curPath.back();       // the last element of curPath is the index of the last selected node.
+    Point_t preNode = nodes[preNodeId];   // the previous node
+    std::vector<int> candidates = nodeNeighborList[preNodeId]; // The indices of all neighbors of the previous node
+    /*
+     * Iterates each candidate node for the next node to be inserted into the path.
+     */
+    for (auto candidateId : candidates) {
+      /* The candidate nodes must only be destination BS and relays. */
+      if (candidateId >= relayNum && candidateId != paths.getDstId()) continue;
+      /* A valid candidate should not be selected before in curPath. */
+      if (find(curPath.begin(), curPath.end(), candidateId) == curPath.end()) {
+        Point_t curNode = nodes[candidateId];
+        double linkLength_m = preNode.distanceTo(curNode); // The link to be selected is from preNode to curNode
+        double distToDst_m = curNode.distanceTo(dst);      // The distance between curNode and dst
+        /*
+         * Threshold 1: distance
+         */
+        /* If the current link length is above threshold, this candidate node will not be selected. */
+        if (linkLength_m > parameters.phyLinkDistMax_m) continue;
+        /* If the distance from the candidate node to destination is too far away, it will not be selected. */
+        if (distToDst_m > parameters.phyLinkDistMax_m * (maxHopNum - curHopNum)) continue;
+        /*
+         * Threshold 2: capacity
+         */
+        double curHopCap = calculateLinkCapacity_Gbps(linkLength_m, parameters);
+        /* The capacity threshold only takes effect when there are more than one hop in the path. */
+        double curLinkPairCap = preHopCap * curHopCap / (preHopCap + curHopCap);
+        if (curHopNum > 1) {
+          /* The current capacity of the link pair should be larger than the best path among all selected paths with more than 1 hops. */
+          if (curLinkPairCap < paths.getMultiHopMaxThroughput()) continue;
+        }
+        /*
+         * Threshold 3: interference
+         */
+        bool intraInterference = intraPathInterferenceAddLink(curPath, preNodeId, candidateId, nodes,
+                                                              nodeNeighborList, parameters);
+        if (intraInterference) continue;
+        /* The searching process only continues when there is no intra path interference. */
+        /*
+         * The currently selected node is a valid candidate node which should be added into an updated path.
+         */
+        std::vector<int> updatePath = curPath;
+        updatePath.push_back(candidateId);
+        double updatePathThroughput = curPathThroughput;
+        if (curLinkPairCap < curPathThroughput) {
+          updatePathThroughput = curLinkPairCap;
+        }
+
+        /* When currently selected node is the destination node. */
+        if (candidateId == paths.getDstId()) {
+          /* Add this new path to path list if the path is better than the best path in the list. */
+          if (curHopNum > 1 && updatePathThroughput > paths.getMultiHopMaxThroughput()) {
+            paths.pathList.push_back(updatePath);
+            paths.pathThroughput.push_back(updatePathThroughput);
+            paths.setMultiHopMaxThroughput(updatePathThroughput);
+            paths.setMultiHopMaxThroughputId(paths.pathList.size()-1);
+            cout << "A new path with " << curHopNum << " hops, and throughput " << updatePathThroughput
+                 << " Gbps has been found!" << endl;
+          }
+          if (curHopNum ==  1) {
+            paths.pathList.push_back(updatePath);
+            paths.pathThroughput.push_back(curHopCap);
+            paths.setSingleHopMaxThroughput(curHopCap);
+            paths.setSingleHopMaxThroughputId(paths.pathList.size()-1);
+            cout << "A new path with 1 hop and throughput " << curHopCap << " Gbps has been found!";
+          }
+        } else {
+          /* The currently selected node is not the destination node and the searching process continues with an updated path. */
+          searchNextHopNode(paths, updatePath, nodes, nodeNeighborList, relayNum, curHopNum, maxHopNum, curHopCap,
+                            updatePathThroughput, parameters);
+        }
+      }
+      /* If the currently viewed candidate node has been selected in curPath, this node should be discarded. */
+      // do nothing, the for loop continues.
+    }
+    // All candidates have been tested, the searching process ends.
+  }
+}
+
+bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId, const int& lRId,
+                                  const std::vector<Point_t>& nodes,
+                                  const std::vector<std::vector<int>>& nodeNeighborList,
+                                  const SystemParameters& parameters) {
+  auto pathHopNum = path.size() - 1; // the number of hops in the current path
+  /*
+   * As for intra path interference, the last hop in path does not need to be considerred, because that hop will never
+   * transmit together with the new link.
+   */
+  for (int i = 0; i < pathHopNum - 1; i++) {
+    /* From left to right. However, the case from right to left is the same. */
+    Point_t tempL = nodes[path[i]];
+    Point_t tempR = nodes[path[i+1]];
+    /* Determine whether the interference link from tempL to lR is blocked. */
+    if (std::find(nodeNeighborList[path[i]].begin(), nodeNeighborList[path[i]].end(), lRId) != nodeNeighborList[path[i]].end()){
+      Vector_t tempLR(tempL, tempR);
+      Vector_t intLR(tempL, nodes[lRId]);
+      Vector_t lLR(nodes[lLId], nodes[lRId]);
+      double angTempIntLR = acos(tempLR.dot(intLR)/tempLR.mod()/intLR.mod());
+      double angIntLLR = acos(intLR.dot(lLR)/intLR.mod()/lLR.mod());
+      if (angTempIntLR < parameters.antennaBeamWidth_phi/2 || angIntLLR < parameters.antennaBeamWidth_phi/2) {
+        /* There is interference */
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>>& nodeNeighborList,
                                               const std::vector<Point_t>& nodes, int maxHop, SystemParameters& parameters,
                                               int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput){

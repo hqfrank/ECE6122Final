@@ -123,6 +123,8 @@ int main() {
     relayNeighborList = exploreConnectivity(allRelays, buildingSet, dataRelayNeighbors);
   }
 
+
+
   /*
    * ==============================================================================================================
    * Select 100 pairs of source and destination base stations, the distance between which is in a certain category.
@@ -146,7 +148,7 @@ int main() {
     cerr << "Error!!!The file to store time stamp is not open!!" << endl;
     exit(errno);
   }
-  int extraHop = 2;
+  int extraHop = 0;
   std::vector<std::vector<int>> minHopPaths;
   std::vector<std::vector<int>> minHopPlusOnePaths;
   std::vector<std::vector<int>> minHopPlusTwoPaths;

@@ -20,14 +20,14 @@ public:
   const double densityRelayOnBuilding = 0.00005;
   const double areaXRange_m[2] {-100, 1700};
   const double areaYRange_m[2] {-1700, 100};
-  const double gridSize_m = 100.0;
+  const double gridSize_m = 200.0;
   const int maxNumRelaysInGrid = 1;
   const double maxLengthLOSLinkBSs_m = 100.0;
   const double phyLinkDistMax_m = 300;
   const double bsDistanceRange_m[2] {20,1000};
   const int numBSPairs = 100;
   const double antennaGain_dBi = 21.87;
-  const double antennaBeamWidth_phi = 5.0/180.0*M_PI;
+  const double antennaBeamWidth_phi = 15.0/180.0*M_PI;
   const double lambda_m = 0.005;   // 5*10^-3 m
   const double alpha = 16E-3;
   const double noise_dBm = 10.0 * log10(1.38064852E-11 * 290 * 2.16);

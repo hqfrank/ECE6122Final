@@ -19,6 +19,7 @@
 #include "Building_t.h"
 #include "SystemParameters.h"
 #include "Plane_t.h"
+#include "Path_t.h"
 
 class EstimatedHop {
 public:
@@ -93,6 +94,23 @@ std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>
 std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>>& nodeNeighborList,
                                               const std::vector<Point_t>& nodes, int maxHop, SystemParameters& parameters,
                                               int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput);
+
+/* Find the optimal path between a pair of source and destination. */
+void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
+                                   const std::vector<std::vector<int>>& nodeNeighborList,
+                                   const int& relayNum, SystemParameters& parameters);
+
+/* Search the next hop along a path. */
+void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std::vector<Point_t>& nodes,
+                       const std::vector<std::vector<int>>& nodeNeighborList, const int& relayNum,
+                       const int& preHopNum, const int& maxHopNum, const double& preHopCap,
+                       const double& curPathThroughput, SystemParameters& parameters);
+
+/* Detect the intra path interference when a new physical link is added on the right side of the path. */
+bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId, const int& lRId,
+                                  const std::vector<Point_t>& nodes,
+                                  const std::vector<std::vector<int>>& nodeNeighborList,
+                                  const SystemParameters& parameters);
 
 /* Dijkstra algorithm to find the shortest path. */
 std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, const std::vector<Point_t>& nodes,
