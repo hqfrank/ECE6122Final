@@ -797,7 +797,7 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
   std::vector<int> curPath;
   curPath.push_back(paths.getSrcId());
 
-  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 0, 0, parameters);
+  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters);
 }
 
 
@@ -882,7 +882,7 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
             paths.pathThroughput.push_back(curHopCap);
             paths.setSingleHopMaxThroughput(curHopCap);
             paths.setSingleHopMaxThroughputId(paths.pathList.size()-1);
-            cout << "A new path with 1 hop and throughput " << curHopCap << " Gbps has been found!";
+            cout << "A new path with 1 hop and throughput " << curHopCap << " Gbps has been found!" << endl;
           }
         } else {
           /* The currently selected node is not the destination node and the searching process continues with an updated path. */
@@ -901,12 +901,12 @@ bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId,
                                   const std::vector<Point_t>& nodes,
                                   const std::vector<std::vector<int>>& nodeNeighborList,
                                   const SystemParameters& parameters) {
-  auto pathHopNum = path.size() - 1; // the number of hops in the current path
+  int pathHopNum = path.size() - 1; // the number of hops in the current path
   /*
    * As for intra path interference, the last hop in path does not need to be considerred, because that hop will never
    * transmit together with the new link.
    */
-  for (int i = 0; i < pathHopNum - 1; i++) {
+  for (int i = 0; i < (pathHopNum - 1); i++) {
     /* From left to right. However, the case from right to left is the same. */
     Point_t tempL = nodes[path[i]];
     Point_t tempR = nodes[path[i+1]];
@@ -1139,99 +1139,77 @@ double calculateWeight(double dist){
 
 bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
                                const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
-                               const std::vector<std::vector<int>>& relayNeighborList,
+                               const std::vector<std::vector<int>>& nodeNeighborList,
                                const std::vector<Building_t>& buildings,
                                const std::vector<Point_t>& nodes, const SystemParameters& parameters) {
   int hop1 = path1.size() - 1;
   int hop2 = path2.size() - 1;
   double halfBeam = parameters.antennaBeamWidth_phi/2.0;
 
-  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-  std::vector<std::vector<int>> nodeNeighborList = addNodeToConnectivityList(relayNeighborList, sd1[0], nodes, buildings);
-  std::vector<Point_t> allNodes = nodes;
-  allNodes.push_back(sd1[0]);
-  nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd1[1], allNodes, buildings);
-  allNodes.push_back(sd1[1]);
-  if (sd2[0].sameAs(sd1[0])){
-    int curIdx = allNodes.size();
-    int refIdx = allNodes.size()-2;
-    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-    nodeNeighborList.push_back(curNeighbors);
-    for (auto idx: curNeighbors) {
-      nodeNeighborList[idx].push_back(curIdx);
-    }
-  } else if (sd2[0].sameAs(sd1[1])){
-    int curIdx = allNodes.size();
-    int refIdx = allNodes.size()-1;
-    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-    nodeNeighborList.push_back(curNeighbors);
-    for (auto idx: curNeighbors) {
-      nodeNeighborList[idx].push_back(curIdx);
-    }
-  } else {
-    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[0], allNodes, buildings);
-  }
-  allNodes.push_back(sd2[0]);
-  if (sd2[1].sameAs(sd1[0])){
-    int curIdx = allNodes.size();
-    int refIdx = allNodes.size()-3;
-    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-    nodeNeighborList.push_back(curNeighbors);
-    for (auto idx: curNeighbors) {
-      nodeNeighborList[idx].push_back(curIdx);
-    }
-  } else if (sd2[1].sameAs(sd1[1])) {
-    int curIdx = allNodes.size();
-    int refIdx = allNodes.size()-2;
-    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-    nodeNeighborList.push_back(curNeighbors);
-    for (auto idx: curNeighbors) {
-      nodeNeighborList[idx].push_back(curIdx);
-    }
-  } else {
-    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[1], allNodes, buildings);
-  }
-  allNodes.push_back(sd2[1]);
-  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-  std::cout << "It took " << time_span.count() << " seconds to add end points to neighbor list." << endl;
+//  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+//  std::vector<std::vector<int>> nodeNeighborList = addNodeToConnectivityList(relayNeighborList, sd1[0], nodes, buildings);
+//  std::vector<Point_t> allNodes = nodes;
+//  allNodes.push_back(sd1[0]);
+//  nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd1[1], allNodes, buildings);
+//  allNodes.push_back(sd1[1]);
+//  if (sd2[0].sameAs(sd1[0])){
+//    int curIdx = allNodes.size();
+//    int refIdx = allNodes.size()-2;
+//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+//    nodeNeighborList.push_back(curNeighbors);
+//    for (auto idx: curNeighbors) {
+//      nodeNeighborList[idx].push_back(curIdx);
+//    }
+//  } else if (sd2[0].sameAs(sd1[1])){
+//    int curIdx = allNodes.size();
+//    int refIdx = allNodes.size()-1;
+//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+//    nodeNeighborList.push_back(curNeighbors);
+//    for (auto idx: curNeighbors) {
+//      nodeNeighborList[idx].push_back(curIdx);
+//    }
+//  } else {
+//    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[0], allNodes, buildings);
+//  }
+//  allNodes.push_back(sd2[0]);
+//  if (sd2[1].sameAs(sd1[0])){
+//    int curIdx = allNodes.size();
+//    int refIdx = allNodes.size()-3;
+//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+//    nodeNeighborList.push_back(curNeighbors);
+//    for (auto idx: curNeighbors) {
+//      nodeNeighborList[idx].push_back(curIdx);
+//    }
+//  } else if (sd2[1].sameAs(sd1[1])) {
+//    int curIdx = allNodes.size();
+//    int refIdx = allNodes.size()-2;
+//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
+//    nodeNeighborList.push_back(curNeighbors);
+//    for (auto idx: curNeighbors) {
+//      nodeNeighborList[idx].push_back(curIdx);
+//    }
+//  } else {
+//    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[1], allNodes, buildings);
+//  }
+//  allNodes.push_back(sd2[1]);
+//  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+//  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+//  std::cout << "It took " << time_span.count() << " seconds to add end points to neighbor list." << endl;
 
   for (int i = 0; i < hop1; i++) {
-    Point_t s1,d1;
-    int s1i,d1i;
-    if (i == 0) {
-      s1 = sd1[0];
-      s1i = allNodes.size()-4;
-    } else {
-      s1 = nodes[path1[i]];
-      s1i = path1[i];
-    }
-    if (i == hop1-1) {
-      d1 = sd1[1];
-      d1i = allNodes.size()-3;
-    } else {
-      d1 = nodes[path1[i+1]];
-      d1i = path1[i+1];
-    }
+    Point_t s1 = nodes[path1[i]];
+    int s1i = path1[i];
+    Point_t d1 = nodes[path1[i+1]];
+    int d1i = path1[i+1];
+
     Vector_t s1d1(s1,d1);
     Vector_t d1s1(d1,s1);
     for (int j = 0; j < hop2; j++) {
-      Point_t s2,d2;
-      int s2i, d2i;
-      if (j == 0) {
-        s2 = sd2[0];
-        s2i = allNodes.size()-2;
-      } else {
-        s2 = nodes[path2[j]];
-        s2i = path2[j];
-      }
-      if (j == hop2-1) {
-        d2 = sd2[1];
-        d2i = allNodes.size()-1;
-      } else {
-        d2 = nodes[path2[j+1]];
-        d2i = path2[j+1];
-      }
+      Point_t s2 = nodes[path2[j]];
+      int s2i = path2[j];
+      Point_t d2 = nodes[path2[j+1]];
+      int d2i = path2[j+1];
+
       Vector_t s2d2(s2,d2);
       Vector_t d2s2(d2,s2);
 
@@ -1250,7 +1228,6 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
 //        if ()
 //      }
       // test interference signal s1-->d2, same as d2-->s1
-//      t1 = std::chrono::high_resolution_clock::now();
       if (std::find(nodeNeighborList[s1i].begin(),nodeNeighborList[s1i].end(),d2i) != nodeNeighborList[s1i].end()){
         Vector_t s1d2(s1,d2);
         if (s1d2.mod() > 0) {
@@ -1266,12 +1243,8 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           }
         }
       }
-//      t2 = std::chrono::high_resolution_clock::now();
-//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//      std::cout << "Section 1 " << time_span.count() << " seconds." << endl;
 
       // test interference signal s2-->d1, same as d1-->s2
-//      t1 = std::chrono::high_resolution_clock::now();
       if (std::find(nodeNeighborList[s2i].begin(),nodeNeighborList[s2i].end(),d1i) != nodeNeighborList[s2i].end()){
         Vector_t s2d1(s2,d1);
         if (s2d1.mod() > 0) {
@@ -1287,12 +1260,8 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           }
         }
       }
-//      t2 = std::chrono::high_resolution_clock::now();
-//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//      std::cout << "Section 2 " << time_span.count() << " seconds." << endl;
 
       // test interference signal d1-->d2, same as d2-->d1
-//      t1 = std::chrono::high_resolution_clock::now();
       if (std::find(nodeNeighborList[d1i].begin(),nodeNeighborList[d1i].end(),d2i) != nodeNeighborList[d1i].end()){
         Vector_t d1d2(d1,d2);
         if (d1d2.mod() > 0) {
@@ -1308,12 +1277,8 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           }
         }
       }
-//      t2 = std::chrono::high_resolution_clock::now();
-//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//      std::cout << "Section 3 " << time_span.count() << " seconds." << endl;
 
       // test interference signal s2-->s1, same as s1-->s2
-//      t1 = std::chrono::high_resolution_clock::now();
       if (std::find(nodeNeighborList[s1i].begin(),nodeNeighborList[s1i].end(),s2i) != nodeNeighborList[s1i].end()){
         Vector_t s1s2(s1,s2);
         if (s1s2.mod() > 0) {
@@ -1329,9 +1294,6 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           }
         }
       }
-//      t2 = std::chrono::high_resolution_clock::now();
-//      time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//      std::cout << "Section 4 " << time_span.count() << " seconds." << endl;
     }
   }
   return false;
