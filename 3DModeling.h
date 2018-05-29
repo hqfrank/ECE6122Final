@@ -20,6 +20,7 @@
 #include "SystemParameters.h"
 #include "Plane_t.h"
 #include "Path_t.h"
+#include "UtilityMethods.h"
 
 class EstimatedHop {
 public:
@@ -35,6 +36,11 @@ void printConnections(const std::vector<std::vector<int>>& nodeConnections);
 void primAlgorithm(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
                    const int mBSId, std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
                    std::vector<std::vector<Point_t>>& bsPairs);
+
+void primAlgorithmSetLinksToGateway(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
+                                    const int mBSId, const int numLinksToGateway,
+                                    std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+                                    std::vector<std::vector<Point_t>>& bsPairs);
 
 void evaluateEstimateHopNumbers(std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet, const EstimatedHop& eHops);
 

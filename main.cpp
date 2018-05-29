@@ -92,7 +92,8 @@ int main() {
   std::vector<std::vector<int>> nodeConnections(numBSs, std::vector<int>());
   std::vector<std::vector<int>> treeConnections;
   std::vector<std::vector<Point_t>> bsPairs;
-  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
+//  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
+  primAlgorithmSetLinksToGateway(eHopMap, bsSet, bsSet.size()/2, 8, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
 
   /*

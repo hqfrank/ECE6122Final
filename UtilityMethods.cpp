@@ -12,3 +12,4 @@ double GetMin (const std::vector<double>& vec) {
   }
   return min;
 }
+

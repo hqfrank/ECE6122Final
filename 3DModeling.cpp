@@ -92,10 +92,204 @@ void primAlgorithm(const std::vector<std::vector<double>>& eHopMaps, const std::
       }
     }
   }
-
-
 }
 
+
+/*
+ * ================================================================================================================
+ * Modified Prim algorithm to find the minimum spanning tree with a number of links connecting to the gateway node.
+ * ================================================================================================================
+ */
+void primAlgorithmSetLinksToGateway(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
+                                    const int mBSId, const int numLinksToGateway,
+                                    std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+                                    std::vector<std::vector<Point_t>>& bsPairs){
+    /* The number of links to gateway node (marco-base station) should be smaller than the total number of links. */
+    assert(numLinksToGateway < bsSet.size());
+    /* Initialization. */
+    double key[bsSet.size()];
+    int otherEnd[bsSet.size()];
+    for (int i = 0; i < bsSet.size(); i++) {
+        key[i] = 100000;
+        otherEnd[i] = -1;
+    }
+    key[mBSId] = 0;
+    otherEnd[mBSId] = mBSId;
+    std::vector<int> unselectedBSs;
+    for (int i = 0; i < bsSet.size(); i++){
+        unselectedBSs.push_back(i);
+    }
+    std::vector<int> selectedBSs;
+    /* Select numLinksToGateway base stations connecting to macro-base station first. */
+    int countLinksToGateway = -1;
+    std::vector<double> mBSNeighborDist = eHopMaps[mBSId];
+    std::vector<int> mBSNeighborDistSortedIndex = sort_indexes(mBSNeighborDist);
+    while(selectedBSs.size() < bsSet.size()){
+        // Find the node with the min key value in the unselected set.
+        double minKey = 100000;
+        int minKeyBSId = -1;
+        int posOfMinKeyBS = -1;
+        for (int i = 0; i < unselectedBSs.size(); i++) {
+            if (countLinksToGateway < numLinksToGateway && countLinksToGateway > -1) {
+                if (unselectedBSs[i] == mBSNeighborDistSortedIndex[countLinksToGateway+1]) {
+                    minKey = key[unselectedBSs.at(i)];
+                    minKeyBSId = unselectedBSs.at(i);
+                    posOfMinKeyBS = i;
+                }
+            } else {
+                if (key[unselectedBSs.at(i)] < minKey) {
+                    minKey = key[unselectedBSs.at(i)];
+                    minKeyBSId = unselectedBSs.at(i);
+                    posOfMinKeyBS = i;
+                }
+            }
+        }
+        if (minKeyBSId == -1) {
+            cerr << "Error! There is no valid key value in the unselected set." << endl;
+            exit(errno);
+        }
+        if (minKey > 0) {
+            connections.at(minKeyBSId).push_back(otherEnd[minKeyBSId]);
+            connections.at(otherEnd[minKeyBSId]).push_back(minKeyBSId);
+            cout << "BS " << minKeyBSId << "\t---\t" << "BS " << otherEnd[minKeyBSId] << endl;
+            // Add this connection to the tree
+            std::vector<int> curConnection;
+            curConnection.push_back(minKeyBSId);
+            curConnection.push_back(otherEnd[minKeyBSId]);
+            tree.push_back(curConnection);
+            // Add this connection to bs pairs
+            std::vector<Point_t> curBSPair;
+            curBSPair.push_back(bsSet.at(minKeyBSId));
+            curBSPair.push_back(bsSet.at(otherEnd[minKeyBSId]));
+            bsPairs.push_back(curBSPair);
+
+        }
+
+        // move the node with min key value from unselected set to selected set.
+        selectedBSs.push_back(minKeyBSId);
+        unselectedBSs.erase(unselectedBSs.begin()+posOfMinKeyBS);
+
+
+        std::vector<double> neighborDist = eHopMaps.at(minKeyBSId);
+
+        if (countLinksToGateway < numLinksToGateway) {
+            for (int i = 0; i < neighborDist.size(); i++) {
+                if (key[i] > neighborDist.at(i) && otherEnd[i] != mBSId) {
+                    key[i] = neighborDist.at(i);
+                    otherEnd[i] = minKeyBSId;
+                }
+            }
+        } else {
+            for (int i = 0; i < neighborDist.size(); i++) {
+                if (key[i] > neighborDist.at(i)) {
+                    key[i] = neighborDist.at(i);
+                    otherEnd[i] = minKeyBSId;
+                }
+            }
+        }
+
+
+        countLinksToGateway++;
+    }
+}
+
+///*
+// * ================================================================================================================
+// * Modified Prim algorithm to find the minimum spanning tree with limited degrees on all nodes except the gateway.
+// * ================================================================================================================
+// */
+//void primAlgorithmLimitedDegree(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
+//                                const int mBSId, const int numLinksToGateway, const int degreeLimit,
+//                                std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+//                                std::vector<std::vector<Point_t>>& bsPairs){
+//    /* The number of links to gateway node (marco-base station) should be smaller than the total number of links. */
+//    assert(numLinksToGateway < bsSet.size());
+//    /* Initialization. */
+//    double key[bsSet.size()];
+//    int otherEnd[bsSet.size()];
+//    for (int i = 0; i < bsSet.size(); i++) {
+//        key[i] = 100000;
+//        otherEnd[i] = -1;
+//    }
+//    key[mBSId] = 0;
+//    otherEnd[mBSId] = mBSId;
+//    std::vector<int> unselectedBSs;
+//    for (int i = 0; i < bsSet.size(); i++){
+//        unselectedBSs.push_back(i);
+//    }
+//    std::vector<int> selectedBSs;
+//    /* Select numLinksToGateway base stations connecting to macro-base station first. */
+//    int countLinksToGateway = -1;
+//    std::vector<double> mBSNeighborDist = eHopMaps[mBSId];
+//    std::vector<int> mBSNeighborDistSortedIndex = sort_indexes(mBSNeighborDist);
+//    while(selectedBSs.size() < bsSet.size()){
+//        // Find the node with the min key value in the unselected set.
+//        double minKey = 100000;
+//        int minKeyBSId = -1;
+//        int posOfMinKeyBS = -1;
+//        for (int i = 0; i < unselectedBSs.size(); i++) {
+//            if (countLinksToGateway < numLinksToGateway && countLinksToGateway > -1) {
+//                if (unselectedBSs[i] == mBSNeighborDistSortedIndex[countLinksToGateway+1]) {
+//                    minKey = key[unselectedBSs.at(i)];
+//                    minKeyBSId = unselectedBSs.at(i);
+//                    posOfMinKeyBS = i;
+//                }
+//            } else {
+//                if (key[unselectedBSs.at(i)] < minKey) {
+//                    minKey = key[unselectedBSs.at(i)];
+//                    minKeyBSId = unselectedBSs.at(i);
+//                    posOfMinKeyBS = i;
+//                }
+//            }
+//        }
+//        if (minKeyBSId == -1) {
+//            cerr << "Error! There is no valid key value in the unselected set." << endl;
+//            exit(errno);
+//        }
+//        if (minKey > 0) {
+//            connections.at(minKeyBSId).push_back(otherEnd[minKeyBSId]);
+//            connections.at(otherEnd[minKeyBSId]).push_back(minKeyBSId);
+//            cout << "BS " << minKeyBSId << "\t---\t" << "BS " << otherEnd[minKeyBSId] << endl;
+//            // Add this connection to the tree
+//            std::vector<int> curConnection;
+//            curConnection.push_back(minKeyBSId);
+//            curConnection.push_back(otherEnd[minKeyBSId]);
+//            tree.push_back(curConnection);
+//            // Add this connection to bs pairs
+//            std::vector<Point_t> curBSPair;
+//            curBSPair.push_back(bsSet.at(minKeyBSId));
+//            curBSPair.push_back(bsSet.at(otherEnd[minKeyBSId]));
+//            bsPairs.push_back(curBSPair);
+//
+//        }
+//
+//        // move the node with min key value from unselected set to selected set.
+//        selectedBSs.push_back(minKeyBSId);
+//        unselectedBSs.erase(unselectedBSs.begin()+posOfMinKeyBS);
+//
+//
+//        std::vector<double> neighborDist = eHopMaps.at(minKeyBSId);
+//
+//        if (countLinksToGateway < numLinksToGateway) {
+//            for (int i = 0; i < neighborDist.size(); i++) {
+//                if (key[i] > neighborDist.at(i) && otherEnd[i] != mBSId) {
+//                    key[i] = neighborDist.at(i);
+//                    otherEnd[i] = minKeyBSId;
+//                }
+//            }
+//        } else {
+//            for (int i = 0; i < neighborDist.size(); i++) {
+//                if (key[i] > neighborDist.at(i)) {
+//                    key[i] = neighborDist.at(i);
+//                    otherEnd[i] = minKeyBSId;
+//                }
+//            }
+//        }
+//
+//
+//        countLinksToGateway++;
+//    }
+//}
 
 /*
  * ==============================================================================================
