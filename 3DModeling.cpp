@@ -1428,11 +1428,19 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           double a_d1s1d2 = acos(s1d1.dot(s1d2)/s1d1.mod()/s1d2.mod());
           double a_s1d2s2 = acos(s1d2.dot(s2d2)/s1d2.mod()/s2d2.mod());
           if (a_d1s1d2 < halfBeam || a_s1d2s2 < halfBeam) {
-            return true;
+            if (a_d1s1d2 > 0.0001 && a_s1d2s2 > 0.0001) {
+              return true;
+            }
+            if (a_d1s1d2 <= 0.0001 && a_s1d2s2 < M_PI/6.0) {
+              return true;
+            }
+            if (a_s1d2s2 <= 0.0001 && a_d1s1d2 < M_PI/6.0) {
+              return true;
+            }
           }
         } else {
           double a_d1s1s2 = acos(s1d1.dot(d2s2)/s1d1.mod()/d2s2.mod());
-          if (a_d1s1s2 < 2*halfBeam || M_PI-a_d1s1s2 < 2*halfBeam) {
+          if (a_d1s1s2 < 2*halfBeam) {
             return true;
           }
         }
@@ -1445,11 +1453,19 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           double a_s1d1s2 = acos(s1d1.dot(s2d1)/s1d1.mod()/s2d1.mod());
           double a_d1s2d2 = acos(s2d1.dot(s2d2)/s2d1.mod()/s2d2.mod());
           if (a_s1d1s2 < halfBeam || a_d1s2d2 < halfBeam) {
-            return true;
+            if (a_s1d1s2 > 0.0001 && a_d1s2d2 > 0.0001) {
+              return true;
+            }
+            if (a_s1d1s2 <= 0.0001 && a_d1s2d2 < M_PI/6.0) {
+              return true;
+            }
+            if (a_d1s2d2 <= 0.0001 && a_s1d1s2 < M_PI/6.0) {
+              return true;
+            }
           }
         } else {
           double a_s1d1d2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
-          if (a_s1d1d2 < 2*halfBeam || M_PI-a_s1d1d2 < 2*halfBeam) {
+          if (a_s1d1d2 < 2*halfBeam) {
             return true;
           }
         }
@@ -1462,11 +1478,20 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           double a_s1d1d2 = acos(-1*s1d1.dot(d1d2)/s1d1.mod()/d1d2.mod());
           double a_s2d2d1 = acos(s2d2.dot(d1d2)/s2d2.mod()/d1d2.mod());
           if (a_s1d1d2 < halfBeam || a_s2d2d1 < halfBeam) {
-            return true;
+            if (a_s1d1d2 > 0.0001 && a_s2d2d1 > 0.0001) {
+              return true;
+            }
+            if (a_s1d1d2 <= 0.0001 && a_s2d2d1 < M_PI/6.0) {
+              return true;
+            }
+            if (a_s2d2d1 <= 0.0001 && a_s1d1d2 < M_PI/6.0) {
+              return true;
+            }
+//            return true;
           }
         } else {
           double a_s1d1s2 = acos(d1s1.dot(d2s2)/d1s1.mod()/d2s2.mod());
-          if (a_s1d1s2 < 2*halfBeam || M_PI-a_s1d1s2 < 2*halfBeam) {
+          if (a_s1d1s2 < 2*halfBeam) {
             return true;
           }
         }
@@ -1479,11 +1504,19 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
           double a_s2s1d1 = acos(s1s2.dot(s1d1)/s1s2.mod()/s1d1.mod());
           double a_d2s2s1 = acos(-1 * s2d2.dot(s1s2)/s2d2.mod()/s1s2.mod());
           if (a_s2s1d1 < halfBeam || a_d2s2s1 < halfBeam) {
-            return true;
+            if (a_s2s1d1 > 0.0001 && a_d2s2s1 > 0.0001) {
+              return true;
+            }
+            if (a_s2s1d1 <= 0.0001 && a_d2s2s1 < M_PI/6.0) {
+              return true;
+            }
+            if (a_d2s2s1 <= 0.0001 && a_s2s1d1 < M_PI/6.0) {
+              return true;
+            }
           }
         } else {
           double a_d1s1d2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
-          if (a_d1s1d2 < 2*halfBeam || M_PI-a_d1s1d2 < 2*halfBeam) {
+          if (a_d1s1d2 < 2*halfBeam) {
             return true;
           }
         }
