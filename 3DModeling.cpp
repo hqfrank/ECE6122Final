@@ -1339,6 +1339,7 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
   int hop1 = path1.size() - 1;
   int hop2 = path2.size() - 1;
   double halfBeam = parameters.antennaBeamWidth_phi/2.0;
+  double isoSpan = parameters.antennaIsoSpan_phi;
 
 //  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 //  std::vector<std::vector<int>> nodeNeighborList = addNodeToConnectivityList(relayNeighborList, sd1[0], nodes, buildings);
@@ -1431,10 +1432,10 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
             if (a_d1s1d2 > 0.0001 && a_s1d2s2 > 0.0001) {
               return true;
             }
-            if (a_d1s1d2 <= 0.0001 && a_s1d2s2 < M_PI/6.0) {
+            if (a_d1s1d2 <= 0.0001 && a_s1d2s2 < isoSpan) {
               return true;
             }
-            if (a_s1d2s2 <= 0.0001 && a_d1s1d2 < M_PI/6.0) {
+            if (a_s1d2s2 <= 0.0001 && a_d1s1d2 < isoSpan) {
               return true;
             }
           }
@@ -1456,10 +1457,10 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
             if (a_s1d1s2 > 0.0001 && a_d1s2d2 > 0.0001) {
               return true;
             }
-            if (a_s1d1s2 <= 0.0001 && a_d1s2d2 < M_PI/6.0) {
+            if (a_s1d1s2 <= 0.0001 && a_d1s2d2 < isoSpan) {
               return true;
             }
-            if (a_d1s2d2 <= 0.0001 && a_s1d1s2 < M_PI/6.0) {
+            if (a_d1s2d2 <= 0.0001 && a_s1d1s2 < isoSpan) {
               return true;
             }
           }
@@ -1481,10 +1482,10 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
             if (a_s1d1d2 > 0.0001 && a_s2d2d1 > 0.0001) {
               return true;
             }
-            if (a_s1d1d2 <= 0.0001 && a_s2d2d1 < M_PI/6.0) {
+            if (a_s1d1d2 <= 0.0001 && a_s2d2d1 < isoSpan) {
               return true;
             }
-            if (a_s2d2d1 <= 0.0001 && a_s1d1d2 < M_PI/6.0) {
+            if (a_s2d2d1 <= 0.0001 && a_s1d1d2 < isoSpan) {
               return true;
             }
 //            return true;
@@ -1507,10 +1508,10 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
             if (a_s2s1d1 > 0.0001 && a_d2s2s1 > 0.0001) {
               return true;
             }
-            if (a_s2s1d1 <= 0.0001 && a_d2s2s1 < M_PI/6.0) {
+            if (a_s2s1d1 <= 0.0001 && a_d2s2s1 < isoSpan) {
               return true;
             }
-            if (a_d2s2s1 <= 0.0001 && a_s2s1d1 < M_PI/6.0) {
+            if (a_d2s2s1 <= 0.0001 && a_s2s1d1 < isoSpan) {
               return true;
             }
           }

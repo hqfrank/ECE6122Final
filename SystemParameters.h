@@ -27,7 +27,8 @@ public:
   const double bsDistanceRange_m[2] {20,1000};
   const int numBSPairs = 100;
   const double antennaGain_dBi = 21.87;
-  const double antennaBeamWidth_phi = 15.0/180.0*M_PI;
+  const double antennaBeamWidth_phi = 7.0/180.0*M_PI;
+  const double antennaIsoSpan_phi = M_PI/6.0;
   const double lambda_m = 0.005;   // 5*10^-3 m
   const double alpha = 16E-3;
   const double noise_dBm = 10.0 * log10(1.38064852E-11 * 290 * 2.16);
