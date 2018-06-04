@@ -981,7 +981,8 @@ std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>
 
 void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
                                    const std::vector<std::vector<int>>& nodeNeighborList,
-                                   const int& relayNum, SystemParameters& parameters){
+                                   const int& relayNum, SystemParameters& parameters,
+                                   const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs){
   /*
    * Get source and destination of this path searching process.
    */
@@ -991,14 +992,15 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
   std::vector<int> curPath;
   curPath.push_back(paths.getSrcId());
 
-  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters);
+  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs);
 }
 
 
 void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std::vector<Point_t>& nodes,
                        const std::vector<std::vector<int>>& nodeNeighborList, const int& relayNum,
                        const int& preHopNum, const int& maxHopNum, const double& preHopCap,
-                       const double& curPathThroughput, SystemParameters& parameters) {
+                       const double& curPathThroughput, SystemParameters& parameters,
+                       const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs) {
   /* Get the source and destination node of the path. */
   Point_t src = nodes[paths.getSrcId()];
   Point_t dst = nodes[paths.getDstId()];
@@ -1021,6 +1023,22 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
     for (auto candidateId : candidates) {
       /* The candidate nodes must only be destination BS and relays. */
       if (candidateId >= relayNum && candidateId != paths.getDstId()) continue;
+      /* First hop control */
+      if (parameters.firstHopControl && curHopNum == 1) {
+        Point_t curNode = nodes[candidateId];
+        Vector_t firstHop(preNode, curNode);
+        if (phyLinksAtBSs.find(preNodeId) != phyLinksAtBSs.end()) {
+          bool isoOK = true;
+          for (auto phyLink : phyLinksAtBSs.at(preNodeId)) {
+            double angle = acos(firstHop.dot(phyLink)/firstHop.mod()/phyLink.mod());
+            if (angle < parameters.antennaIsoSpan_phi) {
+              isoOK = false;
+              break;
+            }
+          }
+          if (!isoOK) continue;
+        }
+      }
       /* A valid candidate should not be selected before in curPath. */
       if (find(curPath.begin(), curPath.end(), candidateId) == curPath.end()) {
         Point_t curNode = nodes[candidateId];
@@ -1062,6 +1080,21 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
 
         /* When currently selected node is the destination node. */
         if (candidateId == paths.getDstId()) {
+          if (parameters.firstHopControl) {
+            Point_t curNode = nodes[candidateId];
+            Vector_t firstHop(curNode, preNode);
+            if (phyLinksAtBSs.find(candidateId) != phyLinksAtBSs.end()) {
+              bool isoOK = true;
+              for (auto phyLink : phyLinksAtBSs.at(candidateId)) {
+                double angle = acos(firstHop.dot(phyLink)/firstHop.mod()/phyLink.mod());
+                if (angle < parameters.antennaIsoSpan_phi) {
+                  isoOK = false;
+                  break;
+                }
+              }
+              if (!isoOK) continue;
+            }
+          }
           /* Add this new path to path list if the path is better than the best path in the list. */
           if (curHopNum > 1 && updatePathThroughput > paths.getMultiHopMaxThroughput()) {
             paths.pathList.push_back(updatePath);
@@ -1081,7 +1114,7 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
         } else {
           /* The currently selected node is not the destination node and the searching process continues with an updated path. */
           searchNextHopNode(paths, updatePath, nodes, nodeNeighborList, relayNum, curHopNum, maxHopNum, curHopCap,
-                            updatePathThroughput, parameters);
+                            updatePathThroughput, parameters, phyLinksAtBSs);
         }
       }
       /* If the currently viewed candidate node has been selected in curPath, this node should be discarded. */
@@ -1341,56 +1374,6 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
   double halfBeam = parameters.antennaBeamWidth_phi/2.0;
   double isoSpan = parameters.antennaIsoSpan_phi;
 
-//  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-//  std::vector<std::vector<int>> nodeNeighborList = addNodeToConnectivityList(relayNeighborList, sd1[0], nodes, buildings);
-//  std::vector<Point_t> allNodes = nodes;
-//  allNodes.push_back(sd1[0]);
-//  nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd1[1], allNodes, buildings);
-//  allNodes.push_back(sd1[1]);
-//  if (sd2[0].sameAs(sd1[0])){
-//    int curIdx = allNodes.size();
-//    int refIdx = allNodes.size()-2;
-//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-//    nodeNeighborList.push_back(curNeighbors);
-//    for (auto idx: curNeighbors) {
-//      nodeNeighborList[idx].push_back(curIdx);
-//    }
-//  } else if (sd2[0].sameAs(sd1[1])){
-//    int curIdx = allNodes.size();
-//    int refIdx = allNodes.size()-1;
-//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-//    nodeNeighborList.push_back(curNeighbors);
-//    for (auto idx: curNeighbors) {
-//      nodeNeighborList[idx].push_back(curIdx);
-//    }
-//  } else {
-//    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[0], allNodes, buildings);
-//  }
-//  allNodes.push_back(sd2[0]);
-//  if (sd2[1].sameAs(sd1[0])){
-//    int curIdx = allNodes.size();
-//    int refIdx = allNodes.size()-3;
-//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-//    nodeNeighborList.push_back(curNeighbors);
-//    for (auto idx: curNeighbors) {
-//      nodeNeighborList[idx].push_back(curIdx);
-//    }
-//  } else if (sd2[1].sameAs(sd1[1])) {
-//    int curIdx = allNodes.size();
-//    int refIdx = allNodes.size()-2;
-//    std::vector<int> curNeighbors = nodeNeighborList[refIdx];
-//    nodeNeighborList.push_back(curNeighbors);
-//    for (auto idx: curNeighbors) {
-//      nodeNeighborList[idx].push_back(curIdx);
-//    }
-//  } else {
-//    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, sd2[1], allNodes, buildings);
-//  }
-//  allNodes.push_back(sd2[1]);
-//  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-//  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//  std::cout << "It took " << time_span.count() << " seconds to add end points to neighbor list." << endl;
-
   for (int i = 0; i < hop1; i++) {
     Point_t s1 = nodes[path1[i]];
     int s1i = path1[i];
@@ -1408,20 +1391,6 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
       Vector_t s2d2(s2,d2);
       Vector_t d2s2(d2,s2);
 
-//      /*
-//       * If the two physical links share any of the end point:
-//       * s1 = s2, s1 = d2, d1 = s2, d1 = d2
-//       */
-//      if (s1.sameAs(s2)) {
-//        if (d1.sameAs(d2)) return true; // two physical links are the same, must interfere with each other.
-//        // d1 != d2, and as s1!=d1, s2!=d2 ==> s1!=d2, s2!=d1
-//
-//
-//      }
-//
-//      if (s1.sameAs(s2) || s1.sameAs(d2) || d1.sameAs(s2) || d1.sameAs(d2)) {
-//        if ()
-//      }
       // test interference signal s1-->d2, same as d2-->s1
       if (std::find(nodeNeighborList[s1i].begin(),nodeNeighborList[s1i].end(),d2i) != nodeNeighborList[s1i].end()){
         Vector_t s1d2(s1,d2);
@@ -1525,4 +1494,54 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
     }
   }
   return false;
+}
+
+void recordPhysicalLinksInAPath(std::map<int, Vector_t>& allPhysicalLinks, const std::vector<int>& path,
+                                const std::vector<Point_t>& nodes, const SystemParameters& parameters){
+  int numHops = path.size()-1;
+  /* Iterate each hop in the path. */
+  for (int i = 0; i < numHops; i++) {
+    int srcId = path[i];
+    int dstId = path[i+1];
+    int phyLinkId = srcId * parameters.maxNumPhyLinks + dstId;
+    Point_t src = nodes[srcId];
+    Point_t dst = nodes[dstId];
+    Vector_t sd(src, dst);
+    if (allPhysicalLinks.find(phyLinkId) == allPhysicalLinks.end()) {
+      /* The physical link is a new one. */
+      allPhysicalLinks.insert(std::pair<int, Vector_t>(phyLinkId, sd));
+    } else {
+      std::cout << "Warning! A duplicated physical link has been selected!" << std::endl;
+    }
+  }
+}
+
+void collectPhyLinksAtBSs(std::map<int, std::vector<Vector_t>>& phyLinksAtBSs, const std::vector<int>& path,
+                          const std::vector<Point_t>& nodes) {
+  int numHops = path.size() - 1;
+  int srcId = path.front();
+  int secNodeId = path[1];
+  Point_t src = nodes[srcId];
+  Point_t secNode = nodes[secNodeId];
+  Vector_t firstHop(src, secNode);
+  if (phyLinksAtBSs.find(srcId) == phyLinksAtBSs.end()) {
+    std::vector<Vector_t> curBSLinks;
+    curBSLinks.push_back(firstHop);
+    phyLinksAtBSs.insert(std::pair<int, std::vector<Vector_t>>(srcId, curBSLinks));
+  } else {
+    phyLinksAtBSs.at(srcId).push_back(firstHop);
+  }
+
+  int dstId = path.back();
+  int secLastId = path[numHops - 1];
+  Point_t dst = nodes[dstId];
+  Point_t secLast = nodes[secLastId];
+  Vector_t lastHop(dst, secLast);
+  if (phyLinksAtBSs.find(dstId) == phyLinksAtBSs.end()) {
+    std::vector<Vector_t> curBSLinks;
+    curBSLinks.push_back(lastHop);
+    phyLinksAtBSs.insert(std::pair<int, std::vector<Vector_t>>(dstId, curBSLinks));
+  } else {
+    phyLinksAtBSs.at(dstId).push_back(lastHop);
+  }
 }

@@ -13,6 +13,7 @@
 #include <memory>
 #include <chrono>
 #include <algorithm>
+#include <map>
 #include "Point_t.h"
 #include "Vector_t.h"
 #include "Line_t.h"
@@ -104,13 +105,15 @@ std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>
 /* Find the optimal path between a pair of source and destination. */
 void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
                                    const std::vector<std::vector<int>>& nodeNeighborList,
-                                   const int& relayNum, SystemParameters& parameters);
+                                   const int& relayNum, SystemParameters& parameters,
+                                   const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs);
 
 /* Search the next hop along a path. */
 void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std::vector<Point_t>& nodes,
                        const std::vector<std::vector<int>>& nodeNeighborList, const int& relayNum,
                        const int& preHopNum, const int& maxHopNum, const double& preHopCap,
-                       const double& curPathThroughput, SystemParameters& parameters);
+                       const double& curPathThroughput, SystemParameters& parameters,
+                       const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs);
 
 /* Detect the intra path interference when a new physical link is added on the right side of the path. */
 bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId, const int& lRId,
@@ -134,5 +137,11 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
                                const std::vector<std::vector<int>>& nodeNeighborList,
                                const std::vector<Building_t>& buildings,
                                const std::vector<Point_t>& nodes, const SystemParameters& parameters);
+
+void recordPhysicalLinksInAPath(std::map<int, Vector_t>& allPhysicalLinks, const std::vector<int>& path,
+                                const std::vector<Point_t>& nodes, const SystemParameters& parameters);
+
+void collectPhyLinksAtBSs(std::map<int, std::vector<Vector_t>>& phyLinksAtBSs, const std::vector<int>& path,
+                          const std::vector<Point_t>& nodes);
 
 #endif //FINALPROJECT_3DMODELING_H

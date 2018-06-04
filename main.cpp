@@ -142,7 +142,14 @@ int main() {
    * =========================================================================
    */
   int numRelays = allRelays.size();
-  int extraHopNum = 2;
+  int extraHopNum = 0;
+  /*
+   * Assume there are at most 9999 nodes in the network, thus, source node id * 10000 + destination node id
+   * can index the source and destination pair of a physical link.
+   */
+  std::map<int, Vector_t> selectedPhysicalLinks;
+  std::map<int, std::vector<Vector_t>> phyLinksAtBSs;
+  std::map<int, Vector_t>::iterator pLinkIter;
   std::vector<std::vector<int>> allPaths;
   for (int i = 0; i < treeConnections.size(); i++) {
     cout << "\n=========================================================\n";
@@ -156,7 +163,7 @@ int main() {
     int caseCount = 0;
     for (int j = 1; caseCount <= extraHopNum; j++) {
       Path_t pathList(srcId, dstId, j);
-      searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams);
+      searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams, phyLinksAtBSs);
       if (pathList.pathList.size() > 0) {
         caseCount++;
 //        if (pathList.getSingleHopMaxThroughputId() >= 0) {
@@ -165,14 +172,22 @@ int main() {
 //        cout << "The best multihop path is with " << pathList.pathList[pathList.getMultiHopMaxThroughputId()].size()-1
 //                                                  << " hops and throughput " << pathList.getMultiHopMaxThroughput()
 //                                                                             << " Gbps." << endl;
+        std::vector<int> tempPath;
         if (j == 1) {
+          /* If the set of paths found are with single hop, the single hop path must be recorded. */
           assert(pathList.getSingleHopMaxThroughputId() >= 0);
-          allPaths.push_back(pathList.pathList[pathList.getSingleHopMaxThroughputId()]);
+          tempPath = pathList.pathList[pathList.getSingleHopMaxThroughputId()];
         } else if (pathList.getMultiHopMaxThroughputId() >= 0){
-          allPaths.push_back(pathList.pathList[pathList.getMultiHopMaxThroughputId()]);
+          /* If the set of paths are supposed to have more than 1 hops, and the multi-hop paths are available. */
+          tempPath = pathList.pathList[pathList.getMultiHopMaxThroughputId()];
         } else {
-          allPaths.push_back(pathList.pathList[pathList.getSingleHopMaxThroughputId()]);
+          /* Though the paths found are supposed to have more than 1 hops, but only single hop path is found. */
+          tempPath = pathList.pathList[pathList.getSingleHopMaxThroughputId()];
         }
+        /* Add the newly found path into the allPaths vector. */
+        allPaths.push_back(tempPath);
+        recordPhysicalLinksInAPath(selectedPhysicalLinks, tempPath, allNodes, sysParams);
+        collectPhyLinksAtBSs(phyLinksAtBSs, tempPath, allNodes);
       }
       cout << "There are " << pathList.pathList.size() << " paths with no more than " << j << " hops being found.\n";
       cout << "---------------------------------------------------------" << endl;
@@ -182,19 +197,27 @@ int main() {
   }
 
   cout << allPaths.size() << endl;
-  assert(allPaths.size() == treeConnections.size()*(extraHopNum+1));
+  cout << selectedPhysicalLinks.size() << endl;
+  cout << phyLinksAtBSs.size() << endl;
+  assert(allPaths.size() == treeConnections.size()*(extraHopNum + 1));
+  /* Count the total number of relays used. */
+  int numRelaysNeeded = 0;
+  for (int i = 0; i < treeConnections.size(); i++) {
+    numRelaysNeeded += (allPaths[i * (extraHopNum + 1)].size() - 2);
+  }
+  cout << "In total, " << numRelaysNeeded << " relays need to be deployed." << endl;
 
   std::map<int, std::vector<int>> nodeCheckMinHop;
   std::map<int, std::vector<int>>::iterator it;
   for (int i = 0; i < treeConnections.size(); i++) {
-    for (int j = 1; j < allPaths[i*3].size() - 1; ++j){
-      it = nodeCheckMinHop.find(allPaths[i*3][j]);
+    for (int j = 1; j < allPaths[i*(extraHopNum + 1)].size() - 1; ++j){
+      it = nodeCheckMinHop.find(allPaths[i*(extraHopNum + 1)][j]);
       if (it != nodeCheckMinHop.end()){
-        nodeCheckMinHop.at(allPaths[i*3][j]).push_back(i);
+        nodeCheckMinHop.at(allPaths[i*(extraHopNum + 1)][j]).push_back(i);
       } else {
         std::vector<int> newPair;
         newPair.push_back(i);
-        nodeCheckMinHop.insert(std::pair<int, std::vector<int>>(allPaths[i*3][j], newPair));
+        nodeCheckMinHop.insert(std::pair<int, std::vector<int>>(allPaths[i*(extraHopNum + 1)][j], newPair));
       }
     }
   }
@@ -207,11 +230,11 @@ int main() {
       int numPath = it->second.size();
       std::vector<int> pathIDs = it->second;
       for (int j = 0; j < numPath-1; j++){
-        std::vector<int> path1 = allPaths[pathIDs[j]*3];
+        std::vector<int> path1 = allPaths[pathIDs[j]*(extraHopNum + 1)];
         Point_t src1 = bsPairs[pathIDs[j]][0];
         Point_t dst1 = bsPairs[pathIDs[j]][1];
         for (int k = j+1; k < numPath; k++) {
-          std::vector<int> path2 = allPaths[pathIDs[k]*3];
+          std::vector<int> path2 = allPaths[pathIDs[k]*(extraHopNum + 1)];
           Point_t src2 = bsPairs[pathIDs[k]][0];
           Point_t dst2 = bsPairs[pathIDs[k]][1];
           std::vector<double> distance;
@@ -233,10 +256,10 @@ int main() {
   // Check interference cases:
   int countIntPairs = 0;
   for (int i = 0; i < treeConnections.size()-1; ++i) {
-    std::vector<int> path1 = allPaths[i*3];
+    std::vector<int> path1 = allPaths[i*(extraHopNum + 1)];
     std::vector<Point_t> sd1 = bsPairs[i];
     for (int j = i+1; j < treeConnections.size(); ++j) {
-      std::vector<int> path2 = allPaths[j*3];
+      std::vector<int> path2 = allPaths[j*(extraHopNum + 1)];
       std::vector<Point_t> sd2 = bsPairs[j];
       bool intTest = checkTwoPathsInterference(path1, path2, sd1, sd2, nodeNeighborList, buildingSet, allNodes, sysParams);
       if(intTest) {
