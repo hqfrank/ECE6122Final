@@ -55,6 +55,7 @@ int main() {
   std::string dataRelayNeighbors = "../Data/Relay_Neighbors/Data_RelayNeighbors_"+ std::to_string(sysParams.randomSeed)
                                    + "_" + std::to_string(sysParams.maxNumRelaysInGrid)
                                    + "_" + std::to_string(sysParams.phyLinkDistMax_m)
+                                   + "_" + std::to_string(sysParams.densityRelayOnBuilding)
                                    + "_" + sysParams.relayType + ".txt";
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
@@ -93,7 +94,7 @@ int main() {
   std::vector<std::vector<int>> treeConnections;
   std::vector<std::vector<Point_t>> bsPairs;
 //  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
-  primAlgorithmSetLinksToGateway(eHopMap, bsSet, bsSet.size()/2, 8, nodeConnections, treeConnections, bsPairs);
+  primAlgorithmSetLinksToGateway(eHopMap, bsSet, bsSet.size()/2, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
 
   /*
@@ -163,7 +164,7 @@ int main() {
     int caseCount = 0;
     for (int j = 1; caseCount <= extraHopNum; j++) {
       Path_t pathList(srcId, dstId, j);
-      searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams, phyLinksAtBSs);
+      searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams, phyLinksAtBSs, selectedPhysicalLinks);
       if (pathList.pathList.size() > 0) {
         caseCount++;
 //        if (pathList.getSingleHopMaxThroughputId() >= 0) {

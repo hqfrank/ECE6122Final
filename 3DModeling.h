@@ -106,14 +106,16 @@ std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>
 void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
                                    const std::vector<std::vector<int>>& nodeNeighborList,
                                    const int& relayNum, SystemParameters& parameters,
-                                   const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs);
+                                   const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
+                                   const std::map<int, Vector_t>& phyLinks);
 
 /* Search the next hop along a path. */
 void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std::vector<Point_t>& nodes,
                        const std::vector<std::vector<int>>& nodeNeighborList, const int& relayNum,
                        const int& preHopNum, const int& maxHopNum, const double& preHopCap,
                        const double& curPathThroughput, SystemParameters& parameters,
-                       const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs);
+                       const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
+                       const std::map<int, Vector_t>& phyLinks);
 
 /* Detect the intra path interference when a new physical link is added on the right side of the path. */
 bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId, const int& lRId,

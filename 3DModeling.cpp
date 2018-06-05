@@ -982,7 +982,8 @@ std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>
 void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
                                    const std::vector<std::vector<int>>& nodeNeighborList,
                                    const int& relayNum, SystemParameters& parameters,
-                                   const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs){
+                                   const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
+                                   const std::map<int, Vector_t>& phyLinks){
   /*
    * Get source and destination of this path searching process.
    */
@@ -992,7 +993,7 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
   std::vector<int> curPath;
   curPath.push_back(paths.getSrcId());
 
-  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs);
+  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs, phyLinks);
 }
 
 
@@ -1000,7 +1001,8 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
                        const std::vector<std::vector<int>>& nodeNeighborList, const int& relayNum,
                        const int& preHopNum, const int& maxHopNum, const double& preHopCap,
                        const double& curPathThroughput, SystemParameters& parameters,
-                       const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs) {
+                       const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
+                       const std::map<int, Vector_t>& phyLinks) {
   /* Get the source and destination node of the path. */
   Point_t src = nodes[paths.getSrcId()];
   Point_t dst = nodes[paths.getDstId()];
@@ -1023,6 +1025,11 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
     for (auto candidateId : candidates) {
       /* The candidate nodes must only be destination BS and relays. */
       if (candidateId >= relayNum && candidateId != paths.getDstId()) continue;
+      /* Relay sharing control */
+      if (parameters.relaySharingControl) {
+        int tempPhyLinkId =  preNodeId * parameters.maxNumPhyLinks + candidateId;
+        if (phyLinks.find(tempPhyLinkId) != phyLinks.end()) continue;
+      }
       /* First hop control */
       if (parameters.firstHopControl && curHopNum == 1) {
         Point_t curNode = nodes[candidateId];
@@ -1114,7 +1121,7 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
         } else {
           /* The currently selected node is not the destination node and the searching process continues with an updated path. */
           searchNextHopNode(paths, updatePath, nodes, nodeNeighborList, relayNum, curHopNum, maxHopNum, curHopCap,
-                            updatePathThroughput, parameters, phyLinksAtBSs);
+                            updatePathThroughput, parameters, phyLinksAtBSs, phyLinks);
         }
       }
       /* If the currently viewed candidate node has been selected in curPath, this node should be discarded. */
@@ -1510,6 +1517,15 @@ void recordPhysicalLinksInAPath(std::map<int, Vector_t>& allPhysicalLinks, const
     if (allPhysicalLinks.find(phyLinkId) == allPhysicalLinks.end()) {
       /* The physical link is a new one. */
       allPhysicalLinks.insert(std::pair<int, Vector_t>(phyLinkId, sd));
+    } else {
+      std::cout << "Warning! A duplicated physical link has been selected!" << std::endl;
+    }
+
+    phyLinkId = dstId * parameters.maxNumPhyLinks + srcId;
+    Vector_t ds(src, dst);
+    if (allPhysicalLinks.find(phyLinkId) == allPhysicalLinks.end()) {
+      /* The physical link is a new one. */
+      allPhysicalLinks.insert(std::pair<int, Vector_t>(phyLinkId, ds));
     } else {
       std::cout << "Warning! A duplicated physical link has been selected!" << std::endl;
     }
