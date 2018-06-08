@@ -146,4 +146,12 @@ void recordPhysicalLinksInAPath(std::map<int, Vector_t>& allPhysicalLinks, const
 void collectPhyLinksAtBSs(std::map<int, std::vector<Vector_t>>& phyLinksAtBSs, const std::vector<int>& path,
                           const std::vector<Point_t>& nodes);
 
+int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& nodes,
+                                 std::vector<int>& maxSDNodeList,
+                                 const std::vector<std::vector<int>>& nodeNeighborList,
+                                 const SystemParameters& parameters);
+
+void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std::vector<int>& R, std::vector<int> P,
+                          std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques);
+
 #endif //FINALPROJECT_3DMODELING_H

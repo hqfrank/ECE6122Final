@@ -1566,24 +1566,93 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
                                  std::vector<int>& maxSDNodeList,
                                  const std::vector<std::vector<int>>& nodeNeighborList,
                                  const SystemParameters& parameters) {
-    int spaceDiversity = 0;
-    double isoAngle = parameters.antennaIsoSpan_phi;
-    std::vector<int> neighbors = nodeNeighborList[nodeId];  // the intended node's neighbors (indices)
-    for (int i = 0; i< neighbors.size()-1; i++) {
-        Point_t p1 = nodes[neighbors[i]];
-        Vector_t v1(nodes[nodeId], p1);
-        int countValidPair = 0;
-        std::vector<int> sdNodeList;
-        for (int j = i + 1; j < neighbors.size(); j++) {
-            Point_t p2 = nodes[neighbors[j]];
-            Vector_t v2(nodes[nodeId], p2);
-            double a12 = v1.dot(v2)/v1.mod()/v2.mod();
-            if (a12 >= isoAngle) {
-                countValidPair++;
-                sdNodeList.push_back(j);
-            }
-        }
+  int spaceDiversity = 0;
+  double isoAngle = parameters.antennaIsoSpan_phi;
+  std::vector<int> neighbors = nodeNeighborList[nodeId];  // the intended node's neighbors (indices)
+  std::vector<std::vector<int>> graphIsoNeighbors(neighbors.size(), std::vector<int>());
+  for (int i = 0; i< neighbors.size()-1; i++) {
+    Point_t p1 = nodes[neighbors[i]];
+    Vector_t v1(nodes[nodeId], p1);
+    for (int j = i + 1; j < neighbors.size(); j++) {
+      Point_t p2 = nodes[neighbors[j]];
+      Vector_t v2(nodes[nodeId], p2);
+      double a12 = v1.dot(v2)/v1.mod()/v2.mod();
+      if (a12 >= isoAngle) {
+        graphIsoNeighbors[i].push_back(j);
+        graphIsoNeighbors[j].push_back(i);
+      }
     }
+  }
+  std::vector<int> P;
+  for (int i = 0; i < neighbors.size(); ++i) {
+    P.push_back(i);
+  }
+  std::vector<int> R;
+  std::vector<int> X;
+  std::vector<std::vector<int>> allMaximalCliques;
+  BronKerboschPivoting(graphIsoNeighbors, R, P, X, allMaximalCliques);
+  for (auto clique : allMaximalCliques) {
+    if (clique.size() > spaceDiversity) {
+      spaceDiversity = clique.size();
+    }
+  }
+  return spaceDiversity;
+}
 
-    return spaceDiversity;
+/* Bron-Kerbosch algorithm with pivoting to list all maximal cliques in an arbitrary graph. */
+void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std::vector<int>& R, std::vector<int> P,
+                          std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques){
+  /* if P and X are both empty:  */
+  if (P.empty() && X.empty()) {
+    /* report R as a maximal clique */
+    allMaximalCliques.push_back(R);
+  } else {
+    /* choose a pivot vertex u in P ⋃ X */
+    std::vector<int> PUX = P;
+    PUX.insert(PUX.end(), X.begin(), X.end());
+    int maxNumNeighborsInP = -1;
+    int uSelected = -1;
+    std::vector<int> uNeighbors;
+    for (auto u : PUX) {
+      int size1 = graph[u].size(); // neighbor of u in the graph (sorted)
+      int size2 = P.size();
+      std::vector<int> vIntersect(size1+size2);
+      std::vector<int>::iterator it;
+      it=std::set_intersection (graph[u].begin(), graph[u].end(), P.begin(), P.end(), vIntersect.begin());
+      vIntersect.resize(it-vIntersect.begin());
+      if (vIntersect.size() > maxNumNeighborsInP) {
+        maxNumNeighborsInP = vIntersect.size();
+        uSelected = u;
+        uNeighbors = vIntersect;
+      }
+    }
+    assert(uSelected > 0);
+    /* Remove each u's neighbor from P */
+    std::vector<int> PMinusUNeighbors = P;
+    for (auto i : uNeighbors) {
+      std::vector<int>::iterator it = std::find(PMinusUNeighbors.begin(), PMinusUNeighbors.end(), i);
+      PMinusUNeighbors.erase(it);
+    }
+    /* for each vertex v in P \ N(u): */
+    for (auto v : PMinusUNeighbors) {
+      std::vector<int> RUV = R;
+      RUV.push_back(v);
+      int size1 = graph[v].size();
+      int size2 = P.size();
+      int size3 = X.size();
+      std::vector<int> PIvNeighbors(size1+size2);
+      std::vector<int> XIvNeighbors(size1+size3);
+      std::vector<int>::iterator it = std::set_intersection(graph[v].begin(), graph[v].end(), P.begin(), P.end(), PIvNeighbors.begin());
+      PIvNeighbors.resize(it - PIvNeighbors.begin());
+      it = std::set_intersection(graph[v].begin(), graph[v].end(), X.begin(), X.end(), XIvNeighbors.begin());
+      XIvNeighbors.resize(it - XIvNeighbors.begin());
+      /* BronKerbosch2(R ⋃ {v}, P ⋂ N(v), X ⋂ N(v)) */
+      BronKerboschPivoting(graph, RUV, PIvNeighbors, XIvNeighbors, allMaximalCliques);
+      /* P := P \ {v} */
+      it =  std::find(P.begin(), P.end(), v);
+      P.erase(it);
+      /* X := X ⋃ {v} */
+      X.push_back(v);
+    }
+  }
 }
