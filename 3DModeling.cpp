@@ -1620,13 +1620,13 @@ void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std:
       std::vector<int>::iterator it;
       it=std::set_intersection (graph[u].begin(), graph[u].end(), P.begin(), P.end(), vIntersect.begin());
       vIntersect.resize(it-vIntersect.begin());
-      if (vIntersect.size() > maxNumNeighborsInP) {
+      if ( (int) vIntersect.size() > maxNumNeighborsInP) {
         maxNumNeighborsInP = vIntersect.size();
         uSelected = u;
         uNeighbors = vIntersect;
       }
     }
-    assert(uSelected > 0);
+    assert(uSelected >= 0);
     /* Remove each u's neighbor from P */
     std::vector<int> PMinusUNeighbors = P;
     for (auto i : uNeighbors) {
