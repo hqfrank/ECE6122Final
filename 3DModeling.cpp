@@ -1561,3 +1561,29 @@ void collectPhyLinksAtBSs(std::map<int, std::vector<Vector_t>>& phyLinksAtBSs, c
     phyLinksAtBSs.at(dstId).push_back(lastHop);
   }
 }
+
+int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& nodes,
+                                 std::vector<int>& maxSDNodeList,
+                                 const std::vector<std::vector<int>>& nodeNeighborList,
+                                 const SystemParameters& parameters) {
+    int spaceDiversity = 0;
+    double isoAngle = parameters.antennaIsoSpan_phi;
+    std::vector<int> neighbors = nodeNeighborList[nodeId];  // the intended node's neighbors (indices)
+    for (int i = 0; i< neighbors.size()-1; i++) {
+        Point_t p1 = nodes[neighbors[i]];
+        Vector_t v1(nodes[nodeId], p1);
+        int countValidPair = 0;
+        std::vector<int> sdNodeList;
+        for (int j = i + 1; j < neighbors.size(); j++) {
+            Point_t p2 = nodes[neighbors[j]];
+            Vector_t v2(nodes[nodeId], p2);
+            double a12 = v1.dot(v2)/v1.mod()/v2.mod();
+            if (a12 >= isoAngle) {
+                countValidPair++;
+                sdNodeList.push_back(j);
+            }
+        }
+    }
+
+    return spaceDiversity;
+}
