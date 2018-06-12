@@ -137,16 +137,18 @@ int main() {
     allNodes.push_back(bs);
   }
 
-  std::vector<int> maxSDNodeList;
-  int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsSet.size()/2, allNodes,
-                                           maxSDNodeList, nodeNeighborList, sysParams);
-  cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
+//  std::vector<int> maxSDNodeList;
+//  int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsSet.size()/2, allNodes,
+//                                           maxSDNodeList, nodeNeighborList, sysParams);
+//  cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
 
-  for (int i = allRelays.size(); i < allNodes.size(); i++) {
-    int sBSSD = evaluateSpaceDiversityAtNode(i, allNodes,
-                                            maxSDNodeList, nodeNeighborList, sysParams);
-    cout << "The space diversity at the " << i-allRelays.size() << "-th small cell base station is: " << sBSSD << endl;
-  }
+//  for (int i = allRelays.size(); i < allNodes.size(); i++) {
+//    int sBSSD = evaluateSpaceDiversityAtNode(i, allNodes,
+//                                            maxSDNodeList, nodeNeighborList, sysParams);
+//    cout << "The space diversity at the " << i-allRelays.size() << "-th small cell base station is: " << sBSSD << endl;
+//  }
+//
+//  return 0;
 
   /*
    * =========================================================================
@@ -163,6 +165,7 @@ int main() {
   std::map<int, std::vector<Vector_t>> phyLinksAtBSs;
   std::map<int, Vector_t>::iterator pLinkIter;
   std::vector<std::vector<int>> allPaths;
+  std::vector<int> noPathList;
   for (int i = 0; i < treeConnections.size(); i++) {
     cout << "\n=========================================================\n";
     cout << "Path search for the " << i << "-th pair of base stations.\n";
@@ -175,6 +178,13 @@ int main() {
     int caseCount = 0;
     for (int j = 1; caseCount <= extraHopNum; j++) {
       Path_t pathList(srcId, dstId, j);
+
+      if (j > 5) {
+        cout << "There is no available path." << endl;
+        noPathList.push_back(i);
+        break;
+      }
+
       searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams, phyLinksAtBSs, selectedPhysicalLinks);
       if (pathList.pathList.size() > 0) {
         caseCount++;
@@ -208,7 +218,7 @@ int main() {
 
   }
 
-  cout << allPaths.size() << endl;
+  cout << "The program finds " << allPaths.size() << " paths among " << treeConnections.size() << " paths." << endl;
   cout << selectedPhysicalLinks.size() << endl;
   cout << phyLinksAtBSs.size() << endl;
   assert(allPaths.size() == treeConnections.size()*(extraHopNum + 1));
@@ -281,6 +291,10 @@ int main() {
     }
   }
   cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
+
+  for (auto path : noPathList) {
+    cout << "There is no path available for the " << path << "-th path." << endl;
+  }
 //  fileOutTimeStamp.close();
 
 

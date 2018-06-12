@@ -1074,6 +1074,12 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
         bool intraInterference = intraPathInterferenceAddLink(curPath, preNodeId, candidateId, nodes,
                                                               nodeNeighborList, parameters);
         if (intraInterference) continue;
+        /* Add inter path interference detection here. */
+
+        bool interInterference = checkInterPathInterference(preNodeId, candidateId, phyLinks, nodes,
+                                                            nodeNeighborList, parameters);
+        if (interInterference) continue;
+
         /* The searching process only continues when there is no intra path interference. */
         /*
          * The currently selected node is a valid candidate node which should be added into an updated path.
@@ -1371,6 +1377,133 @@ double calculateWeight(double dist){
   return exp(0.0037*dist)*dist*dist;
 }
 
+bool checkInterPathInterference(const int s1i, const int d1i, const std::map<int, Vector_t>& phyLinks,
+                                const std::vector<Point_t>& nodes,
+                                const std::vector<std::vector<int>>& nodeNeighborList,
+                                const SystemParameters& parameters) {
+
+  double halfBeam = parameters.antennaBeamWidth_phi/2.0;
+  double isoSpan = parameters.antennaIsoSpan_phi;
+
+  Point_t s1 = nodes[s1i];
+  Point_t d1 = nodes[d1i];
+  Vector_t s1d1(s1,d1);
+  Vector_t d1s1(d1,s1);
+
+  for (auto phyLink : phyLinks) {
+    int s2i = phyLink.first / parameters.maxNumPhyLinks;
+    int d2i = phyLink.first % parameters.maxNumPhyLinks;
+    Point_t s2 = nodes[s2i];
+    Point_t d2 = nodes[d2i];
+    Vector_t s2d2(s2,d2);
+    Vector_t d2s2(d2,s2);
+
+    // test interference signal s1-->d2, same as d2-->s1
+    if (std::find(nodeNeighborList[s1i].begin(),nodeNeighborList[s1i].end(),d2i) != nodeNeighborList[s1i].end()){
+      Vector_t s1d2(s1,d2);
+      if (s1d2.mod() > 0) {
+        double a_d1s1d2 = acos(s1d1.dot(s1d2)/s1d1.mod()/s1d2.mod());
+        double a_s1d2s2 = acos(s1d2.dot(s2d2)/s1d2.mod()/s2d2.mod());
+        if (a_d1s1d2 < halfBeam || a_s1d2s2 < halfBeam) {
+          if (a_d1s1d2 > 0.0001 && a_s1d2s2 > 0.0001) {
+            return true;
+          }
+          if (a_d1s1d2 <= 0.0001 && a_s1d2s2 < isoSpan) {
+            return true;
+          }
+          if (a_s1d2s2 <= 0.0001 && a_d1s1d2 < isoSpan) {
+            return true;
+          }
+        }
+      } else {
+        double a_d1s1s2 = acos(s1d1.dot(d2s2)/s1d1.mod()/d2s2.mod());
+        if (a_d1s1s2 < 2*halfBeam) {
+          return true;
+        }
+      }
+    }
+
+    // test interference signal s2-->d1, same as d1-->s2
+    if (std::find(nodeNeighborList[s2i].begin(),nodeNeighborList[s2i].end(),d1i) != nodeNeighborList[s2i].end()){
+      Vector_t s2d1(s2,d1);
+      if (s2d1.mod() > 0) {
+        double a_s1d1s2 = acos(s1d1.dot(s2d1)/s1d1.mod()/s2d1.mod());
+        double a_d1s2d2 = acos(s2d1.dot(s2d2)/s2d1.mod()/s2d2.mod());
+        if (a_s1d1s2 < halfBeam || a_d1s2d2 < halfBeam) {
+          if (a_s1d1s2 > 0.0001 && a_d1s2d2 > 0.0001) {
+            return true;
+          }
+          if (a_s1d1s2 <= 0.0001 && a_d1s2d2 < isoSpan) {
+            return true;
+          }
+          if (a_d1s2d2 <= 0.0001 && a_s1d1s2 < isoSpan) {
+            return true;
+          }
+        }
+      } else {
+        double a_s1d1d2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
+        if (a_s1d1d2 < 2*halfBeam) {
+          return true;
+        }
+      }
+    }
+
+    // test interference signal d1-->d2, same as d2-->d1
+    if (std::find(nodeNeighborList[d1i].begin(),nodeNeighborList[d1i].end(),d2i) != nodeNeighborList[d1i].end()){
+      Vector_t d1d2(d1,d2);
+      if (d1d2.mod() > 0) {
+        double a_s1d1d2 = acos(-1*s1d1.dot(d1d2)/s1d1.mod()/d1d2.mod());
+        double a_s2d2d1 = acos(s2d2.dot(d1d2)/s2d2.mod()/d1d2.mod());
+        if (a_s1d1d2 < halfBeam || a_s2d2d1 < halfBeam) {
+          if (a_s1d1d2 > 0.0001 && a_s2d2d1 > 0.0001) {
+            return true;
+          }
+          if (a_s1d1d2 <= 0.0001 && a_s2d2d1 < isoSpan) {
+            return true;
+          }
+          if (a_s2d2d1 <= 0.0001 && a_s1d1d2 < isoSpan) {
+            return true;
+          }
+//            return true;
+        }
+      } else {
+        double a_s1d1s2 = acos(d1s1.dot(d2s2)/d1s1.mod()/d2s2.mod());
+        if (a_s1d1s2 < 2*halfBeam) {
+          return true;
+        }
+      }
+    }
+
+    // test interference signal s2-->s1, same as s1-->s2
+    if (std::find(nodeNeighborList[s1i].begin(),nodeNeighborList[s1i].end(),s2i) != nodeNeighborList[s1i].end()){
+      Vector_t s1s2(s1,s2);
+      if (s1s2.mod() > 0) {
+        double a_s2s1d1 = acos(s1s2.dot(s1d1)/s1s2.mod()/s1d1.mod());
+        double a_d2s2s1 = acos(-1 * s2d2.dot(s1s2)/s2d2.mod()/s1s2.mod());
+        if (a_s2s1d1 < halfBeam || a_d2s2s1 < halfBeam) {
+          if (a_s2s1d1 > 0.0001 && a_d2s2s1 > 0.0001) {
+            return true;
+          }
+          if (a_s2s1d1 <= 0.0001 && a_d2s2s1 < isoSpan) {
+            return true;
+          }
+          if (a_d2s2s1 <= 0.0001 && a_s2s1d1 < isoSpan) {
+            return true;
+          }
+        }
+      } else {
+        double a_d1s1d2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
+        if (a_d1s1d2 < 2*halfBeam) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+
+}
+
 bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
                                const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
                                const std::vector<std::vector<int>>& nodeNeighborList,
@@ -1590,7 +1723,8 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
   std::vector<int> R;
   std::vector<int> X;
   std::vector<std::vector<int>> allMaximalCliques;
-  BronKerboschPivoting(graphIsoNeighbors, R, P, X, allMaximalCliques);
+  int maxDegree = 0;
+  BronKerboschPivoting(graphIsoNeighbors, R, P, X, allMaximalCliques, maxDegree);
   for (auto clique : allMaximalCliques) {
     if (clique.size() > spaceDiversity) {
       spaceDiversity = clique.size();
@@ -1601,12 +1735,19 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
 
 /* Bron-Kerbosch algorithm with pivoting to list all maximal cliques in an arbitrary graph. */
 void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std::vector<int>& R, std::vector<int> P,
-                          std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques){
+                          std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques, int& maxDegree){
   /* if P and X are both empty:  */
   if (P.empty() && X.empty()) {
     /* report R as a maximal clique */
-    allMaximalCliques.push_back(R);
+    if (R.size() > maxDegree) {
+        allMaximalCliques.push_back(R);
+        maxDegree = R.size();
+    }
   } else {
+    if (R.size() + P.size() <= maxDegree) {
+        return;
+    }
+
     /* choose a pivot vertex u in P ⋃ X */
     std::sort(P.begin(), P.end());
     std::vector<int> PUX = P;
@@ -1649,7 +1790,7 @@ void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std:
       it = std::set_intersection(graph[v].begin(), graph[v].end(), X.begin(), X.end(), XIvNeighbors.begin());
       XIvNeighbors.resize(it - XIvNeighbors.begin());
       /* BronKerbosch2(R ⋃ {v}, P ⋂ N(v), X ⋂ N(v)) */
-      BronKerboschPivoting(graph, RUV, PIvNeighbors, XIvNeighbors, allMaximalCliques);
+      BronKerboschPivoting(graph, RUV, PIvNeighbors, XIvNeighbors, allMaximalCliques, maxDegree);
       /* P := P \ {v} */
       it =  std::find(P.begin(), P.end(), v);
       P.erase(it);

@@ -133,6 +133,11 @@ double calculateLinkCapacity_Gbps(double linkLength_m, SystemParameters& paramet
 /* Estimate the link weight in AF scheme. */
 double calculateWeight(double dist);
 
+bool checkInterPathInterference(const int s1i, const int d1i, const std::map<int, Vector_t>& phyLinks,
+                                const std::vector<Point_t>& nodes,
+                                const std::vector<std::vector<int>>& nodeNeighborList,
+                                const SystemParameters& parameters);
+
 /* Check whether two paths interfere with each other. */
 bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
                                const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
@@ -152,6 +157,6 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
                                  const SystemParameters& parameters);
 
 void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std::vector<int>& R, std::vector<int> P,
-                          std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques);
+                          std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques, int& maxDegree);
 
 #endif //FINALPROJECT_3DMODELING_H
