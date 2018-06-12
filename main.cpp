@@ -142,6 +142,12 @@ int main() {
                                            maxSDNodeList, nodeNeighborList, sysParams);
   cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
 
+  for (int i = allRelays.size(); i < allNodes.size(); i++) {
+    int sBSSD = evaluateSpaceDiversityAtNode(i, allNodes,
+                                            maxSDNodeList, nodeNeighborList, sysParams);
+    cout << "The space diversity at the " << i-allRelays.size() << "-th small cell base station is: " << sBSSD << endl;
+  }
+
   /*
    * =========================================================================
    * For each logical link in the tree/mesh, run the path selection alogrithm.

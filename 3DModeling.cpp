@@ -1576,7 +1576,7 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
     for (int j = i + 1; j < neighbors.size(); j++) {
       Point_t p2 = nodes[neighbors[j]];
       Vector_t v2(nodes[nodeId], p2);
-      double a12 = v1.dot(v2)/v1.mod()/v2.mod();
+      double a12 = acos(v1.dot(v2)/v1.mod()/v2.mod());
       if (a12 >= isoAngle) {
         graphIsoNeighbors[i].push_back(j);
         graphIsoNeighbors[j].push_back(i);
@@ -1608,6 +1608,7 @@ void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std:
     allMaximalCliques.push_back(R);
   } else {
     /* choose a pivot vertex u in P ⋃ X */
+    std::sort(P.begin(), P.end());
     std::vector<int> PUX = P;
     PUX.insert(PUX.end(), X.begin(), X.end());
     int maxNumNeighborsInP = -1;
@@ -1639,6 +1640,7 @@ void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std:
       RUV.push_back(v);
       int size1 = graph[v].size();
       int size2 = P.size();
+      std::sort(X.begin(), X.end());
       int size3 = X.size();
       std::vector<int> PIvNeighbors(size1+size2);
       std::vector<int> XIvNeighbors(size1+size3);
