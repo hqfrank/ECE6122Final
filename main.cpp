@@ -80,8 +80,9 @@ int main() {
    * Select base stations based on the grid constraint.
    * ==================================================
    */
-  std::vector<Point_t> bsInGrid;
-  selectBaseStationPerGrid(bsSet, bsInGrid, sysParams);
+  std::vector<std::vector<int>> bsGridMap;
+  std::vector<std::vector<int>> bsLocation;
+  selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, sysParams);
 
   /*
    * ==================================================================
@@ -94,8 +95,10 @@ int main() {
   std::vector<std::vector<int>> nodeConnections(numBSs, std::vector<int>());
   std::vector<std::vector<int>> treeConnections;
   std::vector<std::vector<Point_t>> bsPairs;
+  int mBSPos[2] = {5,4};
 //  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
-  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
+//  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
+  treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
 
   /*

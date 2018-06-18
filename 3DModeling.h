@@ -32,6 +32,12 @@ public:
   const double l1000g800 = 4*0.43 + 5*0.49 + 6*0.06 + 7*0.02;
 };
 
+void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<int>>& bsGridMap,
+                             const std::vector<std::vector<int>>& bsLocation,
+                             const std::vector<Point_t>& bsSet,
+                             std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+                             std::vector<std::vector<Point_t>>& bsPairs);
+
 void printConnections(const std::vector<std::vector<int>>& nodeConnections);
 
 void primAlgorithm(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
@@ -59,7 +65,8 @@ std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::
 std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buildingSet, std::vector<Point_t>& roofTopRelays, SystemParameters& parameters);
 
 /* Select base stations based on the grid constraint. */
-void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<Point_t>& bsInGrid, SystemParameters& parameters);
+void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vector<int>>& bsGridMap,
+                              std::vector<std::vector<int>>& bsLocation, SystemParameters& parameters);
 
 /* Collect all relays on the surfaces of buildings. */
 std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings);

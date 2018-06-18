@@ -558,17 +558,23 @@ std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buil
   return poolBS;
 }
 
-void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<Point_t>& bsInGrid, SystemParameters& parameters){
+void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vector<int>>& bsGridMap,
+                              std::vector<std::vector<int>>& bsLocation,
+                              SystemParameters& parameters){
   /* Number of grids. */
   auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
   auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
   /* Initialize the Map for indicating whether there is a BS in the grid. */
   std::vector<bool> gridHasBS;
-  std::vector<Point_t> bsInGridLocal(numGridAlongX * numGridAlongY);
+//  std::vector<Point_t> bsInGridLocal(numGridAlongX * numGridAlongY);
+//  std::vector<std::vector<int>> bsGridMapLocal(numGridAlongX, std::vector<int>(numGridAlongY));
   for (int i = 0; i < numGridAlongX; i++){
+    std::vector<int> tempVector;
     for (int j = 0; j < numGridAlongY; j++){
       gridHasBS.push_back(false);
+      tempVector.push_back(-1);
     }
+    bsGridMap.push_back(tempVector);
   }
   /* Iterating each candidate BS. */
   unsigned int i = 0;
@@ -580,7 +586,8 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<Point_t>&
       bsSet.erase(bsSet.begin() + i);
     } else {
       gridHasBS.at(gridIndexX*numGridAlongY + gridIndexY) = true;
-      bsInGridLocal.at(gridIndexX*numGridAlongY + gridIndexY) = currentBS;
+      bsGridMap[gridIndexX][gridIndexY] = i;
+//      bsInGridLocal.at(gridIndexX*numGridAlongY + gridIndexY) = currentBS;
 //      StdDraw.point(currentBS.x, currentBS.y);
       i++;
     }
@@ -598,22 +605,131 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<Point_t>&
   }
   outFile.close();
 
-  bsInGrid = bsInGridLocal;
+  /* Print the topology of the base stations. */
+  std::vector<std::vector<int>> bsLocationTemp(bsSet.size(), std::vector<int>(2));
   cout << "===================== The topology of base stations ====================" << endl;
   for (int j = 0; j < numGridAlongX; j++){
-      for (int k = 0; k < numGridAlongY; k++) {
-          if (gridHasBS[j * numGridAlongY + k] == true) {
-              if (j * numGridAlongY + k < 10) {
-                  cout << "BS0" << j * numGridAlongY + k << "\t";
-              } else {
-                  cout << "BS" << j * numGridAlongY + k << "\t";
-              }
-          } else {
-              cout << "NULL\t";
-          }
+    for (int k = 0; k < numGridAlongY; k++) {
+      if (gridHasBS[j * numGridAlongY + k] == true) {
+        bsLocationTemp[bsGridMap[j][k]][0] = j;
+        bsLocationTemp[bsGridMap[j][k]][1] = k;
+        if (bsGridMap[j][k] < 10) {
+          cout << "BS0" << bsGridMap[j][k] << "\t";
+        } else {
+          cout << "BS" << bsGridMap[j][k] << "\t";
+        }
+      } else {
+        cout << "NULL\t";
       }
-      cout << endl;
+    }
+    cout << endl;
   }
+  bsLocation = bsLocationTemp;
+}
+
+void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<int>>& bsGridMap,
+                             const std::vector<std::vector<int>>& bsLocation,
+                             const std::vector<Point_t>& bsSet,
+                             std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+                             std::vector<std::vector<Point_t>>& bsPairs){
+  /* The grid where the macro cell base station locates is indicated by mBSPos[2] */
+  assert(bsGridMap[mBSPos[0]][mBSPos[1]] >= 0);  // The mBS should be valid.
+  /* Initialization. */
+//  std::vector<int> unselectedBSs;
+//  for (int i = 0; i < bsSet.size(); i++){
+//    unselectedBSs.push_back(i);
+//  }
+  std::vector<int> selectedBS;
+  selectedBS.push_back(bsGridMap[mBSPos[0]][mBSPos[1]]);  // First to select the mBS
+  int nextRootIndex = 0;
+  int nextRoot = selectedBS[nextRootIndex];
+  nextRootIndex++;
+  /* Connect the mBS to its 8 neighbors. */
+  for (int i = mBSPos[0] - 1; i <= mBSPos[0] + 1; ++i) {
+    for (int j = mBSPos[1] - 1; j <= mBSPos[1] + 1; ++j) {
+      if (i != mBSPos[0] || j != mBSPos[1]) {
+        std::vector<int> curConnection;
+        curConnection.push_back(bsGridMap[mBSPos[0]][mBSPos[1]]);  // add the mBS
+        curConnection.push_back(bsGridMap[i][j]);  // add the sBS
+        selectedBS.push_back(bsGridMap[i][j]);
+        tree.push_back(curConnection);  // add the logical link into the tree topology
+        connections[bsGridMap[mBSPos[0]][mBSPos[1]]].push_back(bsGridMap[i][j]);  // add the sBS to the 'neighbor' of mBS
+        connections[bsGridMap[i][j]].push_back(bsGridMap[mBSPos[0]][mBSPos[1]]);
+        std::vector<Point_t> curBSPair;
+        curBSPair.push_back(bsSet[bsGridMap[mBSPos[0]][mBSPos[1]]]);
+        curBSPair.push_back(bsSet[bsGridMap[i][j]]);
+        bsPairs.push_back(curBSPair);
+      }
+    }
+  }
+
+  while (selectedBS.size() < bsSet.size()) {
+    int numSelectedBS = selectedBS.size();
+    nextRoot = selectedBS[nextRootIndex];
+    int rootX = bsLocation[nextRoot][0];
+    int rootY = bsLocation[nextRoot][1];
+    for (int i = rootX - 1; i <= rootX + 1; i++) {
+      if (i < 0 || i > bsGridMap[0].size() - 1) continue;
+      for (int j = rootY - 1; j <= rootY + 1; j++) {
+        if (j < 0 || j > bsGridMap.size() - 1) continue;
+        if (bsGridMap[i][j] < 0) continue;  // no bs at the grid
+        auto it = std::find(selectedBS.begin(),selectedBS.end(),bsGridMap[i][j]);
+        if (it != selectedBS.end()) continue;  // the bs has been selected
+        // connect nextRoot to this bs;
+        std::vector<int> curConnection;
+        curConnection.push_back(nextRoot);
+        curConnection.push_back(bsGridMap[i][j]);
+        selectedBS.push_back(bsGridMap[i][j]);
+        tree.push_back(curConnection);
+        connections[nextRoot].push_back(bsGridMap[i][j]);
+        connections[bsGridMap[i][j]].push_back(nextRoot);
+        std::vector<Point_t> curBSPair;
+        curBSPair.push_back(bsSet[nextRoot]);
+        curBSPair.push_back(bsSet[bsGridMap[i][j]]);
+        bsPairs.push_back(curBSPair);
+        break;
+      }
+      if (selectedBS.size() > numSelectedBS) break;
+    }
+    nextRootIndex++;
+
+    if (nextRootIndex == selectedBS.size()) {
+      // find an unselected bs.
+      for (int i = 0; i < bsSet.size(); i++) {
+        if (std::find(selectedBS.begin(),selectedBS.end(),i) != selectedBS.end()) continue;
+        // i is an unselected BS.
+        int iX = bsLocation[i][0];
+        int iY = bsLocation[i][1];
+        for (int j = iX - 1; j <= iX + 1; j++) {
+          if (j < 0 || j > bsGridMap[0].size() - 1) continue;
+          for (int k = iY - 1; k <= iY + 1; k++) {
+            if (k < 0 || k > bsGridMap.size() - 1) continue;
+            if (bsGridMap[j][k] < 0) continue;
+            auto it = std::find(selectedBS.begin(), selectedBS.end(), bsGridMap[j][k]);
+            if (it != selectedBS.end()) {
+              std::vector<int> curConnection;
+              curConnection.push_back(*it);
+              curConnection.push_back(bsGridMap[j][k]);
+              selectedBS.push_back(bsGridMap[j][k]);
+              tree.push_back(curConnection);
+              connections[*it].push_back(bsGridMap[j][k]);
+              connections[bsGridMap[j][k]].push_back(*it);
+              std::vector<Point_t> curBSPair;
+              curBSPair.push_back(bsSet[*it]);
+              curBSPair.push_back(bsSet[bsGridMap[j][k]]);
+              bsPairs.push_back(curBSPair);
+              break;
+            }
+          }
+          if (selectedBS.size() > numSelectedBS) break;
+        }
+        if (selectedBS.size() > numSelectedBS) break;
+      }
+    }
+    if (selectedBS.size() == numSelectedBS || nextRootIndex == selectedBS.size()) break;
+  }
+
+  cout << "The number of connected BS is " << selectedBS.size() << endl;
 }
 
 void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters){
