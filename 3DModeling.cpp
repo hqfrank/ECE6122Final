@@ -708,14 +708,14 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
             auto it = std::find(selectedBS.begin(), selectedBS.end(), bsGridMap[j][k]);
             if (it != selectedBS.end()) {
               std::vector<int> curConnection;
-              curConnection.push_back(*it);
+              curConnection.push_back(i);
               curConnection.push_back(bsGridMap[j][k]);
               selectedBS.push_back(bsGridMap[j][k]);
               tree.push_back(curConnection);
-              connections[*it].push_back(bsGridMap[j][k]);
-              connections[bsGridMap[j][k]].push_back(*it);
+              connections[i].push_back(bsGridMap[j][k]);
+              connections[bsGridMap[j][k]].push_back(i);
               std::vector<Point_t> curBSPair;
-              curBSPair.push_back(bsSet[*it]);
+              curBSPair.push_back(bsSet[i]);
               curBSPair.push_back(bsSet[bsGridMap[j][k]]);
               bsPairs.push_back(curBSPair);
               break;
@@ -726,7 +726,7 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
         if (selectedBS.size() > numSelectedBS) break;
       }
     }
-    if (selectedBS.size() == numSelectedBS || nextRootIndex == selectedBS.size()) break;
+    if (selectedBS.size() == numSelectedBS && nextRootIndex == selectedBS.size()) break;
   }
 
   cout << "The number of connected BS is " << selectedBS.size() << endl;
