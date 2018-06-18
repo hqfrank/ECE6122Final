@@ -59,7 +59,7 @@ std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::
 std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buildingSet, std::vector<Point_t>& roofTopRelays, SystemParameters& parameters);
 
 /* Select base stations based on the grid constraint. */
-void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, SystemParameters& parameters);
+void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<Point_t>& bsInGrid, SystemParameters& parameters);
 
 /* Collect all relays on the surfaces of buildings. */
 std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings);

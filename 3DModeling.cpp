@@ -193,6 +193,110 @@ void primAlgorithmSetLinksToGateway(const std::vector<std::vector<double>>& eHop
     }
 }
 
+/*
+ * ================================================================================================================
+ * Modified Prim algorithm to find the minimum spanning tree with a number of links connecting to the gateway node.
+ * ================================================================================================================
+ */
+//void primAlgorithmEightLinksAtMBS(const std::vector<std::vector<double>>& eHopMaps, const std::vector<Point_t>& bsSet,
+//                                    const int mBSId, const SystemParameters& parameters,
+//                                    std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
+//                                    std::vector<std::vector<Point_t>>& bsPairs){
+//    /* Get the number of grids along x and y axis. */
+//    auto numGridAlongX = (int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
+//    auto numGridAlongY = (int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
+//    /* The macro base station should have 8 neighbors around. */
+//    assert((mBSId > numGridAlongX) && (mBSId < numGridAlongX * (numGridAlongY - 1) - 1));
+//    int eightNeighborGrids[8] = {mBSId - numGridAlongX - 1, mBSId - numGridAlongX, mBSId - numGridAlongX + 1, mBSId - 1,
+//                                 mBSId + 1, mBSId + numGridAlongX - 1, mBSId + numGridAlongX, mBSId + numGridAlongX + 1};
+//
+//    /* Initialization. */
+//    double key[bsSet.size()];
+//    int otherEnd[bsSet.size()];
+//    for (int i = 0; i < bsSet.size(); i++) {
+//        key[i] = 100000;
+//        otherEnd[i] = -1;
+//    }
+//    key[mBSId] = 0;
+//    otherEnd[mBSId] = mBSId;
+//    std::vector<int> unselectedBSs;
+//    for (int i = 0; i < bsSet.size(); i++){
+//        unselectedBSs.push_back(i);
+//    }
+//    std::vector<int> selectedBSs;
+//    /* Select numLinksToGateway base stations connecting to macro-base station first. */
+//    int countLinksToGateway = -1;
+//    std::vector<double> mBSNeighborDist = eHopMaps[mBSId];
+//    std::vector<int> mBSNeighborDistSortedIndex = sort_indexes(mBSNeighborDist);
+//    while(selectedBSs.size() < bsSet.size()){
+//        // Find the node with the min key value in the unselected set.
+//        double minKey = 100000;
+//        int minKeyBSId = -1;
+//        int posOfMinKeyBS = -1;
+//        for (int i = 0; i < unselectedBSs.size(); i++) {
+//            if (countLinksToGateway < numLinksToGateway && countLinksToGateway > -1) {
+//                if (unselectedBSs[i] == mBSNeighborDistSortedIndex[countLinksToGateway+1]) {
+//                    minKey = key[unselectedBSs.at(i)];
+//                    minKeyBSId = unselectedBSs.at(i);
+//                    posOfMinKeyBS = i;
+//                }
+//            } else {
+//                if (key[unselectedBSs.at(i)] < minKey) {
+//                    minKey = key[unselectedBSs.at(i)];
+//                    minKeyBSId = unselectedBSs.at(i);
+//                    posOfMinKeyBS = i;
+//                }
+//            }
+//        }
+//        if (minKeyBSId == -1) {
+//            cerr << "Error! There is no valid key value in the unselected set." << endl;
+//            exit(errno);
+//        }
+//        if (minKey > 0) {
+//            connections.at(minKeyBSId).push_back(otherEnd[minKeyBSId]);
+//            connections.at(otherEnd[minKeyBSId]).push_back(minKeyBSId);
+//            cout << "BS " << minKeyBSId << "\t---\t" << "BS " << otherEnd[minKeyBSId] << endl;
+//            // Add this connection to the tree
+//            std::vector<int> curConnection;
+//            curConnection.push_back(minKeyBSId);
+//            curConnection.push_back(otherEnd[minKeyBSId]);
+//            tree.push_back(curConnection);
+//            // Add this connection to bs pairs
+//            std::vector<Point_t> curBSPair;
+//            curBSPair.push_back(bsSet.at(minKeyBSId));
+//            curBSPair.push_back(bsSet.at(otherEnd[minKeyBSId]));
+//            bsPairs.push_back(curBSPair);
+//
+//        }
+//
+//        // move the node with min key value from unselected set to selected set.
+//        selectedBSs.push_back(minKeyBSId);
+//        unselectedBSs.erase(unselectedBSs.begin()+posOfMinKeyBS);
+//
+//
+//        std::vector<double> neighborDist = eHopMaps.at(minKeyBSId);
+//
+//        if (countLinksToGateway < numLinksToGateway) {
+//            for (int i = 0; i < neighborDist.size(); i++) {
+//                if (key[i] > neighborDist.at(i) && otherEnd[i] != mBSId) {
+//                    key[i] = neighborDist.at(i);
+//                    otherEnd[i] = minKeyBSId;
+//                }
+//            }
+//        } else {
+//            for (int i = 0; i < neighborDist.size(); i++) {
+//                if (key[i] > neighborDist.at(i)) {
+//                    key[i] = neighborDist.at(i);
+//                    otherEnd[i] = minKeyBSId;
+//                }
+//            }
+//        }
+//
+//
+//        countLinksToGateway++;
+//    }
+//}
+
 ///*
 // * ================================================================================================================
 // * Modified Prim algorithm to find the minimum spanning tree with limited degrees on all nodes except the gateway.
@@ -454,12 +558,13 @@ std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buil
   return poolBS;
 }
 
-void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, SystemParameters& parameters){
+void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<Point_t>& bsInGrid, SystemParameters& parameters){
   /* Number of grids. */
   auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
   auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
   /* Initialize the Map for indicating whether there is a BS in the grid. */
   std::vector<bool> gridHasBS;
+  std::vector<Point_t> bsInGridLocal(numGridAlongX * numGridAlongY);
   for (int i = 0; i < numGridAlongX; i++){
     for (int j = 0; j < numGridAlongY; j++){
       gridHasBS.push_back(false);
@@ -475,6 +580,7 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, SystemParameters& par
       bsSet.erase(bsSet.begin() + i);
     } else {
       gridHasBS.at(gridIndexX*numGridAlongY + gridIndexY) = true;
+      bsInGridLocal.at(gridIndexX*numGridAlongY + gridIndexY) = currentBS;
 //      StdDraw.point(currentBS.x, currentBS.y);
       i++;
     }
@@ -491,6 +597,23 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, SystemParameters& par
     outFile << bs.toStringData() << endl;
   }
   outFile.close();
+
+  bsInGrid = bsInGridLocal;
+  cout << "===================== The topology of base stations ====================" << endl;
+  for (int j = 0; j < numGridAlongX; j++){
+      for (int k = 0; k < numGridAlongY; k++) {
+          if (gridHasBS[j * numGridAlongY + k] == true) {
+              if (j * numGridAlongY + k < 10) {
+                  cout << "BS0" << j * numGridAlongY + k << "\t";
+              } else {
+                  cout << "BS" << j * numGridAlongY + k << "\t";
+              }
+          } else {
+              cout << "NULL\t";
+          }
+      }
+      cout << endl;
+  }
 }
 
 void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters){

@@ -80,7 +80,8 @@ int main() {
    * Select base stations based on the grid constraint.
    * ==================================================
    */
-  selectBaseStationPerGrid(bsSet, sysParams);
+  std::vector<Point_t> bsInGrid;
+  selectBaseStationPerGrid(bsSet, bsInGrid, sysParams);
 
   /*
    * ==================================================================
@@ -94,7 +95,7 @@ int main() {
   std::vector<std::vector<int>> treeConnections;
   std::vector<std::vector<Point_t>> bsPairs;
 //  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
-  primAlgorithmSetLinksToGateway(eHopMap, bsSet, bsSet.size()/2, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
+  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
 
   /*
