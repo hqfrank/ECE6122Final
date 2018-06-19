@@ -95,7 +95,7 @@ int main() {
   std::vector<std::vector<int>> nodeConnections(numBSs, std::vector<int>());
   std::vector<std::vector<int>> treeConnections;
   std::vector<std::vector<Point_t>> bsPairs;
-  int mBSPos[2] = {5,4};
+  int mBSPos[2] = {4,5};
 //  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
 //  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
   treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs);
@@ -170,6 +170,7 @@ int main() {
   std::map<int, Vector_t>::iterator pLinkIter;
   std::vector<std::vector<int>> allPaths;
   std::vector<int> noPathList;
+  std::shuffle(treeConnections.begin(), treeConnections.end(), std::default_random_engine(sysParams.randomSeed));
   for (int i = 0; i < treeConnections.size(); i++) {
     cout << "\n=========================================================\n";
     cout << "Path search for the " << i << "-th pair of base stations.\n";
@@ -223,82 +224,84 @@ int main() {
   }
 
   cout << "The program finds " << allPaths.size() << " paths among " << treeConnections.size() << " paths." << endl;
+  for (auto path : noPathList) {
+    cout << "There is no path available for the " << path << "-th path from BS" << treeConnections[path][0] <<
+         " to BS" << treeConnections[path][1] << endl;
+  }
   cout << selectedPhysicalLinks.size() << endl;
   cout << phyLinksAtBSs.size() << endl;
-  assert(allPaths.size() == treeConnections.size()*(extraHopNum + 1));
-  /* Count the total number of relays used. */
-  int numRelaysNeeded = 0;
-  for (int i = 0; i < treeConnections.size(); i++) {
-    numRelaysNeeded += (allPaths[i * (extraHopNum + 1)].size() - 2);
-  }
-  cout << "In total, " << numRelaysNeeded << " relays need to be deployed." << endl;
+//  assert(allPaths.size() == treeConnections.size()*(extraHopNum + 1));
+//  /* Count the total number of relays used. */
+//  int numRelaysNeeded = 0;
+//  for (int i = 0; i < treeConnections.size(); i++) {
+//    numRelaysNeeded += (allPaths[i * (extraHopNum + 1)].size() - 2);
+//  }
+//  cout << "In total, " << numRelaysNeeded << " relays need to be deployed." << endl;
+//
+//  std::map<int, std::vector<int>> nodeCheckMinHop;
+//  std::map<int, std::vector<int>>::iterator it;
+//  for (int i = 0; i < treeConnections.size(); i++) {
+//    for (int j = 1; j < allPaths[i*(extraHopNum + 1)].size() - 1; ++j){
+//      it = nodeCheckMinHop.find(allPaths[i*(extraHopNum + 1)][j]);
+//      if (it != nodeCheckMinHop.end()){
+//        nodeCheckMinHop.at(allPaths[i*(extraHopNum + 1)][j]).push_back(i);
+//      } else {
+//        std::vector<int> newPair;
+//        newPair.push_back(i);
+//        nodeCheckMinHop.insert(std::pair<int, std::vector<int>>(allPaths[i*(extraHopNum + 1)][j], newPair));
+//      }
+//    }
+//  }
+//
+//  cout << "========== Check the min hop case ===========" << endl;
+//  for (it = nodeCheckMinHop.begin(); it != nodeCheckMinHop.end(); ++it) {
+//    if (it->second.size() > 1){
+//      cout << "-----------------------------------------------------------" << endl;
+//      cout << "Relay No. " << it->first << " has been selected by " << it->second.size() << " paths." << endl;
+//      int numPath = it->second.size();
+//      std::vector<int> pathIDs = it->second;
+//      for (int j = 0; j < numPath-1; j++){
+//        std::vector<int> path1 = allPaths[pathIDs[j]*(extraHopNum + 1)];
+//        Point_t src1 = bsPairs[pathIDs[j]][0];
+//        Point_t dst1 = bsPairs[pathIDs[j]][1];
+//        for (int k = j+1; k < numPath; k++) {
+//          std::vector<int> path2 = allPaths[pathIDs[k]*(extraHopNum + 1)];
+//          Point_t src2 = bsPairs[pathIDs[k]][0];
+//          Point_t dst2 = bsPairs[pathIDs[k]][1];
+//          std::vector<double> distance;
+//          distance.push_back(src1.distanceTo(src2));
+//          distance.push_back(src1.distanceTo(dst2));
+//          distance.push_back(dst1.distanceTo(src2));
+//          distance.push_back(dst1.distanceTo(dst2));
+//          double minDistance = GetMin(distance);
+//          cout << "Path " << pathIDs[j] << ": src - " << src1.toString() << ", dst - " << dst1.toString() << "\n"
+//               << "Path " << pathIDs[k] << ": src - " << src2.toString() << ", dst - " << dst2.toString() << "\n"
+//               << "Minimum distance between end points: " << minDistance << endl;
+////          cout << minDistance << src1.distanceTo(src2) << "\t" << src1.distanceTo(dst2) << "\t"
+////               << dst1.distanceTo(src2) << "\t" << dst1.distanceTo(dst2) << endl;
+//        }
+//      }
+//    }
+//  }
+//
+//  // Check interference cases:
+//  int countIntPairs = 0;
+//  for (int i = 0; i < treeConnections.size()-1; ++i) {
+//    std::vector<int> path1 = allPaths[i*(extraHopNum + 1)];
+//    std::vector<Point_t> sd1 = bsPairs[i];
+//    for (int j = i+1; j < treeConnections.size(); ++j) {
+//      std::vector<int> path2 = allPaths[j*(extraHopNum + 1)];
+//      std::vector<Point_t> sd2 = bsPairs[j];
+//      bool intTest = checkTwoPathsInterference(path1, path2, sd1, sd2, nodeNeighborList, buildingSet, allNodes, sysParams);
+//      if(intTest) {
+//        cout << "Path " << i << " and Path " << j << " interfere with each other." << endl;
+//        countIntPairs++;
+//      }
+//    }
+//  }
+//  cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
 
-  std::map<int, std::vector<int>> nodeCheckMinHop;
-  std::map<int, std::vector<int>>::iterator it;
-  for (int i = 0; i < treeConnections.size(); i++) {
-    for (int j = 1; j < allPaths[i*(extraHopNum + 1)].size() - 1; ++j){
-      it = nodeCheckMinHop.find(allPaths[i*(extraHopNum + 1)][j]);
-      if (it != nodeCheckMinHop.end()){
-        nodeCheckMinHop.at(allPaths[i*(extraHopNum + 1)][j]).push_back(i);
-      } else {
-        std::vector<int> newPair;
-        newPair.push_back(i);
-        nodeCheckMinHop.insert(std::pair<int, std::vector<int>>(allPaths[i*(extraHopNum + 1)][j], newPair));
-      }
-    }
-  }
 
-  cout << "========== Check the min hop case ===========" << endl;
-  for (it = nodeCheckMinHop.begin(); it != nodeCheckMinHop.end(); ++it) {
-    if (it->second.size() > 1){
-      cout << "-----------------------------------------------------------" << endl;
-      cout << "Relay No. " << it->first << " has been selected by " << it->second.size() << " paths." << endl;
-      int numPath = it->second.size();
-      std::vector<int> pathIDs = it->second;
-      for (int j = 0; j < numPath-1; j++){
-        std::vector<int> path1 = allPaths[pathIDs[j]*(extraHopNum + 1)];
-        Point_t src1 = bsPairs[pathIDs[j]][0];
-        Point_t dst1 = bsPairs[pathIDs[j]][1];
-        for (int k = j+1; k < numPath; k++) {
-          std::vector<int> path2 = allPaths[pathIDs[k]*(extraHopNum + 1)];
-          Point_t src2 = bsPairs[pathIDs[k]][0];
-          Point_t dst2 = bsPairs[pathIDs[k]][1];
-          std::vector<double> distance;
-          distance.push_back(src1.distanceTo(src2));
-          distance.push_back(src1.distanceTo(dst2));
-          distance.push_back(dst1.distanceTo(src2));
-          distance.push_back(dst1.distanceTo(dst2));
-          double minDistance = GetMin(distance);
-          cout << "Path " << pathIDs[j] << ": src - " << src1.toString() << ", dst - " << dst1.toString() << "\n"
-               << "Path " << pathIDs[k] << ": src - " << src2.toString() << ", dst - " << dst2.toString() << "\n"
-               << "Minimum distance between end points: " << minDistance << endl;
-//          cout << minDistance << src1.distanceTo(src2) << "\t" << src1.distanceTo(dst2) << "\t"
-//               << dst1.distanceTo(src2) << "\t" << dst1.distanceTo(dst2) << endl;
-        }
-      }
-    }
-  }
-
-  // Check interference cases:
-  int countIntPairs = 0;
-  for (int i = 0; i < treeConnections.size()-1; ++i) {
-    std::vector<int> path1 = allPaths[i*(extraHopNum + 1)];
-    std::vector<Point_t> sd1 = bsPairs[i];
-    for (int j = i+1; j < treeConnections.size(); ++j) {
-      std::vector<int> path2 = allPaths[j*(extraHopNum + 1)];
-      std::vector<Point_t> sd2 = bsPairs[j];
-      bool intTest = checkTwoPathsInterference(path1, path2, sd1, sd2, nodeNeighborList, buildingSet, allNodes, sysParams);
-      if(intTest) {
-        cout << "Path " << i << " and Path " << j << " interfere with each other." << endl;
-        countIntPairs++;
-      }
-    }
-  }
-  cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
-
-  for (auto path : noPathList) {
-    cout << "There is no path available for the " << path << "-th path." << endl;
-  }
 //  fileOutTimeStamp.close();
 
 

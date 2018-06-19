@@ -507,7 +507,8 @@ std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buil
   /* Set up random generator. */
   // Seed with a real random value, if available
   std::random_device r;
-  std::default_random_engine e(r());
+//  std::default_random_engine e(r());
+  std::default_random_engine e(parameters.randomSeed);
   std::uniform_int_distribution<int> uniform_dist(0, 999);
 
   /* Initialize variables for storing BSs' locations. */
@@ -1314,10 +1315,12 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
                                                               nodeNeighborList, parameters);
         if (intraInterference) continue;
         /* Add inter path interference detection here. */
+        if (parameters.interPathIntControl) {
+          bool interInterference = checkInterPathInterference(preNodeId, candidateId, phyLinks, nodes,
+                                                              nodeNeighborList, parameters);
+          if (interInterference) continue;
+        }
 
-        bool interInterference = checkInterPathInterference(preNodeId, candidateId, phyLinks, nodes,
-                                                            nodeNeighborList, parameters);
-        if (interInterference) continue;
 
         /* The searching process only continues when there is no intra path interference. */
         /*
