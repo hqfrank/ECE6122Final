@@ -708,15 +708,15 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
             auto it = std::find(selectedBS.begin(), selectedBS.end(), bsGridMap[j][k]);
             if (it != selectedBS.end()) {
               std::vector<int> curConnection;
-              curConnection.push_back(i);
               curConnection.push_back(bsGridMap[j][k]);
-              selectedBS.push_back(bsGridMap[j][k]);
+              curConnection.push_back(i);
+              selectedBS.push_back(i);
               tree.push_back(curConnection);
               connections[i].push_back(bsGridMap[j][k]);
               connections[bsGridMap[j][k]].push_back(i);
               std::vector<Point_t> curBSPair;
-              curBSPair.push_back(bsSet[i]);
               curBSPair.push_back(bsSet[bsGridMap[j][k]]);
+              curBSPair.push_back(bsSet[i]);
               bsPairs.push_back(curBSPair);
               break;
             }
