@@ -74,6 +74,9 @@ std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings);
 /* Select roof top relays based on the grid constraint. */
 void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters);
 
+/* Count the number of relays per grid */
+void countRelaysPerGrid(std::vector<Point_t>& relays, std::vector<std::vector<int>>& numRelaysInGrid, SystemParameters& parameters);
+
 /* Explore the connectivity between each pair of nodes in the topology. */
 std::vector<std::vector<int>> exploreConnectivity(const std::vector<Point_t>& nodes, const std::vector<Building_t>& buildings, const std::string& fileRelayNeighbors);
 
@@ -93,21 +96,6 @@ std::vector<std::vector<Point_t>> generateBaseStationPairs(const std::vector<Poi
 std::vector<std::vector<int>> addNodeToConnectivityList(const std::vector<std::vector<int>>& relayNeighborList,
                                                         const Point_t& newNode, const std::vector<Point_t>& oldNodes,
                                                         const std::vector<Building_t>& buildings);
-
-/* The algorithm proposed in MASS paper. */
-std::vector<std::vector<int>> findPathDecodeForward(const std::vector<std::vector<int>>& nodeNeighborList,
-                                                    const std::vector<Point_t>& nodes, int addHop,
-                                                    SystemParameters& parameters);
-
-/* Find the optimal path between a pair of source and destination. */
-std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>& nodeNeighborList,
-                                             const std::vector<Point_t>& nodes, int maxHop,
-                                             SystemParameters& parameters);
-
-/* The recursive algorithm to find the path. */
-std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>>& nodeNeighborList,
-                                              const std::vector<Point_t>& nodes, int maxHop, SystemParameters& parameters,
-                                              int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput);
 
 /* Find the optimal path between a pair of source and destination. */
 void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
@@ -165,5 +153,20 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
 
 void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std::vector<int>& R, std::vector<int> P,
                           std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques, int& maxDegree);
+
+///* The algorithm proposed in MASS paper. */
+//std::vector<std::vector<int>> findPathDecodeForward(const std::vector<std::vector<int>>& nodeNeighborList,
+//                                                    const std::vector<Point_t>& nodes, int addHop,
+//                                                    SystemParameters& parameters);
+
+///* Find the optimal path between a pair of source and destination. */
+//std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>& nodeNeighborList,
+//                                             const std::vector<Point_t>& nodes, int maxHop,
+//                                             SystemParameters& parameters);
+
+///* The recursive algorithm to find the path. */
+//std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>>& nodeNeighborList,
+//                                              const std::vector<Point_t>& nodes, int maxHop, SystemParameters& parameters,
+//                                              int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput);
 
 #endif //FINALPROJECT_3DMODELING_H

@@ -24,28 +24,28 @@ int main() {
    *  ***************************************
    */
   /*
-   * ===============================================================================
-   * Get current time, which is used to identify the name of the simulation results.
-   * ===============================================================================
+   * ===================================================================================
+   *   Get current time, which is used to identify the name of the simulation results.
+   * ===================================================================================
    */
   std::chrono::microseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(
     std::chrono::system_clock::now().time_since_epoch()
   );
-  std::string strTime = std::to_string(ms.count()/1000);
-//  cout << strTime << endl;
+  std::string strTime = std::to_string(ms.count()/1000);  // "strTime" is the current time in string type.
+
   /*
-   * ===========================================
-   * Set up simulation configuration parameters.
-   * ===========================================
+   * ===============================================
+   *   Set up simulation configuration parameters.
+   * ===============================================
    */
-  SystemParameters sysParams;
-  sysParams.simStartTime = strTime;
-  EstimatedHop eHops;
-//  cout << "randomSeed in use is " + std::to_string(sysParams.randomSeed) << endl;
+  SystemParameters sysParams;        // Create the system parameter object.
+  sysParams.simStartTime = strTime;  // Update the simulation start time using "strTime".
+  EstimatedHop eHops;                // Create the variable which records the distance-estimated hop number mapping.
+
   /*
-   * ======================
-   * Files addresses in use
-   * ======================
+   * ==========================
+   *   Files addresses in use
+   * ==========================
    */
   /* Building raw data file */
   std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
@@ -61,27 +61,36 @@ int main() {
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
   /*
-   * ====================================
-   * Construct all buildings in the area.
-   * ====================================
+   * ========================================
+   *   Construct all buildings in the area.
+   * ========================================
    */
   std::vector<Building_t> buildingSet = getBuildingInfoFromFile(strDataBuildings, strDataBuildingVertices, sysParams);
 
   /*
-   * ===================================================
-   * Generate candidate base station locations randomly.
-   * ===================================================
+   * =============================================
+   *   Collect all candidate relays in the area.
+   * =============================================
    */
-  std::vector<Point_t> roofTopRelays;
-  std::vector<Point_t> bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
-//  cout << to_string(roofTopRelays.size()) << endl;
+  std::vector<Point_t> allRelays = collectAllRelays(buildingSet);
+  std::vector<std::vector<int>> numRelaysInGrid;
+  countRelaysPerGrid(allRelays, numRelaysInGrid, sysParams);
+
   /*
-   * ==================================================
-   * Select base stations based on the grid constraint.
-   * ==================================================
+   * =======================================================
+   *   Generate candidate base station locations randomly.
+   * =======================================================
    */
-  std::vector<std::vector<int>> bsGridMap;
-  std::vector<std::vector<int>> bsLocation;
+  std::vector<Point_t> roofTopRelays;  // An Point_t vector to store all relays on the roof top.
+  std::vector<Point_t> bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
+
+  /*
+   * ======================================================
+   *   Select base stations based on the grid constraint.
+   * ======================================================
+   */
+  std::vector<std::vector<int>> bsGridMap;   // Stores the index of base station (i.e. 'i' in bsSet[i]) in each grid.
+  std::vector<std::vector<int>> bsLocation;  // Stores the indices of row and column of the grid where each base station sits.
   selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, sysParams);
 
   /*
@@ -101,12 +110,7 @@ int main() {
   treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
 
-  /*
-   * =========================================
-   * Collect all candidate relays in the area.
-   * =========================================
-   */
-  std::vector<Point_t> allRelays = collectAllRelays(buildingSet);
+
   /*
    * =======================================================================================
    * If roof top relays are in use, select roof top relays according to the grid constraint.
