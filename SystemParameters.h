@@ -41,6 +41,8 @@ public:
   const bool firstHopControl = false;
   const bool relaySharingControl = false;
   const bool interPathIntControl = true;
+  const bool bsFewRelaysControl = true;  // If the number of relays is smaller than the threshold, the bs is disabled.
+  const unsigned int minRelayNumInGrid = 5;  // The minimum number of relays in a grid to support the activation of a BS.
   double lowerBound_Gbps = 0;
   string simStartTime = "NULL";
 };

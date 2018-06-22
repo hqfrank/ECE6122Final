@@ -57,6 +57,9 @@ int main() {
                                    + "_" + std::to_string(sysParams.phyLinkDistMax_m)
                                    + "_" + std::to_string(sysParams.densityRelayOnBuilding)
                                    + "_" + sysParams.relayType + ".txt";
+  /* File to store the relay nodes. */
+  std::string dataRelays = "../Data/Relays/Data_Relays_" + std::to_string(sysParams.densityRelayOnBuilding)
+                           + "_" + sysParams.relayType + ".txt";
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
@@ -72,7 +75,14 @@ int main() {
    *   Collect all candidate relays in the area.
    * =============================================
    */
-  std::vector<Point_t> allRelays = collectAllRelays(buildingSet);
+  std::ifstream fileRelays(dataRelays);
+  std::vector<Point_t> allRelays;
+  if (fileRelays.good()){
+    // read the relays
+    readRelayInfoFromFile(allRelays, dataRelays);
+  } else {
+    allRelays = collectAllRelays(buildingSet, dataRelays);
+  }
   std::vector<std::vector<int>> numRelaysInGrid;
   countRelaysPerGrid(allRelays, numRelaysInGrid, sysParams);
 
@@ -91,7 +101,7 @@ int main() {
    */
   std::vector<std::vector<int>> bsGridMap;   // Stores the index of base station (i.e. 'i' in bsSet[i]) in each grid.
   std::vector<std::vector<int>> bsLocation;  // Stores the indices of row and column of the grid where each base station sits.
-  selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, sysParams);
+  selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, sysParams);
 
   /*
    * ==================================================================

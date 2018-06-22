@@ -560,7 +560,7 @@ std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buil
 }
 
 void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vector<int>>& bsGridMap,
-                              std::vector<std::vector<int>>& bsLocation,
+                              std::vector<std::vector<int>>& bsLocation, std::vector<std::vector<int>>& numRelaysInGrid,
                               SystemParameters& parameters){
   /* Number of grids. */
   auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
@@ -586,13 +586,17 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vect
     if (gridHasBS.at(gridIndexX*numGridAlongY + gridIndexY)){
       bsSet.erase(bsSet.begin() + i);
     } else {
-      gridHasBS.at(gridIndexX*numGridAlongY + gridIndexY) = true;
-      bsGridMap[gridIndexX][gridIndexY] = i;
-//      bsInGridLocal.at(gridIndexX*numGridAlongY + gridIndexY) = currentBS;
-//      StdDraw.point(currentBS.x, currentBS.y);
-      i++;
+      if (parameters.bsFewRelaysControl && numRelaysInGrid[gridIndexX][gridIndexY] < parameters.minRelayNumInGrid) {
+        // If too few relays are in this grid, the bs will be removed.
+        bsSet.erase(bsSet.begin() + i);
+      } else {
+        gridHasBS.at(gridIndexX*numGridAlongY + gridIndexY) = true;
+        bsGridMap[gridIndexX][gridIndexY] = i;
+        i++;
+      }
     }
   }
+
   cout << "(3) There are " + to_string(bsSet.size()) + " candidate base stations being selected." << endl;
   /* Write the selected base stations to file. */
   ofstream outFile;
@@ -790,13 +794,53 @@ void countRelaysPerGrid(std::vector<Point_t>& relays, std::vector<std::vector<in
   }
 }
 
-std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings){
+void readRelayInfoFromFile(std::vector<Point_t>& relays, const std::string& fileDataRelays){
+  std::ifstream fileIn(fileDataRelays);
+  std::string str;
+  while (std::getline(fileIn, str))
+  {
+    /* str stores the string version of a relay's coordination. */
+    size_t pos = 0;
+    std::string token;
+    std::vector<double> data;
+    while (true) {
+      pos = str.find(',');
+      if (pos != std::string::npos) {
+        token = str.substr(0, pos);
+        data.push_back(std::stod(token));
+        str = str.substr(pos + 1);
+      } else if (str.length() > 0) {
+        data.push_back(std::stod(str));
+        break;
+      }
+    }
+    assert(data.size() == 3);
+    Point_t relay(data[0], data[1], data[2]);
+    relays.push_back(relay);
+  }
+  cout << "(*) Connectivity information loaded! " << relays.size() << " relays are read." << endl;
+}
+
+std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, const std::string& fileDataRelays){
   std::vector<Point_t> allRelays;
   for (const Building_t& bldg : buildings){
     std::vector<Point_t> curRelays = bldg.getRelays();
     allRelays.insert(allRelays.begin(), curRelays.begin(), curRelays.end());
   }
-  cout << "(4) There are " + to_string(allRelays.size()) + " candidate relays on the surfaces of buildings." << endl;
+
+  /* Write the relays collected out into the file. */
+  std::ofstream fileOut;
+  fileOut.open(fileDataRelays, std::ios_base::app);
+  if (fileOut.is_open()){
+    cout << "Ready to write relays' information to file." << endl;
+  } else {
+    cout << "Fail to open the file where relays' information should be stored." << endl;
+  }
+  for (auto relay : allRelays) {
+    fileOut << relay.toStringData() << "\n";
+  }
+  fileOut.close();
+  cout << "(*) There are " + to_string(allRelays.size()) + " candidate relays generated on the surfaces of buildings." << endl;
   return allRelays;
 }
 
@@ -1035,6 +1079,7 @@ bool blockageTest(const std::vector<Building_t>& buildingSet, const Line_t& sd){
   return false;
 }
 
+
 void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborList, std::string dataRelayNeighbors){
   std::ifstream fileIn(dataRelayNeighbors);
   std::string str;
@@ -1056,6 +1101,7 @@ void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborLi
 
   cout << "Connectivity information loaded!" << endl;
 }
+
 
 std::vector<std::vector<Point_t>> generateBaseStationPairs(const std::vector<Point_t>& bsSet,
                                                            SystemParameters& parameters){
