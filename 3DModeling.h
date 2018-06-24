@@ -67,9 +67,11 @@ std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buil
 /* Select base stations based on the grid constraint. */
 void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vector<int>>& bsGridMap,
                               std::vector<std::vector<int>>& bsLocation,
-                              std::vector<std::vector<int>>& numRelaysInGrid, SystemParameters& parameters);
-/* Read all relays from file. */
-void readRelayInfoFromFile(std::vector<Point_t>& relays, const std::string& fileDataRelays);
+                              std::vector<std::vector<int>>& numRelaysInGrid,
+                              std::string& dataBSs, bool write, SystemParameters& parameters);
+
+/* Read node information from file. */
+void readNodeInfoFromFile(std::vector<Point_t>& nodes, const std::string& fileDataNodes, std::string& type);
 
 /* Collect all relays on the surfaces of buildings. */
 std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, const std::string& fileDataRelays);
@@ -81,7 +83,14 @@ void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& paramete
 void countRelaysPerGrid(std::vector<Point_t>& relays, std::vector<std::vector<int>>& numRelaysInGrid, SystemParameters& parameters);
 
 /* Explore the connectivity between each pair of nodes in the topology. */
-std::vector<std::vector<int>> exploreConnectivity(const std::vector<Point_t>& nodes, const std::vector<Building_t>& buildings, const std::string& fileRelayNeighbors);
+void exploreConnectivity(std::vector<std::vector<int>>& neighborList,
+                         const std::vector<Point_t>& nodes, const std::vector<Building_t>& buildings,
+                         const std::string& fileRelayNeighbors);
+
+/* Collect physical links within selected area. */
+void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::vector<std::vector<int>>& neighborList,
+                          const std::vector<Point_t>& nodes, const double xRange[2], const double yRange[2],
+                          const SystemParameters& parameters);
 
 /* Evaluate the line-of-sight connectivity between a point s and other nodes in the topology. */
 std::vector<int> searchNonBlockLink(const std::vector<Building_t>& buildings, const Point_t& s, const std::vector<Point_t>& nodes);

@@ -10,14 +10,14 @@
 
 class SystemParameters {
 public:
-  const int randomSeed = 10;
+  const int randomSeed = 100;
   const std::string relayType = "Surface";
   const double minHeightForRelay_m = 5.0;
   const double maxHeightForRelay_m = 200.0;
   const double minHeightForBS_m = 10.0; // Only deploy BSs on the rooftop of buildings with height between [min,max].
   const double maxHeightForBS_m = 50.0;
   const double groundLevel_m = 290.0;
-  const double densityRelayOnBuilding = 0.00010;
+  const double densityRelayOnBuilding = 0.00020;
   const double areaXRange_m[2] {-100, 1700};
   const double areaYRange_m[2] {-1700, 100};
   const double gridSize_m = 200.0;
@@ -41,7 +41,7 @@ public:
   const bool firstHopControl = false;
   const bool relaySharingControl = false;
   const bool interPathIntControl = true;
-  const bool bsFewRelaysControl = true;  // If the number of relays is smaller than the threshold, the bs is disabled.
+  const bool bsFewRelaysControl = false;  // If the number of relays is smaller than the threshold, the bs is disabled.
   const unsigned int minRelayNumInGrid = 5;  // The minimum number of relays in a grid to support the activation of a BS.
   double lowerBound_Gbps = 0;
   string simStartTime = "NULL";

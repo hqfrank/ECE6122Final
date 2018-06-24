@@ -553,15 +553,15 @@ std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buil
       // StdDraw.point(candiBS.x, candiBS.y);
     }
   }
-  cout << "(1) There are " + to_string(poolBS.size()) + " candidate base stations being generated." << endl;
-  cout << "(2) There are " + to_string(roofTopRelays.size()) + " candidate roof top relays being generated." << endl;
+  cout << "(*) There are " + to_string(poolBS.size()) + " candidate base stations being generated." << endl;
+  cout << "(*) There are " + to_string(roofTopRelays.size()) + " candidate roof top relays being generated." << endl;
 
   return poolBS;
 }
 
 void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vector<int>>& bsGridMap,
                               std::vector<std::vector<int>>& bsLocation, std::vector<std::vector<int>>& numRelaysInGrid,
-                              SystemParameters& parameters){
+                              std::string& dataBSs, bool write, SystemParameters& parameters){
   /* Number of grids. */
   auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
   auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
@@ -597,19 +597,20 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vect
     }
   }
 
-  cout << "(3) There are " + to_string(bsSet.size()) + " candidate base stations being selected." << endl;
+  cout << "(*) There are " + to_string(bsSet.size()) + " candidate base stations being selected." << endl;
   /* Write the selected base stations to file. */
-  ofstream outFile;
-  outFile.open("../Data/Base_Stations/bsSet_"+parameters.simStartTime+".txt", std::ios_base::app);
-  if (!outFile.is_open()) {
-    cerr << "Error!!!The file to store base stations is not open!!" << endl;
-    exit(errno);
+  if (write) {
+    ofstream outFile;
+    outFile.open(dataBSs, std::ios_base::app);
+    if (!outFile.is_open()) {
+      cerr << "Error!!!The file to store base stations is not open!!" << endl;
+      exit(errno);
+    }
+    for(auto bs : bsSet) {
+      outFile << bs.toStringData() << endl;
+    }
+    outFile.close();
   }
-  for(auto bs : bsSet) {
-    outFile << bs.toStringData() << endl;
-  }
-  outFile.close();
-
   /* Print the topology of the base stations. */
   std::vector<std::vector<int>> bsLocationTemp(bsSet.size(), std::vector<int>(2));
   cout << "===================== The topology of base stations ====================" << endl;
@@ -629,6 +630,7 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vect
     }
     cout << endl;
   }
+  cout << "------------------------------------------------------------------------" << endl;
   bsLocation = bsLocationTemp;
 }
 
@@ -788,37 +790,17 @@ void countRelaysPerGrid(std::vector<Point_t>& relays, std::vector<std::vector<in
   cout << "===================== The number of relays in every grid ====================" << endl;
   for (int j = 0; j < numGridAlongX; j++){
     for (int k = 0; k < numGridAlongY; k++) {
-      cout << numRelaysInGrid[j][k] << " relays\t";
+      if (numRelaysInGrid[j][k] == 0) {
+        cout << "NULL\t";
+      } else if (numRelaysInGrid[j][k] < 10) {
+        cout << "0" << numRelaysInGrid[j][k] << "Rs\t";
+      } else {
+        cout << numRelaysInGrid[j][k] << "Rs\t";
+      }
     }
     cout << endl;
   }
-}
-
-void readRelayInfoFromFile(std::vector<Point_t>& relays, const std::string& fileDataRelays){
-  std::ifstream fileIn(fileDataRelays);
-  std::string str;
-  while (std::getline(fileIn, str))
-  {
-    /* str stores the string version of a relay's coordination. */
-    size_t pos = 0;
-    std::string token;
-    std::vector<double> data;
-    while (true) {
-      pos = str.find(',');
-      if (pos != std::string::npos) {
-        token = str.substr(0, pos);
-        data.push_back(std::stod(token));
-        str = str.substr(pos + 1);
-      } else if (str.length() > 0) {
-        data.push_back(std::stod(str));
-        break;
-      }
-    }
-    assert(data.size() == 3);
-    Point_t relay(data[0], data[1], data[2]);
-    relays.push_back(relay);
-  }
-  cout << "(*) Connectivity information loaded! " << relays.size() << " relays are read." << endl;
+  cout << "-----------------------------------------------------------------------------" << endl;
 }
 
 std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, const std::string& fileDataRelays){
@@ -844,8 +826,37 @@ std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, 
   return allRelays;
 }
 
-std::vector<std::vector<int>> exploreConnectivity(const std::vector<Point_t>& nodes, const std::vector<Building_t>& buildings, const std::string& fileRelayNeighbors){
-  std::vector<std::vector<int>> neighborList;
+void readNodeInfoFromFile(std::vector<Point_t>& nodes, const std::string& fileDataNodes, std::string& type){
+  std::ifstream fileIn(fileDataNodes);
+  std::string str;
+  while (std::getline(fileIn, str))
+  {
+    /* str stores the string version of a node's coordination. */
+    size_t pos = 0;
+    std::string token;
+    std::vector<double> data;
+    while (true) {
+      pos = str.find(',');
+      if (pos != std::string::npos) {
+        token = str.substr(0, pos);
+        data.push_back(std::stod(token));
+        str = str.substr(pos + 1);
+      } else if (str.length() > 0) {
+        data.push_back(std::stod(str));
+        break;
+      }
+    }
+    assert(data.size() == 3);
+    Point_t node(data[0], data[1], data[2]);
+    nodes.push_back(node);
+  }
+  cout << "(*) Node information loaded! " << nodes.size() << " " << type << "s are read." << endl;
+}
+
+void exploreConnectivity(std::vector<std::vector<int>>& neighborList,
+                         const std::vector<Point_t>& nodes, const std::vector<Building_t>& buildings,
+                         const std::string& fileRelayNeighbors){
+  /* Configure the output file. */
   std::ofstream fileOut;
   fileOut.open(fileRelayNeighbors, std::ios_base::app);
   if (fileOut.is_open()){
@@ -853,20 +864,50 @@ std::vector<std::vector<int>> exploreConnectivity(const std::vector<Point_t>& no
   } else {
     cout << "Fail to open the file where neighbors information should be stored." << endl;
   }
-  for (unsigned int i = 0; i < nodes.size(); i++) {
+  /* Iterate through all nodes, find the neighbors of each node. */
+  for (int i = 0; i < nodes.size(); i++) {
     std::vector<int> curRelayNeighbors = searchNonBlockLink(buildings, (nodes.at(i)), nodes);
     neighborList.push_back(curRelayNeighbors);
     std::string outputToFile = "";
-    for (unsigned int j = 0; j < curRelayNeighbors.size(); ++j){
-      outputToFile += std::to_string(curRelayNeighbors.at(j)) + "\t";
+    for (auto neighbor : curRelayNeighbors){
+      outputToFile += std::to_string(neighbor) + "\t";
     }
     fileOut << outputToFile + "\n";
-    cout << "The No.\t" + std::to_string(i) + "\tnode has\t" + std::to_string(neighborList.at(i).size()) + "\tnon-block neighbors." << endl;
+    cout << "The No.\t" + std::to_string(i) + "\tnode has\t" + std::to_string(neighborList[i].size()) + "\tnon-block neighbors." << endl;
   }
   fileOut.close();
-  return neighborList;
 }
 
+void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::vector<std::vector<int>>& neighborList,
+                          const std::vector<Point_t>& nodes, const double xRange[2], const double yRange[2],
+                          const SystemParameters& parameters){
+  /* Iterate through all nodes. */
+  std::vector<std::vector<int>> phyLinkSet2;
+  int count = 0;
+  for (int i = 0; i < neighborList.size(); ++i) {
+    if (nodes[i].getX() < xRange[0] || nodes[i].getX() > xRange[1] || nodes[i].getY() < yRange[0] || nodes[i].getY() > yRange[1]) continue;
+    count++;
+    for (int j = 0; j < neighborList[i].size(); ++j) {
+      if (neighborList[i][j] <= i) continue;
+      if (nodes[neighborList[i][j]].getX() < xRange[0] || nodes[neighborList[i][j]].getX() > xRange[1]
+          || nodes[neighborList[i][j]].getY() < yRange[0] || nodes[neighborList[i][j]].getY() > yRange[1]) continue;
+      if (nodes[i].distanceTo(nodes[neighborList[i][j]]) > parameters.phyLinkDistMax_m) continue;
+      std::vector<int> curPhyLink;
+      curPhyLink.push_back(i);
+      curPhyLink.push_back(neighborList[i][j]);
+      phyLinkSet.push_back(curPhyLink);
+      std::vector<int> reverseLink;
+      reverseLink.push_back(neighborList[i][j]);
+      reverseLink.push_back(i);
+      phyLinkSet2.push_back(reverseLink);
+    }
+  }
+  phyLinkSet.insert(phyLinkSet.end(), phyLinkSet2.begin(), phyLinkSet2.end());
+  cout << "(*) There are " << phyLinkSet2.size() << " connections between " << count
+       << " nodes in the selected area." << endl;
+  cout << "    In total, there are " << phyLinkSet.size() << " physical links." << endl;
+
+}
 
 std::vector<int> searchNonBlockLink(const std::vector<Building_t>& buildings, const Point_t& s, const std::vector<Point_t>& nodes){
   std::vector<int> nonBlockNodes;
@@ -1099,7 +1140,7 @@ void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborLi
     }
   }
 
-  cout << "Connectivity information loaded!" << endl;
+  cout << "(*) Node connectivity information loaded!" << endl;
 }
 
 

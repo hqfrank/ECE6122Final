@@ -60,6 +60,16 @@ int main() {
   /* File to store the relay nodes. */
   std::string dataRelays = "../Data/Relays/Data_Relays_" + std::to_string(sysParams.densityRelayOnBuilding)
                            + "_" + sysParams.relayType + ".txt";
+  /* File to store the selected base stations. */
+  std::string dataBSs = "../Data/Base_Stations/Data_BSSet_" + std::to_string(sysParams.randomSeed)
+                        + "_" + std::to_string(sysParams.gridSize_m)
+                        + "_" + std::to_string(sysParams.minRelayNumInGrid) +".txt";
+  /* File to store the node neighboring information. */
+  std::string dataNodeNeighbors = "../Data/Node_Neighbors/Data_NodeNeighbors_" + std::to_string(sysParams.randomSeed)
+                                  + "_" + std::to_string(sysParams.densityRelayOnBuilding)
+                                  + "_" + sysParams.relayType
+                                  + + "_" + std::to_string(sysParams.gridSize_m)
+                                  + "_" + std::to_string(sysParams.minRelayNumInGrid) +".txt";
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
@@ -79,10 +89,12 @@ int main() {
   std::vector<Point_t> allRelays;
   if (fileRelays.good()){
     // read the relays
-    readRelayInfoFromFile(allRelays, dataRelays);
+    std::string type = "relay";
+    readNodeInfoFromFile(allRelays, dataRelays, type);
   } else {
     allRelays = collectAllRelays(buildingSet, dataRelays);
   }
+  int numRelays = allRelays.size();
   std::vector<std::vector<int>> numRelaysInGrid;
   countRelaysPerGrid(allRelays, numRelaysInGrid, sysParams);
 
@@ -92,34 +104,75 @@ int main() {
    * =======================================================
    */
   std::vector<Point_t> roofTopRelays;  // An Point_t vector to store all relays on the roof top.
-  std::vector<Point_t> bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
-
-  /*
-   * ======================================================
-   *   Select base stations based on the grid constraint.
-   * ======================================================
-   */
+  std::vector<Point_t> bsSet;
+  std::ifstream fileBSs(dataBSs);
+  if (fileBSs.good()){
+      // read the selected BSs
+      std::string type = "base station";
+      readNodeInfoFromFile(bsSet, dataBSs, type);
+    } else {
+      bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
+    }
+  /* Select base stations based on the grid. Each grid has at most 1 base station.  */
   std::vector<std::vector<int>> bsGridMap;   // Stores the index of base station (i.e. 'i' in bsSet[i]) in each grid.
   std::vector<std::vector<int>> bsLocation;  // Stores the indices of row and column of the grid where each base station sits.
-  selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, sysParams);
+  selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, dataBSs, !fileBSs.good(), sysParams);
+  int numBSs = bsSet.size();
+  std::vector<Point_t> allNodes = allRelays;
+  allNodes.insert(allNodes.end(), bsSet.begin(), bsSet.end());
+  cout << "(*) There are " << allNodes.size() << " wireless nodes in the area." << endl;
+
+  /*
+   * ===============================================================
+   *   Evaluate the connectivity between different wireless nodes.
+   * ===============================================================
+   */
+  std::ifstream fileConnect(dataNodeNeighbors);
+  std::vector<std::vector<int>> nodeNeighborList;
+  if (fileConnect.good()){
+    // read the relay neighborList
+    getRelayNeighborInfoFromFile(nodeNeighborList, dataNodeNeighbors);
+  } else {
+    exploreConnectivity(nodeNeighborList, allNodes, buildingSet, dataNodeNeighbors);
+  }
+
+  /*
+   * =======================================
+   *   Select the macro-cell base station.
+   * =======================================
+   */
+  int mBSPos[2] = {4,5};
+  cout << "The macro-cell base station is in grid row " << mBSPos[0] << ", column " << mBSPos[1] << endl;
+  /* Find the space diversity of macro cell base station. */
+  std::vector<int> maxSDNodeList;
+  int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
+                                           maxSDNodeList, nodeNeighborList, sysParams);
+  cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
+
+  /*
+   * ==================================================
+   *   Collect physical links in the interested area.
+   * ==================================================
+   */
+  std::vector<std::vector<int>> phyLinkSet;
+  double xRange[2] = {sysParams.areaXRange_m[0] + 4 * sysParams.gridSize_m, sysParams.areaXRange_m[0] + 7 * sysParams.gridSize_m};
+  double yRange[2] = {sysParams.areaYRange_m[0] + 3 * sysParams.gridSize_m, sysParams.areaYRange_m[0] + 6 * sysParams.gridSize_m};
+  collectPhysicalLinks(phyLinkSet, nodeNeighborList, allNodes, xRange, yRange, sysParams);
 
   /*
    * ==================================================================
    * Approximately evaluate the hops between any pair of base stations.
    * ==================================================================
    */
-  auto numBSs = bsSet.size();
-  std::vector<std::vector<double>> eHopMap;
-  evaluateEstimateHopNumbers(eHopMap, bsSet, eHops);
+//  std::vector<std::vector<double>> eHopMap;
+//  evaluateEstimateHopNumbers(eHopMap, bsSet, eHops);
   std::vector<std::vector<int>> nodeConnections(numBSs, std::vector<int>());
   std::vector<std::vector<int>> treeConnections;
   std::vector<std::vector<Point_t>> bsPairs;
-  int mBSPos[2] = {4,5};
 //  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
 //  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
   treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
-
 
   /*
    * =======================================================================================
@@ -134,13 +187,13 @@ int main() {
    * Check if connectivity information exists, if not, generate connectivity information; otherwise, read existed info.
    * ==================================================================================================================
    */
-  std::ifstream fileConnect(dataRelayNeighbors);
+  std::ifstream fileConnects(dataRelayNeighbors);
   std::vector<std::vector<int>> relayNeighborList;
-  if (fileConnect.good()){
+  if (fileConnects.good()){
     // read the relay neighborList
     getRelayNeighborInfoFromFile(relayNeighborList, dataRelayNeighbors);
   } else {
-    relayNeighborList = exploreConnectivity(allRelays, buildingSet, dataRelayNeighbors);
+     exploreConnectivity(relayNeighborList, allRelays, buildingSet, dataRelayNeighbors);
   }
 
   /*
@@ -148,17 +201,14 @@ int main() {
    * Add source and destination bss to "nodes" and "neighbor list".
    * ==============================================================
    */
-  std::vector<std::vector<int>> nodeNeighborList = relayNeighborList;
-  std::vector<Point_t> allNodes = allRelays;
+  nodeNeighborList = relayNeighborList;
+  allNodes = allRelays;
   for (auto bs : bsSet){
     nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, bs, allNodes, buildingSet);
     allNodes.push_back(bs);
   }
 
-  std::vector<int> maxSDNodeList;
-  int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
-                                           maxSDNodeList, nodeNeighborList, sysParams);
-  cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
+
 
 //  for (int i = allRelays.size(); i < allNodes.size(); i++) {
 //    int sBSSD = evaluateSpaceDiversityAtNode(i, allNodes,
@@ -173,7 +223,7 @@ int main() {
    * For each logical link in the tree/mesh, run the path selection alogrithm.
    * =========================================================================
    */
-  int numRelays = allRelays.size();
+
   int extraHopNum = 0;
   /*
    * Assume there are at most 9999 nodes in the network, thus, source node id * 10000 + destination node id
