@@ -70,6 +70,13 @@ int main() {
                                   + "_" + sysParams.relayType
                                   + + "_" + std::to_string(sysParams.gridSize_m)
                                   + "_" + std::to_string(sysParams.minRelayNumInGrid) +".txt";
+  /* File to store the consecutive link pairs info. */
+  std::string dataConsecLinkPairs = "../Data/Consecutive_Link_Pairs/Data_ConsecLinkPairs_"
+                                    + std::to_string(sysParams.randomSeed)
+                                    + "_" + std::to_string(sysParams.densityRelayOnBuilding)
+                                    + "_" + sysParams.relayType
+                                    + "_" + std::to_string(sysParams.gridSize_m)
+                                    + "_" + std::to_string(sysParams.minRelayNumInGrid) +".txt";
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
@@ -160,9 +167,17 @@ int main() {
   collectPhysicalLinks(phyLinkSet, nodeNeighborList, allNodes, xRange, yRange, sysParams);
 
   /*
-   * ==================================================================
-   * Approximately evaluate the hops between any pair of base stations.
-   * ==================================================================
+   * ===================================================================
+   *   Collect consecutive link pairs upon selected physical link set.
+   * ===================================================================
+   */
+  std::vector<int> consecLinkPairSet;
+  collectConsecutiveLinkPairs(consecLinkPairSet, phyLinkSet, dataConsecLinkPairs);
+
+  /*
+   * ==========================
+   *   Generate mesh topology
+   * ==========================
    */
 //  std::vector<std::vector<double>> eHopMap;
 //  evaluateEstimateHopNumbers(eHopMap, bsSet, eHops);
@@ -173,6 +188,16 @@ int main() {
 //  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
   treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
+
+  /*
+   * ====================================================
+   *   Collect first/last hop candidate physical links.
+   * ====================================================
+   */
+  std::vector<std::vector<int>> firstHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
+  std::vector<std::vector<int>> lastHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
+  collectFirstLastHopCandidatePhyLinks(firstHopSet, lastHopSet, phyLinkSet, treeConnections);
+
 
   /*
    * =======================================================================================

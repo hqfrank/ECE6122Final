@@ -92,6 +92,18 @@ void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::
                           const std::vector<Point_t>& nodes, const double xRange[2], const double yRange[2],
                           const SystemParameters& parameters);
 
+/* Collect consective link pairs upon selected physical links. */
+void collectConsecutiveLinkPairs(std::vector<int>& consecLinkPairSet,
+                                 const std::vector<std::vector<int>>& phyLinkSet,
+                                 std::string& dataConsecLinkPairs);
+
+/* Collect first/last hop physical links of each connection. */
+void collectFirstLastHopCandidatePhyLinks(std::vector<std::vector<int>>& firstHopSet,
+                                          std::vector<std::vector<int>>& lastHopSet,
+                                          const std::vector<std::vector<int>>& phyLinkSet,
+                                          const std::vector<std::vector<int>>& connectionList,
+                                          int& numRelays);
+
 /* Evaluate the line-of-sight connectivity between a point s and other nodes in the topology. */
 std::vector<int> searchNonBlockLink(const std::vector<Building_t>& buildings, const Point_t& s, const std::vector<Point_t>& nodes);
 
@@ -165,6 +177,10 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
 
 void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std::vector<int>& R, std::vector<int> P,
                           std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques, int& maxDegree);
+
+bool checkTwoPhysicalLinksInterference(const std::vector<int>& phyLink1, const std::vector<int>& phyLink2,
+                                       int& numRelays, const std::vector<Point_t>& nodes,
+                                       const SystemParameters& parameters);
 
 ///* The algorithm proposed in MASS paper. */
 //std::vector<std::vector<int>> findPathDecodeForward(const std::vector<std::vector<int>>& nodeNeighborList,

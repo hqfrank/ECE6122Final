@@ -23,6 +23,7 @@ void printConnections(const std::vector<std::vector<int>>& nodeConnections){
     cout << endl;
     count++;
   }
+  cout << "----------------------------------------------------" << endl;
 }
 
 /*
@@ -907,6 +908,63 @@ void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::
        << " nodes in the selected area." << endl;
   cout << "    In total, there are " << phyLinkSet.size() << " physical links." << endl;
 
+}
+
+void collectConsecutiveLinkPairs(std::vector<int>& consecLinkPairSet,
+                                 const std::vector<std::vector<int>>& phyLinkSet,
+                                 std::string& dataConsecLinkPairs) {
+  /* Configure the output file. */
+//  std::ofstream fileOut;
+//  fileOut.open(dataConsecLinkPairs, std::ios_base::app);
+//  if (fileOut.is_open()){
+//    cout << "Ready to write consecutive link pairs' information to file." << endl;
+//  } else {
+//    cout << "Fail to open the file where consective link pairs' information should be stored." << endl;
+//  }
+
+  int indicator = 0;
+  int count = 0;
+  for (int i = 0; i < phyLinkSet.size(); ++i) {
+    for (int j = 0; j < phyLinkSet.size(); ++j) {
+      if (phyLinkSet[i][1] == phyLinkSet[j][0] && phyLinkSet[i][0] != phyLinkSet[j][1]) {
+        indicator = 1;
+        count++;
+      } else {
+        indicator = 0;
+      }
+      consecLinkPairSet.push_back(indicator);
+//      fileOut << indicator << "\t";
+    }
+//    fileOut << "\n";
+  }
+
+  cout << "(*) In total, there are " << count << " pairs of consecutive link pairs." << endl;
+
+//  fileOut.close();
+
+}
+
+void collectFirstLastHopCandidatePhyLinks(std::vector<std::vector<int>>& firstHopSet,
+                                          std::vector<std::vector<int>>& lastHopSet,
+                                          const std::vector<std::vector<int>>& phyLinkSet,
+                                          const std::vector<std::vector<int>>& connectionList,
+                                          int& numRelays) {
+  for (int i = 0; i < connectionList.size(); i++) {
+    int srcId = connectionList[i][0] + numRelays;
+    int dstId = connectionList[i][1] + numRelays;
+    for (int j = 0; j < phyLinkSet.size(); j++) {
+      if (phyLinkSet[j][0] == srcId) {
+        firstHopSet[i][j] = 1;
+      } else {
+        firstHopSet[i][j] = 0;
+      }
+      if (phyLinkSet[j][1] == dstId) {
+        lastHopSet[i][j] = 1;
+      } else {
+        lastHopSet[i][j] = 0;
+      }
+    }
+  }
 }
 
 std::vector<int> searchNonBlockLink(const std::vector<Building_t>& buildings, const Point_t& s, const std::vector<Point_t>& nodes){
@@ -2154,5 +2212,75 @@ void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std:
       /* X := X ⋃ {v} */
       X.push_back(v);
     }
+  }
+}
+
+bool checkTwoPhysicalLinksInterference(const std::vector<int>& phyLink1, const std::vector<int>& phyLink2,
+                                       int& numRelays, const std::vector<Point_t>& nodes,
+                                       const SystemParameters& parameters){
+  /*
+   * Check whether there are two nodes same to each other.
+   * Since any physical link is from a src to a dst, and src != dst,
+   * thus, it would only be possible that s1 == s2, s1 == d2, d1 == s2, or d1 == d2.
+   */
+  int s1 = phyLink1[0];  // phyLink stores the node id of src and dst
+  int d1 = phyLink1[1];
+  int s2 = phyLink2[0];
+  int d2 = phyLink2[1];
+  Vector_t s1d1(nodes[s1], nodes[d1]);
+  Vector_t s2d2(nodes[s2], nodes[d2]);
+  Vector_t s2d1(nodes[s2], nodes[d1]);
+  Vector_t s1d2(nodes[s1], nodes[d2]);
+
+  if (s1 == s2) {
+    /* d1 != d2 */
+    /* If angle d1sd2 >= isolation angle, there is no interference. */
+    double a_d1sd2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
+    if (a_d1sd2 >= parameters.antennaIsoSpan_phi)
+      return false;
+    else
+      return true;
+  }
+
+  if (d1 == d2) {
+    /* s1 != s2 */
+    double a_s1ds2 = acos(s1d1.dot(s2d2)/s1d1.mod()/s2d2.mod());
+    if (a_s1ds2 >= parameters.antennaIsoSpan_phi)
+      return false;
+    else
+      return true;
+  }
+
+  if (s1 == d2) {
+    double a_s2s1d1 = acos(-1 * s2d2.dot(s1d1)/s2d2.mod()/s1d1.mod());
+    double a_s2d1s1 = acos(s2d1.dot(s1d1)/s2d1.mod()/s1d1.mod());
+    double a_d1s2d2 = acos(s2d2.dot(s2d1)/s2d2.mod()/s2d1.mod());
+    if (a_s2d1s1 < parameters.antennaBeamWidth_phi/2 || a_d1s2d2 < parameters.antennaBeamWidth_phi/2
+        || a_s2s1d1 < parameters.antennaBeamWidth_phi)
+      return true;
+    else
+      return false;
+  }
+
+  if (s2 == d1) {
+    double a_s1s2d2 = acos(-1 * s2d2.dot(s1d1) / s2d2.mod() / s1d1.mod());
+    double a_d2s1d1 = acos(s1d2.dot(s1d1) / s1d2.mod() / s1d1.mod());
+    double a_s1d2s2 = acos(s1d2.dot(s2d2) / s1d2.mod() / s2d2.mod());
+    if (a_d2s1d1 < parameters.antennaBeamWidth_phi / 2 || a_s1d2s2 < parameters.antennaBeamWidth_phi / 2
+        || a_s1s2d2 < parameters.antennaBeamWidth_phi)
+      return true;
+    else
+      return false;
+  }
+
+  double a_s1d1s2 = acos(s1d1.dot(s2d1)/s1d1.mod()/s2d1.mod());
+  double a_d1s2d2 = acos(s2d1.dot(s2d2)/s2d1.mod()/s2d2.mod());
+  double a_s1d2s2 = acos(s1d2.dot(s2d2)/s1d2.mod()/s2d2.mod());
+  double a_d1s1d2 = acos(s1d1.dot(s1d2)/s1d1.mod()/s1d2.mod());
+  if (a_s1d1s2 < parameters.antennaBeamWidth_phi/2 || a_d1s2d2 < parameters.antennaBeamWidth_phi/2
+      || a_s1d2s2 < parameters.antennaBeamWidth_phi/2 || a_d1s1d2 < parameters.antennaBeamWidth_phi/2) {
+    return true;
+  } else {
+    return false;
   }
 }
