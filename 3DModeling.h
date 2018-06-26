@@ -95,7 +95,7 @@ void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::
 /* Collect consective link pairs upon selected physical links. */
 void collectConsecutiveLinkPairs(std::vector<int>& consecLinkPairSet,
                                  const std::vector<std::vector<int>>& phyLinkSet,
-                                 std::string& dataConsecLinkPairs);
+                                 std::string& dataConsecLinkPairs, bool& write);
 
 /* Collect first/last hop physical links of each connection. */
 void collectFirstLastHopCandidatePhyLinks(std::vector<std::vector<int>>& firstHopSet,

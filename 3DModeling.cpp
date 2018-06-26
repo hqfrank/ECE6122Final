@@ -912,15 +912,20 @@ void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::
 
 void collectConsecutiveLinkPairs(std::vector<int>& consecLinkPairSet,
                                  const std::vector<std::vector<int>>& phyLinkSet,
-                                 std::string& dataConsecLinkPairs) {
+                                 std::string& dataConsecLinkPairs, bool& write) {
   /* Configure the output file. */
-//  std::ofstream fileOut;
-//  fileOut.open(dataConsecLinkPairs, std::ios_base::app);
-//  if (fileOut.is_open()){
-//    cout << "Ready to write consecutive link pairs' information to file." << endl;
-//  } else {
-//    cout << "Fail to open the file where consective link pairs' information should be stored." << endl;
-//  }
+  std::ofstream fileOut;
+  fileOut.open(dataConsecLinkPairs, std::ios_base::app);
+  if (write) {
+    if (fileOut.is_open()){
+      cout << "Ready to write consecutive link pairs' information to file." << endl;
+    } else {
+      cout << "Fail to open the file where consective link pairs' information should be stored." << endl;
+    }
+  } else {
+    cout << "(*) Consecutive link pairs' information exists. No need to write to file." << endl;
+  }
+
 
   int indicator = 0;
   int count = 0;
@@ -933,15 +938,18 @@ void collectConsecutiveLinkPairs(std::vector<int>& consecLinkPairSet,
         indicator = 0;
       }
       consecLinkPairSet.push_back(indicator);
-//      fileOut << indicator << "\t";
+      if (write) {
+        fileOut << indicator << "\t";
+      }
     }
-//    fileOut << "\n";
+    if (write) {
+      fileOut << "\n";
+    }
   }
 
   cout << "(*) In total, there are " << count << " pairs of consecutive link pairs." << endl;
 
-//  fileOut.close();
-
+  fileOut.close();
 }
 
 void collectFirstLastHopCandidatePhyLinks(std::vector<std::vector<int>>& firstHopSet,
