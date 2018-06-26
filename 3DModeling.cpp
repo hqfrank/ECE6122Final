@@ -494,7 +494,7 @@ std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::
     double lwhbg[] {length_m, width_m, topHeight_m, baseLevel_m + parameters.minHeightForRelay_m, parameters.groundLevel_m};
     double orientation_rad = (std::stod(data.at(i+6)))/180.0*M_PI;
     /* Generate each building object. */
-    Building_t newBuilding(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m, parameters.densityRelayOnBuilding, parameters.randomSeed);
+    Building_t newBuilding(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m, parameters.densityRelayOnBuilding, buildings.size());
     buildings.push_back(newBuilding);
     fileOut << (buildings.at(buildings.size()-1).toStringData()+"\n");
 //    cout << buildings.at(buildings.size()-1)->toStringData() << endl;
