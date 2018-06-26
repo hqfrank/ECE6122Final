@@ -182,6 +182,10 @@ bool checkTwoPhysicalLinksInterference(const std::vector<int>& phyLink1, const s
                                        int& numRelays, const std::vector<Point_t>& nodes,
                                        const SystemParameters& parameters);
 
+void collectMutualInterferenceInfo(std::vector<std::vector<int>>& mutualInterferenceIndicator,
+                                   const std::vector<std::vector<int>>& phyLinkSet, int& numRelays,
+                                   const std::vector<Point_t>& nodes, const SystemParameters& parameters);
+
 ///* The algorithm proposed in MASS paper. */
 //std::vector<std::vector<int>> findPathDecodeForward(const std::vector<std::vector<int>>& nodeNeighborList,
 //                                                    const std::vector<Point_t>& nodes, int addHop,

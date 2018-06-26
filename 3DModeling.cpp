@@ -1248,149 +1248,6 @@ std::vector<std::vector<int>> addNodeToConnectivityList(const std::vector<std::v
   return currentList;
 }
 
-//std::vector<std::vector<int>> findPathDecodeForward(const std::vector<std::vector<int>>& nodeNeighborList,
-//                                                    const std::vector<Point_t>& nodes, int addHop,
-//                                                    SystemParameters& parameters){
-//  /*
-//   * Get source and destination.
-//   */
-//  int numNodes = nodes.size();
-//  int srcIndex = numNodes - 2;
-//  int dstIndex = numNodes - 1;
-//  Point_t src = nodes[srcIndex];
-//  Point_t dst = nodes[dstIndex];
-//
-//  /*
-//   * Initialization: allPaths store: shortest hop optimal path; plus 1 optimal path; ...
-//   * in total there are "addHop + 1" paths, but one more path will be added if shortest path is LoS path
-//   */
-//  std::vector<std::vector<int>> allPaths; // to store all final optimal paths with different number of hops
-//  parameters.lowerBound_Gbps = 0; // Reset the lower bound of the path throughput as 0.
-//
-//  /*
-//   * Find a path with the minimum number of hops. Using Dijkstra algorithm with type "hop"
-//   */
-//  std::string pathFileDijkstra = "../Data/Paths/Dijkstra.txt";
-//  std::vector<int> pathDijkstraHop = Dijkstra(nodeNeighborList, nodes, pathFileDijkstra, "hop");
-//  if (pathDijkstraHop.empty()){
-//    cout << "Warning!!! There is no path from current source to destination!!\n";
-//    return allPaths;  // the return value is also null
-//  }
-//  cout << "The minimum number of hops path has " + std::to_string(pathDijkstraHop.size()-1) + " hops." << endl;
-//
-//  /*
-//   * Calculate the current end-to-end throughput.
-//   */
-//  double pathThroughput_Gbps = 40.0;  // Even the shortest link cannot exceed 35.6 Gbps throughput due to upper limit on SNR
-//  int minHop = pathDijkstraHop.size() - 1;
-//  if (minHop == 1) {
-//    // Special case: LoS path exists
-//    allPaths.push_back(pathDijkstraHop);  // the LoS path is added to allPaths.
-//    minHop = 2; // In the later search, directly start to search path with 2 hops.
-//    /*
-//     * Do not update the parameters.lowerBound_Gbps, because the los path usually has very high throughput due to no primary constraint.
-//     */
-//  } else {
-//    // At least 2 hops in the path with smallest number of hops
-//    // Update the current path throughput.
-//    for (int i = 0; i < minHop - 1; ++i) {
-//      // current hop is i to i+1
-//      // next hop is i+1 to i+2
-//      double linkLengthCurrent_m = nodes[pathDijkstraHop.at(i)].distanceTo(nodes[pathDijkstraHop.at(i+1)]);
-//      double linkLengthNext_m = nodes[pathDijkstraHop.at(i+1)].distanceTo(nodes[pathDijkstraHop.at(i+2)]);
-//      double capacityCurrent_Gbps = calculateLinkCapacity_Gbps(linkLengthCurrent_m, parameters);
-//      double capacityNext_Gbps = calculateLinkCapacity_Gbps(linkLengthNext_m, parameters);
-//      double throughputCurrent_Gbps = capacityCurrent_Gbps * capacityNext_Gbps / (capacityCurrent_Gbps + capacityNext_Gbps);
-//      // A path's throughput is the smallest throughput of a pair of consecutive links
-//      if (throughputCurrent_Gbps < pathThroughput_Gbps){
-//        pathThroughput_Gbps = throughputCurrent_Gbps;
-//      }
-//    }
-//    parameters.lowerBound_Gbps = pathThroughput_Gbps; // As long as a path is found, update the lowerBound_Gbps
-//  }
-//
-//  if (pathThroughput_Gbps >= 20.0 && pathThroughput_Gbps != 40.0) {
-//    cerr << "Warning!!! There is something wrong with the calculation on capacity.\n";
-//    exit(errno);
-//  }
-//
-//  /* Iterate the path find process "addHop" times to obtain the path with different lengths. */
-//  std::chrono::microseconds curMs = std::chrono::duration_cast< std::chrono::milliseconds >(
-//    std::chrono::system_clock::now().time_since_epoch()
-//  );
-//  std::string curTime = std::to_string(curMs.count()/1000);
-//  std::string pathFileDF = "../Data/Paths/" + curTime + "DF.txt";
-//  std::ofstream fileOutDF;
-//  fileOutDF.open(pathFileDF, std::ios_base::app);
-//  // do not allow the number of hops to exceed 10 hops.
-//  for (int i = 0; i <= addHop && i <= parameters.hopLimit - minHop; ++i) {
-//    int maxHop = minHop + i;
-//    cout << "============ " + std::to_string(maxHop) + " hop case ============\n";
-//    // Find the path with no more than maxHop hops which has the optimal throughput.
-//    std::vector<int> path = findPathDecodeForwardMaxHop(nodeNeighborList, nodes, maxHop, parameters);
-//    if (path.empty()){
-//      cout << "Warning!!! There is no path with no more than " + std::to_string(maxHop) + " hops\n";
-//      addHop++;
-//    } else {
-//      allPaths.push_back(path);   // allPaths may contain null path.
-//      for (int j : path){
-//        fileOutDF << nodes.at(j).toStringData() << "\n";
-//      }
-//    }
-//  }
-//  fileOutDF.close();
-//
-//  return allPaths;
-//}
-
-//std::vector<int> findPathDecodeForwardMaxHop(const std::vector<std::vector<int>>& nodeNeighborList,
-//                                             const std::vector<Point_t>& nodes, int maxHop,
-//                                             SystemParameters& parameters){
-//  /*
-//   * Get source and destination.
-//  */
-//  int numNodes = nodes.size();
-//  int srcIndex = numNodes - 2;
-//  int dstIndex = numNodes - 1;
-//  Point_t src = nodes[srcIndex];
-//  Point_t dst = nodes[dstIndex];
-//
-//  /*
-//   * Initialization: path is used to store the final result.
-//   */
-//  std::vector<int> pathMaxHop;
-//  double preHopCap_Gbps = 40.0; // At the very beginning, there is no previous hop, so the preHopCap_Gbps is set as a value which cannot be achieved.
-//  std::vector<std::vector<int>> pathList = findNextHopNode(nodeNeighborList, nodes, maxHop, parameters, srcIndex, 0, 40.0, 40.0);
-//  if (!pathList.empty()){
-//    int maxThroughtput = 0;
-//    int indexMax = 0;
-//    for (int i = 0; i < pathList.size(); ++i) {
-//      /* When more than one hop is needed! */
-//      if (maxHop > 1 && pathList.at(i).size() == 2) continue;
-//      if (pathList.at(i).at(0) > maxThroughtput){
-//        // System.out.println("Find the optimal path under the maximum hop limit.");
-//        maxThroughtput = pathList.at(i).at(0);
-//        indexMax = i;
-//      }
-//    }
-//    if (pathList.size() > 1 && maxThroughtput == 0){
-//      cerr << "Error!!! No path has above 0 throughput!!\n";
-//      exit(errno);
-//    } else {
-//      pathMaxHop.push_back(srcIndex);
-//      for (int j = pathList.at(indexMax).size()-1; j >= 1; --j){
-//        pathMaxHop.push_back(pathList.at(indexMax).at(j));
-//      }
-//    }
-//    if (pathMaxHop.empty()){
-//      cerr << "Error!!! Do not find the best path.\n";
-//      return pathMaxHop;
-//    }
-//  }
-//
-//  return pathMaxHop;
-//}
-
 
 void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& nodes,
                                    const std::vector<std::vector<int>>& nodeNeighborList,
@@ -1581,99 +1438,6 @@ bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId,
   return false;
 }
 
-//std::vector<std::vector<int>> findNextHopNode(const std::vector<std::vector<int>>& nodeNeighborList,
-//                                              const std::vector<Point_t>& nodes, int maxHop, SystemParameters& parameters,
-//                                              int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput){
-//  // int preNodeIndex, int preHopNum, double preHopCap, double pathThroughput
-//  double prePathThroughput = pathThroughput;
-//  std::vector<std::vector<int>> validPaths;
-//  /* The destination node is always the last node in the "nodes" vector. */
-//  Point_t dst = nodes[nodes.size() - 1];
-//  /* Update the current hop number. The searching process starts from hop 0 at src. */
-//  int curHopNum = preHopNum + 1;
-//  /*
-//   * If current hop exceeds the maximum hop number allowed, return a null path.
-//   * When the returned path vector is empty, it means no path has been found.
-//   */
-//  if (curHopNum > maxHop) {
-//    return validPaths;
-//  } else {
-//    /*
-//     * Here, the current hop number is below hop number upper bound.
-//     * It also implies that the node previously selected is not the destination.
-//     * The following assertion make sure that the searching ends at the destination.
-//     */
-//    assert(preNodeIndex != (nodes.size() - 1));
-//    /*
-//     * Get candidate nodes of this hop, which are the neighboring nodes of the previous node.
-//     */
-//    Point_t preNode = nodes[preNodeIndex];  // the previous node
-//    std::vector<int> candidates = nodeNeighborList[preNodeIndex]; // The indices of all neighbors of the previous node
-//    /*
-//     * Iterates each candidate node for the next node to be inserted into the path.
-//     */
-//    for (int i = 0; i < candidates.size(); ++i){
-//      Point_t curNode = nodes[candidates[i]]; // "candidates" only stores indices of neighboring nodes.
-//      double linkLength_m = preNode.distanceTo(curNode);
-//      double distToDst_m = curNode.distanceTo(dst);
-//      /* Test the link length, which should be smaller than the threshold. */
-//      if (linkLength_m > parameters.phyLinkDistMax_m) continue;
-//      /* Control the expansion of the route. */
-//      if (candidates.at(i) != (nodes.size() - 1) && distToDst_m > parameters.phyLinkDistMax_m * (maxHop - curHopNum)) continue;
-//      /* Calculate the current throughput of the consecutive link pair, when the candidate neighbor is selected. */
-//      double curHopCap = calculateLinkCapacity_Gbps(linkLength_m, parameters);
-//      double curThroughput = preHopCap * curHopCap / (preHopCap + curHopCap);
-//      /* The throughput of the consecutive link pair should be larger than the lower bound. */
-//      if (curThroughput < parameters.lowerBound_Gbps) continue;
-//      if (pathThroughput < parameters.lowerBound_Gbps) continue;
-//      /* Update the current path throughput when this node is selected. */
-//      double curPathThroughput = prePathThroughput;
-//      if (curThroughput < curPathThroughput) {
-//        curPathThroughput = curThroughput;
-//      }
-//      if (candidates.at(i) == (nodes.size() -1)){
-//        /* The currently selected node is the destination node. */
-//        std::vector<int> validSinglePath; // define a vector to store the found single path.
-//        /*
-//         * Push back the path throughput into the path vector as the first element.
-//         * If the path is LoS, the path throughput should be curHopCap.
-//         * Otherwise, the path throughput should be curPathThroughput.
-//         */
-//        if (curHopNum == 1) {
-//          /* The path is a line of sight single hop path. */
-//          validSinglePath.push_back((int) (curHopCap * 10000));
-//        } else {
-//          validSinglePath.push_back((int) (curPathThroughput * 10000));
-//          /* Only update the lower bound of the path throughput when there is no LoS path. */
-//          parameters.lowerBound_Gbps = curPathThroughput;
-//          cout << "The lower bound of the throughput in this search becomes " + std::to_string(curPathThroughput) + " Gbps.\n";
-//        }
-//        /* Push back the current node which is also the destination node into the path vector. */
-//        validSinglePath.push_back(candidates[i]);
-//        /* Push back the current path to the path list. */
-//        validPaths.push_back(validSinglePath);
-//      } else {
-//        /*
-//         * Current selected node is not the destination node. The searching process continues.
-//         */
-//        std::vector<std::vector<int>> pathList = findNextHopNode(nodeNeighborList, nodes, maxHop, parameters, candidates.at(i), curHopNum, curHopCap, curPathThroughput);
-//        if (pathList.empty()) {
-//          // do nothing, because no path has been found.
-//        } else {
-//          for (auto path0 : pathList){
-//            /* Only return the paths which do not have duplicated nodes. */
-//            if (std::find(path0.begin(), path0.end(), candidates[i]) == path0.end() && candidates[i] != nodes.size()-2){
-//              path0.push_back(candidates.at(i));
-//              validPaths.push_back(path0);
-//            }
-//          }
-//        }
-//      }
-//    }
-//    // Updated all paths found in validPaths
-//    return validPaths;
-//  }
-//}
 
 /*
  * Dijkstra algorithm.
@@ -2283,4 +2047,24 @@ bool checkTwoPhysicalLinksInterference(const std::vector<int>& phyLink1, const s
   } else {
     return false;
   }
+}
+
+void collectMutualInterferenceInfo(std::vector<std::vector<int>>& mutualInterferenceIndicator,
+                                   const std::vector<std::vector<int>>& phyLinkSet, int& numRelays,
+                                   const std::vector<Point_t>& nodes, const SystemParameters& parameters){
+    int numPhyLinks = phyLinkSet.size();
+    for (int i = 0; i < numPhyLinks; ++i) {
+        for (int j = 0; j < numPhyLinks; ++j) {
+            if (i == j) {
+                mutualInterferenceIndicator[i][j] = 1;  // A link interfered with itself
+            } else {
+                bool result = checkTwoPhysicalLinksInterference(phyLinkSet[i], phyLinkSet[j], numRelays, nodes, parameters);
+                if (result) {
+                    mutualInterferenceIndicator[i][j] = 1;
+                } else {
+                    mutualInterferenceIndicator[i][j] = 0;
+                }
+            }
+        }
+    }
 }
