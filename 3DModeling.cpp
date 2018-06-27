@@ -740,6 +740,20 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
   cout << "The number of connected BS is " << selectedBS.size() << endl;
 }
 
+void writeTopologyToFile(std::string& dataTopology, const std::vector<std::vector<int>>& connections, int& numRelays) {
+  ofstream outFile;
+  outFile.open(dataTopology, std::ios_base::app);
+  if (!outFile.is_open()) {
+    cout << "(E) Failed to open the file where topology information should be stored!" << endl;
+  } else {
+    cout << "(*) Ready to write the topology information into file." << endl;
+    for (auto connection : connections) {
+      outFile << connection[0] + numRelays << "\t" << connection[1] + numRelays << "\n";
+    }
+  }
+  outFile.close();
+}
+
 void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters){
   /* Number of grids. */
   auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
@@ -956,7 +970,11 @@ void collectFirstLastHopCandidatePhyLinks(std::vector<std::vector<int>>& firstHo
                                           std::vector<std::vector<int>>& lastHopSet,
                                           const std::vector<std::vector<int>>& phyLinkSet,
                                           const std::vector<std::vector<int>>& connectionList,
-                                          int& numRelays) {
+                                          int& numRelays, bool& write, std::string& dataFirstHop,
+                                          std::string& dataLastHop) {
+  std::ofstream outFileFirstHop, outFileLastHop;
+  outFileFirstHop.open(dataFirstHop, std::ios_base::app);
+  outFileLastHop.open(dataLastHop, std::ios_base::app);
   for (int i = 0; i < connectionList.size(); i++) {
     int srcId = connectionList[i][0] + numRelays;
     int dstId = connectionList[i][1] + numRelays;
@@ -971,8 +989,18 @@ void collectFirstLastHopCandidatePhyLinks(std::vector<std::vector<int>>& firstHo
       } else {
         lastHopSet[i][j] = 0;
       }
+      if (write) {
+        outFileFirstHop << firstHopSet[i][j] << "\t";
+        outFileLastHop << lastHopSet[i][j] << "\t";
+      }
+    }
+    if (write) {
+      outFileFirstHop << "\n";
+      outFileLastHop << "\n";
     }
   }
+  outFileFirstHop.close();
+  outFileLastHop.close();
 }
 
 std::vector<int> searchNonBlockLink(const std::vector<Building_t>& buildings, const Point_t& s, const std::vector<Point_t>& nodes){
@@ -2059,7 +2087,15 @@ bool checkTwoPhysicalLinksInterference(const std::vector<int>& phyLink1, const s
 
 void collectMutualInterferenceInfo(std::vector<std::vector<int>>& mutualInterferenceIndicator,
                                    const std::vector<std::vector<int>>& phyLinkSet, int& numRelays,
-                                   const std::vector<Point_t>& nodes, const SystemParameters& parameters){
+                                   const std::vector<Point_t>& nodes, const SystemParameters& parameters,
+                                   std::string& dataMutualInterference, bool& write){
+    std::ofstream outFile;
+    outFile.open(dataMutualInterference, std::ios_base::app);
+    if (!outFile.is_open()) {
+        cout << "(E) Fail to open the file where mutual interference info should be stored. " << endl;
+    } else if (write) {
+        cout << "(O) Ready to write the mutual interference info into file." << endl;
+    }
     int numPhyLinks = phyLinkSet.size();
     for (int i = 0; i < numPhyLinks; ++i) {
         for (int j = 0; j < numPhyLinks; ++j) {
@@ -2073,6 +2109,13 @@ void collectMutualInterferenceInfo(std::vector<std::vector<int>>& mutualInterfer
                     mutualInterferenceIndicator[i][j] = 0;
                 }
             }
+            if (write) {
+                outFile << mutualInterferenceIndicator[i][j] << "\t";
+            }
+        }
+        if (write) {
+            outFile << "\n";
         }
     }
+    outFile.close();
 }

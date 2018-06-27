@@ -1,0 +1,1 @@
+This folder stores the mutual interference information.

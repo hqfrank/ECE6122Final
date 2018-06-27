@@ -188,25 +188,46 @@ int main() {
   std::vector<std::vector<Point_t>> bsPairs;
 //  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
 //  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
+  /* File to store the consecutive link pairs info. */
+  std::string dataTopology = "../Data/Topology/Data_Topology_"
+                                    + std::to_string(numBSs)
+                                    + "_" + sysParams.topologyType +".txt";
   treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
+  std::ifstream fileTopology(dataTopology);
+  if (!fileTopology.good()) {
+    writeTopologyToFile(dataTopology, treeConnections, numRelays);
+  }
+
 
   /*
    * ====================================================
    *   Collect first/last hop candidate physical links.
    * ====================================================
    */
+  std::string dataFirstHop = "../Data/First_Hop_Set/Data_FirstHopSet_" + std::to_string(treeConnections.size()) + ".txt";
+  std::string dataLastHop = "../Data/Last_Hop_Set/Data_LastHopSet_" + std::to_string(treeConnections.size()) + ".txt";
   std::vector<std::vector<int>> firstHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
   std::vector<std::vector<int>> lastHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
-  collectFirstLastHopCandidatePhyLinks(firstHopSet, lastHopSet, phyLinkSet, treeConnections, numRelays);
+  std::ifstream fileFirstHop(dataFirstHop);
+  bool writeFirstLastHop = false;
+  if (!fileFirstHop.good()) writeFirstLastHop = true;
+  collectFirstLastHopCandidatePhyLinks(firstHopSet, lastHopSet, phyLinkSet, treeConnections, numRelays,
+                                       writeFirstLastHop, dataFirstHop, dataLastHop);
 
   /*
    * ============================================
    *   Collect mutual interference information.
    * ============================================
    */
+  std::string dataMutualInterference = "../Data/Mutual_Interference/Data_MutualInterference_"
+                                       + std::to_string(phyLinkSet.size()) + ".txt";
+  std::ifstream fileMutualInt(dataMutualInterference);
+  bool writeMutualInt = false;
+  if (!fileMutualInt.good()) writeMutualInt = true;
   std::vector<std::vector<int>> mutualInterferenceIndicator(phyLinkSet.size(), std::vector<int>(phyLinkSet.size()));
-  collectMutualInterferenceInfo(mutualInterferenceIndicator, phyLinkSet, numRelays, allNodes, sysParams);
+  collectMutualInterferenceInfo(mutualInterferenceIndicator, phyLinkSet, numRelays, allNodes, sysParams,
+                                dataMutualInterference, writeMutualInt);
 
 
 //  /*

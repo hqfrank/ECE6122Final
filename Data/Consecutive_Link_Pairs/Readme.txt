@@ -1,0 +1,1 @@
+This folder stores the file of consecutive link pairs information.

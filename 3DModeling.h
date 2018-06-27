@@ -102,7 +102,8 @@ void collectFirstLastHopCandidatePhyLinks(std::vector<std::vector<int>>& firstHo
                                           std::vector<std::vector<int>>& lastHopSet,
                                           const std::vector<std::vector<int>>& phyLinkSet,
                                           const std::vector<std::vector<int>>& connectionList,
-                                          int& numRelays);
+                                          int& numRelays, bool& write, std::string& dataFirstHop,
+                                          std::string& dataLastHop);
 
 /* Evaluate the line-of-sight connectivity between a point s and other nodes in the topology. */
 std::vector<int> searchNonBlockLink(const std::vector<Building_t>& buildings, const Point_t& s, const std::vector<Point_t>& nodes);
@@ -184,7 +185,10 @@ bool checkTwoPhysicalLinksInterference(const std::vector<int>& phyLink1, const s
 
 void collectMutualInterferenceInfo(std::vector<std::vector<int>>& mutualInterferenceIndicator,
                                    const std::vector<std::vector<int>>& phyLinkSet, int& numRelays,
-                                   const std::vector<Point_t>& nodes, const SystemParameters& parameters);
+                                   const std::vector<Point_t>& nodes, const SystemParameters& parameters,
+                                   std::string& dataMutualInterference, bool& write);
+
+void writeTopologyToFile(std::string& dataTopology, const std::vector<std::vector<int>>& connections, int& numRelays);
 
 ///* The algorithm proposed in MASS paper. */
 //std::vector<std::vector<int>> findPathDecodeForward(const std::vector<std::vector<int>>& nodeNeighborList,

@@ -12,6 +12,7 @@ class SystemParameters {
 public:
   const int randomSeed = 100;
   const std::string relayType = "Surface";
+  const std::string topologyType = "Tree";  // "Tree", "Mesh"
   const double minHeightForRelay_m = 5.0;
   const double maxHeightForRelay_m = 200.0;
   const double minHeightForBS_m = 10.0; // Only deploy BSs on the rooftop of buildings with height between [min,max].
