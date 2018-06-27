@@ -895,14 +895,16 @@ void exploreConnectivity(std::vector<std::vector<int>>& neighborList,
 
 void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::vector<std::vector<int>>& neighborList,
                           const std::vector<Point_t>& nodes, const double xRange[2], const double yRange[2],
-                          const SystemParameters& parameters){
+                          const SystemParameters& parameters, std::string& dataPhyLinks, bool& write){
   /* Iterate through all nodes. */
   std::vector<std::vector<int>> phyLinkSet2;
   int count = 0;
   for (int i = 0; i < neighborList.size(); ++i) {
+    // nodes[i] stores the coordinates of the i-th node. Test to make sure that nodes[i] is within the seleted area.
     if (nodes[i].getX() < xRange[0] || nodes[i].getX() > xRange[1] || nodes[i].getY() < yRange[0] || nodes[i].getY() > yRange[1]) continue;
     count++;
     for (int j = 0; j < neighborList[i].size(); ++j) {
+      // neighborList[i][j] stores the index of the j-th LoS neighbor of the i-th node
       if (neighborList[i][j] <= i) continue;
       if (nodes[neighborList[i][j]].getX() < xRange[0] || nodes[neighborList[i][j]].getX() > xRange[1]
           || nodes[neighborList[i][j]].getY() < yRange[0] || nodes[neighborList[i][j]].getY() > yRange[1]) continue;
@@ -921,6 +923,20 @@ void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::
   cout << "(*) There are " << phyLinkSet2.size() << " connections between " << count
        << " nodes in the selected area." << endl;
   cout << "    In total, there are " << phyLinkSet.size() << " physical links." << endl;
+
+  std::ofstream outFile;
+  outFile.open(dataPhyLinks, std::ios_base::app);
+  if (!outFile.is_open()) {
+    cout << "(E) Failed to open the file where physical links information should be stored." << endl;
+  } else if (write) {
+    cout << "(O) Ready to write physical links information into file." << endl;
+    for (auto link : phyLinkSet) {
+      outFile << link[0] << "\t" << link[1] << "\n";
+    }
+  } else {
+    cout << "(S) The physical link information has been stored. Skip the operation of write to file." << endl;
+  }
+  outFile.close();
 
 }
 

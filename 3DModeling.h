@@ -90,7 +90,7 @@ void exploreConnectivity(std::vector<std::vector<int>>& neighborList,
 /* Collect physical links within selected area. */
 void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::vector<std::vector<int>>& neighborList,
                           const std::vector<Point_t>& nodes, const double xRange[2], const double yRange[2],
-                          const SystemParameters& parameters);
+                          const SystemParameters& parameters, std::string& dataPhyLinks, bool& write);
 
 /* Collect consective link pairs upon selected physical links. */
 void collectConsecutiveLinkPairs(std::vector<int>& consecLinkPairSet,

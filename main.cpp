@@ -152,10 +152,17 @@ int main() {
    *   Collect physical links in the interested area.
    * ==================================================
    */
+  std::string dataPhyLinks = "../Data/Physical_Links/Data_PhyLinks_" + std::to_string(numRelays)
+                              + "_" + std::to_string(numBSs) + ".txt";
   std::vector<std::vector<int>> phyLinkSet;
   double xRange[2] = {sysParams.areaXRange_m[0] + 4 * sysParams.gridSize_m, sysParams.areaXRange_m[0] + 7 * sysParams.gridSize_m};
   double yRange[2] = {sysParams.areaYRange_m[0] + 3 * sysParams.gridSize_m, sysParams.areaYRange_m[0] + 6 * sysParams.gridSize_m};
-  collectPhysicalLinks(phyLinkSet, nodeNeighborList, allNodes, xRange, yRange, sysParams);
+  std::ifstream filePhyLinks(dataPhyLinks);
+  bool writePhyLinks = false;
+  if (!filePhyLinks.good()) {
+    writePhyLinks = true;
+  }
+  collectPhysicalLinks(phyLinkSet, nodeNeighborList, allNodes, xRange, yRange, sysParams, dataPhyLinks, writePhyLinks);
 
   /*
    * ===================================================================
