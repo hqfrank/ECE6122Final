@@ -152,17 +152,16 @@ int main() {
    *   Collect physical links in the interested area.
    * ==================================================
    */
-  std::string dataPhyLinks = "../Data/Physical_Links/Data_PhyLinks_" + std::to_string(numRelays)
-                              + "_" + std::to_string(numBSs) + ".txt";
   std::vector<std::vector<int>> phyLinkSet;
-  double xRange[2] = {sysParams.areaXRange_m[0] + 4 * sysParams.gridSize_m, sysParams.areaXRange_m[0] + 7 * sysParams.gridSize_m};
-  double yRange[2] = {sysParams.areaYRange_m[0] + 3 * sysParams.gridSize_m, sysParams.areaYRange_m[0] + 6 * sysParams.gridSize_m};
+  std::vector<int> selectedGrids = {31,32,40,41};
+  std::string dataPhyLinks = "../Data/Physical_Links/Data_PhyLinks_" + std::to_string(numRelays)
+                             + "_" + std::to_string(numBSs) + "_" + std::to_string(selectedGrids.size()) + ".txt";
   std::ifstream filePhyLinks(dataPhyLinks);
   bool writePhyLinks = false;
   if (!filePhyLinks.good()) {
     writePhyLinks = true;
   }
-  collectPhysicalLinks(phyLinkSet, nodeNeighborList, allNodes, xRange, yRange, sysParams, dataPhyLinks, writePhyLinks);
+  collectPhysicalLinks(phyLinkSet, nodeNeighborList, allNodes, selectedGrids, sysParams, dataPhyLinks, writePhyLinks);
 
   /*
    * ===================================================================
@@ -172,7 +171,7 @@ int main() {
   /* File to store the consecutive link pairs info. */
   std::string dataConsecLinkPairs = "../Data/Consecutive_Link_Pairs/Data_ConsecLinkPairs_"
                                     + std::to_string(numRelays)
-                                    + "_" + std::to_string(numBSs) +".txt";
+                                    + "_" + std::to_string(numBSs) + "_" + std::to_string(selectedGrids.size()) +".txt";
   std::ifstream fileConsecutive(dataConsecLinkPairs);
   std::vector<int> consecLinkPairSet;
   bool writeConsecutive;
@@ -212,8 +211,10 @@ int main() {
    *   Collect first/last hop candidate physical links.
    * ====================================================
    */
-  std::string dataFirstHop = "../Data/First_Hop_Set/Data_FirstHopSet_" + std::to_string(treeConnections.size()) + ".txt";
-  std::string dataLastHop = "../Data/Last_Hop_Set/Data_LastHopSet_" + std::to_string(treeConnections.size()) + ".txt";
+  std::string dataFirstHop = "../Data/First_Hop_Set/Data_FirstHopSet_" + std::to_string(treeConnections.size())
+                             + "_" + std::to_string(phyLinkSet.size()) + ".txt";
+  std::string dataLastHop = "../Data/Last_Hop_Set/Data_LastHopSet_" + std::to_string(treeConnections.size())
+                            + "_" + std::to_string(phyLinkSet.size()) + ".txt";
   std::vector<std::vector<int>> firstHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
   std::vector<std::vector<int>> lastHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
   std::ifstream fileFirstHop(dataFirstHop);

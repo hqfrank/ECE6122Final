@@ -894,20 +894,29 @@ void exploreConnectivity(std::vector<std::vector<int>>& neighborList,
 }
 
 void collectPhysicalLinks(std::vector<std::vector<int>>& phyLinkSet, const std::vector<std::vector<int>>& neighborList,
-                          const std::vector<Point_t>& nodes, const double xRange[2], const double yRange[2],
+                          const std::vector<Point_t>& nodes, const vector<int>& selectedGrids,
                           const SystemParameters& parameters, std::string& dataPhyLinks, bool& write){
+  /* Number of grids. */
+  auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
+  auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
   /* Iterate through all nodes. */
   std::vector<std::vector<int>> phyLinkSet2;
   int count = 0;
   for (int i = 0; i < neighborList.size(); ++i) {
     // nodes[i] stores the coordinates of the i-th node. Test to make sure that nodes[i] is within the seleted area.
-    if (nodes[i].getX() < xRange[0] || nodes[i].getX() > xRange[1] || nodes[i].getY() < yRange[0] || nodes[i].getY() > yRange[1]) continue;
+    auto gridIndexX = (unsigned int) floor((nodes[i].getX() - parameters.areaXRange_m[0])/parameters.gridSize_m);
+    auto gridIndexY = (unsigned int) floor((nodes[i].getY() - parameters.areaYRange_m[0])/parameters.gridSize_m);
+    int gridId = gridIndexY * numGridAlongX + gridIndexX;  // X is column, Y is row
+    if (std::find(selectedGrids.begin(), selectedGrids.end(),gridId) == selectedGrids.end()) continue;
     count++;
     for (int j = 0; j < neighborList[i].size(); ++j) {
       // neighborList[i][j] stores the index of the j-th LoS neighbor of the i-th node
-      if (neighborList[i][j] <= i) continue;
-      if (nodes[neighborList[i][j]].getX() < xRange[0] || nodes[neighborList[i][j]].getX() > xRange[1]
-          || nodes[neighborList[i][j]].getY() < yRange[0] || nodes[neighborList[i][j]].getY() > yRange[1]) continue;
+      int neighborId = neighborList[i][j];
+      if (neighborId <= i) continue;
+      gridIndexX = (unsigned int) floor((nodes[neighborId].getX() - parameters.areaXRange_m[0])/parameters.gridSize_m);
+      gridIndexY = (unsigned int) floor((nodes[neighborId].getY() - parameters.areaYRange_m[0])/parameters.gridSize_m);
+      gridId = gridIndexY * numGridAlongX + gridIndexX;
+      if (std::find(selectedGrids.begin(), selectedGrids.end(),gridId) == selectedGrids.end()) continue;
       if (nodes[i].distanceTo(nodes[neighborList[i][j]]) > parameters.phyLinkDistMax_m) continue;
       std::vector<int> curPhyLink;
       curPhyLink.push_back(i);
