@@ -299,6 +299,9 @@ int main() {
   std::vector<std::vector<int>> allPaths;
   std::vector<int> noPathList;
 //  std::shuffle(treeConnections.begin(), treeConnections.end(), std::default_random_engine(sysParams.randomSeed));
+  std::vector<int> tempConnection = treeConnections[37];
+  treeConnections[37] = treeConnections[35];
+  treeConnections[35] = tempConnection;
   for (int i = 0; i < treeConnections.size(); i++) {
     cout << "\n=========================================================\n";
     cout << "Path search for the " << i << "-th pair of base stations.\n";
