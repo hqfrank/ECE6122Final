@@ -47,23 +47,10 @@ int main() {
    *   Files addresses in use
    * ==========================
    */
-  /* Building raw data file */
+  /* Building raw data file (not change) */
   std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
-  /* File to store the vertices of each building */
-  std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices_" + std::to_string(sysParams.randomSeed) +".txt";
-  /* File to store the connectivity information of the relay nodes. */
-  std::string dataRelayNeighbors = "../Data/Relay_Neighbors/Data_RelayNeighbors_"+ std::to_string(sysParams.randomSeed)
-                                   + "_" + std::to_string(sysParams.maxNumRelaysInGrid)
-                                   + "_" + std::to_string(sysParams.phyLinkDistMax_m)
-                                   + "_" + std::to_string(sysParams.densityRelayOnBuilding)
-                                   + "_" + sysParams.relayType + ".txt";
-  /* File to store the relay nodes. */
-  std::string dataRelays = "../Data/Relays/Data_Relays_" + std::to_string(sysParams.densityRelayOnBuilding)
-                           + "_" + sysParams.relayType + ".txt";
-  /* File to store the selected base stations. */
-  std::string dataBSs = "../Data/Base_Stations/Data_BSSet_" + std::to_string(sysParams.randomSeed)
-                        + "_" + std::to_string(sysParams.gridSize_m)
-                        + "_" + std::to_string(sysParams.minRelayNumInGrid) +".txt";
+  /* File to store the vertices of each building (not change)*/
+  std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices.txt";
 
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
@@ -80,6 +67,10 @@ int main() {
    *   Collect all candidate relays in the area.
    * =============================================
    */
+  /* File to store the relay nodes. */
+  std::string dataRelays = "../Data/Relays/Data_Relays_" + sysParams.relayType
+                           + "_" + std::to_string(sysParams.randomSeed)
+                           + "_" + std::to_string(sysParams.densityRelayOnBuilding) + ".txt";
   std::ifstream fileRelays(dataRelays);
   std::vector<Point_t> allRelays;
   if (fileRelays.good()){
@@ -98,6 +89,11 @@ int main() {
    *   Generate candidate base station locations randomly.
    * =======================================================
    */
+  /* File to store the selected base stations. */
+  std::string dataBSs = "../Data/Base_Stations/Data_BSSet_" + std::to_string(sysParams.randomSeed)
+                        + "_" + std::to_string(numRelays)
+                        + "_" + std::to_string(sysParams.gridSize_m)
+                        + "_" + std::to_string(sysParams.minRelayNumInGrid) +".txt";
   std::vector<Point_t> roofTopRelays;  // An Point_t vector to store all relays on the roof top.
   std::vector<Point_t> bsSet;
   std::ifstream fileBSs(dataBSs);
@@ -123,8 +119,9 @@ int main() {
    * ===============================================================
    */
   /* File to store the node neighboring information. */
-  std::string dataNodeNeighbors = "../Data/Node_Neighbors/Data_NodeNeighbors_" + std::to_string(numRelays)
-                                   + "_" + std::to_string(numBSs) + ".txt";
+  std::string dataNodeNeighbors = "../Data/Node_Neighbors/Data_NodeNeighbors_" + std::to_string(sysParams.randomSeed)
+                                  + "_" + std::to_string(numRelays)
+                                  + "_" + std::to_string(numBSs) + ".txt";
   std::ifstream fileConnect(dataNodeNeighbors);
   std::vector<std::vector<int>> nodeNeighborList;
   if (fileConnect.good()){
@@ -154,7 +151,8 @@ int main() {
    */
   std::vector<std::vector<int>> phyLinkSet;
   std::vector<int> selectedGrids = {31,32,40,41};
-  std::string dataPhyLinks = "../Data/Physical_Links/Data_PhyLinks_" + std::to_string(numRelays)
+  std::string dataPhyLinks = "../Data/Physical_Links/Data_PhyLinks_" + std::to_string(sysParams.randomSeed)
+                             + "_" + std::to_string(numRelays)
                              + "_" + std::to_string(numBSs) + "_" + std::to_string(selectedGrids.size()) + ".txt";
   std::ifstream filePhyLinks(dataPhyLinks);
   bool writePhyLinks = false;
@@ -170,7 +168,8 @@ int main() {
    */
   /* File to store the consecutive link pairs info. */
   std::string dataConsecLinkPairs = "../Data/Consecutive_Link_Pairs/Data_ConsecLinkPairs_"
-                                    + std::to_string(numRelays)
+                                    + std::to_string(sysParams.randomSeed)
+                                    + "_" + std::to_string(numRelays)
                                     + "_" + std::to_string(numBSs) + "_" + std::to_string(selectedGrids.size()) +".txt";
   std::ifstream fileConsecutive(dataConsecLinkPairs);
   std::vector<int> consecLinkPairSet;
@@ -195,9 +194,10 @@ int main() {
 //  primAlgorithm(eHopMap, bsSet, bsSet.size()/2, nodeConnections, treeConnections, bsPairs);
 //  primAlgorithmSetLinksToGateway(eHopMap, bsSet, 19, sysParams.minConnectionsAtMBs, nodeConnections, treeConnections, bsPairs);
   /* File to store the consecutive link pairs info. */
-  std::string dataTopology = "../Data/Topology/Data_Topology_"
-                                    + std::to_string(numBSs)
-                                    + "_" + sysParams.topologyType +".txt";
+  std::string dataTopology = "../Data/Topology/Data_Topology_" + sysParams.topologyType
+                             + "_" + std::to_string(sysParams.randomSeed)
+                             + "_" + std::to_string(numRelays)
+                             + "_" + std::to_string(numBSs) + ".txt";
   treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs);
   printConnections(nodeConnections);
   std::ifstream fileTopology(dataTopology);
@@ -211,9 +211,11 @@ int main() {
    *   Collect first/last hop candidate physical links.
    * ====================================================
    */
-  std::string dataFirstHop = "../Data/First_Hop_Set/Data_FirstHopSet_" + std::to_string(treeConnections.size())
+  std::string dataFirstHop = "../Data/First_Hop_Set/Data_FirstHopSet_" + std::to_string(sysParams.randomSeed)
+                             + "_" + std::to_string(treeConnections.size())
                              + "_" + std::to_string(phyLinkSet.size()) + ".txt";
-  std::string dataLastHop = "../Data/Last_Hop_Set/Data_LastHopSet_" + std::to_string(treeConnections.size())
+  std::string dataLastHop = "../Data/Last_Hop_Set/Data_LastHopSet_" + std::to_string(sysParams.randomSeed)
+                            + "_" + std::to_string(treeConnections.size())
                             + "_" + std::to_string(phyLinkSet.size()) + ".txt";
   std::vector<std::vector<int>> firstHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
   std::vector<std::vector<int>> lastHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
@@ -229,7 +231,8 @@ int main() {
    * ============================================
    */
   std::string dataMutualInterference = "../Data/Mutual_Interference/Data_MutualInterference_"
-                                       + std::to_string(phyLinkSet.size()) + ".txt";
+                                       + std::to_string(sysParams.randomSeed)
+                                       + "_" + std::to_string(phyLinkSet.size()) + ".txt";
   std::ifstream fileMutualInt(dataMutualInterference);
   bool writeMutualInt = false;
   if (!fileMutualInt.good()) writeMutualInt = true;
@@ -294,15 +297,31 @@ int main() {
    * can index the source and destination pair of a physical link.
    */
   std::map<int, Vector_t> selectedPhysicalLinks;
+  std::vector<int> selectedRelays;
   std::map<int, std::vector<Vector_t>> phyLinksAtBSs;
   std::map<int, Vector_t>::iterator pLinkIter;
   std::vector<std::vector<int>> allPaths;
   std::vector<int> noPathList;
+  bool feasible = true;
 //  std::shuffle(treeConnections.begin(), treeConnections.end(), std::default_random_engine(sysParams.randomSeed));
-  std::vector<int> tempConnection = treeConnections[37];
-  treeConnections[37] = treeConnections[35];
-  treeConnections[35] = tempConnection;
+  std::vector<int> tempConnection;
+//  tempConnection = treeConnections[16];
+//  treeConnections[16] = treeConnections[8];
+//  treeConnections[8] = tempConnection;
+//  tempConnection = treeConnections[21];
+//  treeConnections[21] = treeConnections[5];
+//  treeConnections[5] = tempConnection;
+//  tempConnection = treeConnections[35];
+//  treeConnections[35] = treeConnections[1];
+//  treeConnections[1] = tempConnection;
+  std::vector<int> sequence;
   for (int i = 0; i < treeConnections.size(); i++) {
+    sequence.push_back(i);
+  }
+  for (int i = 0; i < treeConnections.size(); i++) {
+    if (!feasible) {
+      return -1;
+    }
     cout << "\n=========================================================\n";
     cout << "Path search for the " << i << "-th pair of base stations.\n";
     cout << "---------------------------------------------------------" << endl;
@@ -318,18 +337,40 @@ int main() {
       if (j > 5) {
         cout << "There is no available path." << endl;
         noPathList.push_back(i);
+        if (i >= 1) {
+          int k = i - 1;
+          while (k >= 0 && sequence[k] > sequence[i]) {
+            k--;
+          }
+          if (k < 0) {
+            cout << "(W) The algorithm cannot find the feasible solution." << endl;
+            feasible = false;
+          } else {
+            tempConnection = treeConnections[i];
+            treeConnections[i] = treeConnections[k];
+            treeConnections[k] = tempConnection;
+            int tempSequence = sequence[i];
+            sequence[i] = sequence[k];
+            sequence[k] = tempSequence;
+            selectedPhysicalLinks.clear();
+            selectedRelays.clear();
+            phyLinksAtBSs.clear();
+            allPaths.clear();
+            noPathList.clear();
+            i = -1;
+          }
+
+        } else {
+          cout << "(W) The algorithm cannot find the feasible solution." << endl;
+          feasible = false;
+        }
+
         break;
       }
 
-      searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams, phyLinksAtBSs, selectedPhysicalLinks);
+      searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams, phyLinksAtBSs, selectedPhysicalLinks, selectedRelays);
       if (pathList.pathList.size() > 0) {
         caseCount++;
-//        if (pathList.getSingleHopMaxThroughputId() >= 0) {
-//          cout << "The single hop path is with throughput " << pathList.getSingleHopMaxThroughput() << " Gbps." << endl;
-//        }
-//        cout << "The best multihop path is with " << pathList.pathList[pathList.getMultiHopMaxThroughputId()].size()-1
-//                                                  << " hops and throughput " << pathList.getMultiHopMaxThroughput()
-//                                                                             << " Gbps." << endl;
         std::vector<int> tempPath;
         if (j == 1) {
           /* If the set of paths found are with single hop, the single hop path must be recorded. */
@@ -345,6 +386,7 @@ int main() {
         /* Add the newly found path into the allPaths vector. */
         allPaths.push_back(tempPath);
         recordPhysicalLinksInAPath(selectedPhysicalLinks, tempPath, allNodes, sysParams);
+        recordRelaysInAPath(selectedRelays, tempPath, allNodes, sysParams);
         collectPhyLinksAtBSs(phyLinksAtBSs, tempPath, allNodes);
       }
       cout << "There are " << pathList.pathList.size() << " paths with no more than " << j << " hops being found.\n";
@@ -361,76 +403,76 @@ int main() {
   }
   cout << selectedPhysicalLinks.size() << endl;
   cout << phyLinksAtBSs.size() << endl;
-//  assert(allPaths.size() == treeConnections.size()*(extraHopNum + 1));
-//  /* Count the total number of relays used. */
-//  int numRelaysNeeded = 0;
-//  for (int i = 0; i < treeConnections.size(); i++) {
-//    numRelaysNeeded += (allPaths[i * (extraHopNum + 1)].size() - 2);
-//  }
-//  cout << "In total, " << numRelaysNeeded << " relays need to be deployed." << endl;
-//
-//  std::map<int, std::vector<int>> nodeCheckMinHop;
-//  std::map<int, std::vector<int>>::iterator it;
-//  for (int i = 0; i < treeConnections.size(); i++) {
-//    for (int j = 1; j < allPaths[i*(extraHopNum + 1)].size() - 1; ++j){
-//      it = nodeCheckMinHop.find(allPaths[i*(extraHopNum + 1)][j]);
-//      if (it != nodeCheckMinHop.end()){
-//        nodeCheckMinHop.at(allPaths[i*(extraHopNum + 1)][j]).push_back(i);
-//      } else {
-//        std::vector<int> newPair;
-//        newPair.push_back(i);
-//        nodeCheckMinHop.insert(std::pair<int, std::vector<int>>(allPaths[i*(extraHopNum + 1)][j], newPair));
-//      }
-//    }
-//  }
-//
-//  cout << "========== Check the min hop case ===========" << endl;
-//  for (it = nodeCheckMinHop.begin(); it != nodeCheckMinHop.end(); ++it) {
-//    if (it->second.size() > 1){
-//      cout << "-----------------------------------------------------------" << endl;
-//      cout << "Relay No. " << it->first << " has been selected by " << it->second.size() << " paths." << endl;
-//      int numPath = it->second.size();
-//      std::vector<int> pathIDs = it->second;
-//      for (int j = 0; j < numPath-1; j++){
-//        std::vector<int> path1 = allPaths[pathIDs[j]*(extraHopNum + 1)];
-//        Point_t src1 = bsPairs[pathIDs[j]][0];
-//        Point_t dst1 = bsPairs[pathIDs[j]][1];
-//        for (int k = j+1; k < numPath; k++) {
-//          std::vector<int> path2 = allPaths[pathIDs[k]*(extraHopNum + 1)];
-//          Point_t src2 = bsPairs[pathIDs[k]][0];
-//          Point_t dst2 = bsPairs[pathIDs[k]][1];
-//          std::vector<double> distance;
-//          distance.push_back(src1.distanceTo(src2));
-//          distance.push_back(src1.distanceTo(dst2));
-//          distance.push_back(dst1.distanceTo(src2));
-//          distance.push_back(dst1.distanceTo(dst2));
-//          double minDistance = GetMin(distance);
-//          cout << "Path " << pathIDs[j] << ": src - " << src1.toString() << ", dst - " << dst1.toString() << "\n"
-//               << "Path " << pathIDs[k] << ": src - " << src2.toString() << ", dst - " << dst2.toString() << "\n"
-//               << "Minimum distance between end points: " << minDistance << endl;
-////          cout << minDistance << src1.distanceTo(src2) << "\t" << src1.distanceTo(dst2) << "\t"
-////               << dst1.distanceTo(src2) << "\t" << dst1.distanceTo(dst2) << endl;
-//        }
-//      }
-//    }
-//  }
-//
-//  // Check interference cases:
-//  int countIntPairs = 0;
-//  for (int i = 0; i < treeConnections.size()-1; ++i) {
-//    std::vector<int> path1 = allPaths[i*(extraHopNum + 1)];
-//    std::vector<Point_t> sd1 = bsPairs[i];
-//    for (int j = i+1; j < treeConnections.size(); ++j) {
-//      std::vector<int> path2 = allPaths[j*(extraHopNum + 1)];
-//      std::vector<Point_t> sd2 = bsPairs[j];
-//      bool intTest = checkTwoPathsInterference(path1, path2, sd1, sd2, nodeNeighborList, buildingSet, allNodes, sysParams);
-//      if(intTest) {
-//        cout << "Path " << i << " and Path " << j << " interfere with each other." << endl;
-//        countIntPairs++;
-//      }
-//    }
-//  }
-//  cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
+  assert(allPaths.size() == treeConnections.size()*(extraHopNum + 1));
+  /* Count the total number of relays used. */
+  int numRelaysNeeded = 0;
+  for (int i = 0; i < treeConnections.size(); i++) {
+    numRelaysNeeded += (allPaths[i * (extraHopNum + 1)].size() - 2);
+  }
+  cout << "In total, " << numRelaysNeeded << " relays need to be deployed." << endl;
+
+  std::map<int, std::vector<int>> nodeCheckMinHop;
+  std::map<int, std::vector<int>>::iterator it;
+  for (int i = 0; i < treeConnections.size(); i++) {
+    for (int j = 1; j < allPaths[i*(extraHopNum + 1)].size() - 1; ++j){
+      it = nodeCheckMinHop.find(allPaths[i*(extraHopNum + 1)][j]);
+      if (it != nodeCheckMinHop.end()){
+        nodeCheckMinHop.at(allPaths[i*(extraHopNum + 1)][j]).push_back(i);
+      } else {
+        std::vector<int> newPair;
+        newPair.push_back(i);
+        nodeCheckMinHop.insert(std::pair<int, std::vector<int>>(allPaths[i*(extraHopNum + 1)][j], newPair));
+      }
+    }
+  }
+
+  cout << "========== Check the min hop case ===========" << endl;
+  for (it = nodeCheckMinHop.begin(); it != nodeCheckMinHop.end(); ++it) {
+    if (it->second.size() > 1){
+      cout << "-----------------------------------------------------------" << endl;
+      cout << "Relay No. " << it->first << " has been selected by " << it->second.size() << " paths." << endl;
+      int numPath = it->second.size();
+      std::vector<int> pathIDs = it->second;
+      for (int j = 0; j < numPath-1; j++){
+        std::vector<int> path1 = allPaths[pathIDs[j]*(extraHopNum + 1)];
+        Point_t src1 = bsPairs[pathIDs[j]][0];
+        Point_t dst1 = bsPairs[pathIDs[j]][1];
+        for (int k = j+1; k < numPath; k++) {
+          std::vector<int> path2 = allPaths[pathIDs[k]*(extraHopNum + 1)];
+          Point_t src2 = bsPairs[pathIDs[k]][0];
+          Point_t dst2 = bsPairs[pathIDs[k]][1];
+          std::vector<double> distance;
+          distance.push_back(src1.distanceTo(src2));
+          distance.push_back(src1.distanceTo(dst2));
+          distance.push_back(dst1.distanceTo(src2));
+          distance.push_back(dst1.distanceTo(dst2));
+          double minDistance = GetMin(distance);
+          cout << "Path " << pathIDs[j] << ": src - " << src1.toString() << ", dst - " << dst1.toString() << "\n"
+               << "Path " << pathIDs[k] << ": src - " << src2.toString() << ", dst - " << dst2.toString() << "\n"
+               << "Minimum distance between end points: " << minDistance << endl;
+//          cout << minDistance << src1.distanceTo(src2) << "\t" << src1.distanceTo(dst2) << "\t"
+//               << dst1.distanceTo(src2) << "\t" << dst1.distanceTo(dst2) << endl;
+        }
+      }
+    }
+  }
+
+  // Check interference cases:
+  int countIntPairs = 0;
+  for (int i = 0; i < treeConnections.size()-1; ++i) {
+    std::vector<int> path1 = allPaths[i*(extraHopNum + 1)];
+    std::vector<Point_t> sd1 = bsPairs[i];
+    for (int j = i+1; j < treeConnections.size(); ++j) {
+      std::vector<int> path2 = allPaths[j*(extraHopNum + 1)];
+      std::vector<Point_t> sd2 = bsPairs[j];
+      bool intTest = checkTwoPathsInterference(path1, path2, sd1, sd2, nodeNeighborList, buildingSet, allNodes, sysParams);
+      if(intTest) {
+        cout << "Path " << i << " and Path " << j << " interfere with each other." << endl;
+        countIntPairs++;
+      }
+    }
+  }
+  cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
 
 
 //  fileOutTimeStamp.close();

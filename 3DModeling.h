@@ -127,7 +127,8 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
                                    const std::vector<std::vector<int>>& nodeNeighborList,
                                    const int& relayNum, SystemParameters& parameters,
                                    const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
-                                   const std::map<int, Vector_t>& phyLinks);
+                                   const std::map<int, Vector_t>& phyLinks,
+                                   const std::vector<int>& selectedRelays);
 
 /* Search the next hop along a path. */
 void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std::vector<Point_t>& nodes,
@@ -135,7 +136,8 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
                        const int& preHopNum, const int& maxHopNum, const double& preHopCap,
                        const double& curPathThroughput, SystemParameters& parameters,
                        const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
-                       const std::map<int, Vector_t>& phyLinks);
+                       const std::map<int, Vector_t>& phyLinks,
+                       const std::vector<int>& selectedRelays);
 
 /* Detect the intra path interference when a new physical link is added on the right side of the path. */
 bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId, const int& lRId,
@@ -167,6 +169,9 @@ bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<
 
 void recordPhysicalLinksInAPath(std::map<int, Vector_t>& allPhysicalLinks, const std::vector<int>& path,
                                 const std::vector<Point_t>& nodes, const SystemParameters& parameters);
+
+void recordRelaysInAPath(std::vector<int>& allRelaysSelected, const std::vector<int>& path,
+                         const std::vector<Point_t>& nodes, const SystemParameters& parameters);
 
 void collectPhyLinksAtBSs(std::map<int, std::vector<Vector_t>>& phyLinksAtBSs, const std::vector<int>& path,
                           const std::vector<Point_t>& nodes);

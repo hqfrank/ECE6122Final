@@ -1314,7 +1314,8 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
                                    const std::vector<std::vector<int>>& nodeNeighborList,
                                    const int& relayNum, SystemParameters& parameters,
                                    const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
-                                   const std::map<int, Vector_t>& phyLinks){
+                                   const std::map<int, Vector_t>& phyLinks,
+                                   const std::vector<int>& selectedRelays){
   /*
    * Get source and destination of this path searching process.
    */
@@ -1324,7 +1325,7 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
   std::vector<int> curPath;
   curPath.push_back(paths.getSrcId());
 
-  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs, phyLinks);
+  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs, phyLinks, selectedRelays);
 }
 
 
@@ -1333,7 +1334,8 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
                        const int& preHopNum, const int& maxHopNum, const double& preHopCap,
                        const double& curPathThroughput, SystemParameters& parameters,
                        const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
-                       const std::map<int, Vector_t>& phyLinks) {
+                       const std::map<int, Vector_t>& phyLinks,
+                       const std::vector<int>& selectedRelays) {
   /* Get the source and destination node of the path. */
   Point_t src = nodes[paths.getSrcId()];
   Point_t dst = nodes[paths.getDstId()];
@@ -1358,8 +1360,7 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
       if (candidateId >= relayNum && candidateId != paths.getDstId()) continue;
       /* Relay sharing control */
       if (parameters.relaySharingControl) {
-        int tempPhyLinkId =  preNodeId * parameters.maxNumPhyLinks + candidateId;
-        if (phyLinks.find(tempPhyLinkId) != phyLinks.end()) continue;
+        if (std::find(selectedRelays.begin(), selectedRelays.end(), candidateId) != selectedRelays.end()) continue;
       }
       /* First hop control */
       if (parameters.firstHopControl && curHopNum == 1) {
@@ -1460,7 +1461,7 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
         } else {
           /* The currently selected node is not the destination node and the searching process continues with an updated path. */
           searchNextHopNode(paths, updatePath, nodes, nodeNeighborList, relayNum, curHopNum, maxHopNum, curHopCap,
-                            updatePathThroughput, parameters, phyLinksAtBSs, phyLinks);
+                            updatePathThroughput, parameters, phyLinksAtBSs, phyLinks, selectedRelays);
         }
       }
       /* If the currently viewed candidate node has been selected in curPath, this node should be discarded. */
@@ -1903,6 +1904,19 @@ void recordPhysicalLinksInAPath(std::map<int, Vector_t>& allPhysicalLinks, const
       std::cout << "Warning! A duplicated physical link has been selected!" << std::endl;
     }
   }
+}
+
+void recordRelaysInAPath(std::vector<int>& allRelaysSelected, const std::vector<int>& path,
+                         const std::vector<Point_t>& nodes, const SystemParameters& parameters){
+    int numHops = path.size()-1;
+    /* Iterate each hop in the path. */
+    for (int i = 1; i < numHops; i++) {
+        if (std::find(allRelaysSelected.begin(), allRelaysSelected.end(), path[i]) == allRelaysSelected.end()) {
+            allRelaysSelected.push_back(path[i]);
+        } else {
+            cout << "(W) A duplicated relay has been used." << endl;
+        }
+    }
 }
 
 void collectPhyLinksAtBSs(std::map<int, std::vector<Vector_t>>& phyLinksAtBSs, const std::vector<int>& path,
