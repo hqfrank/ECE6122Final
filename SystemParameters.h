@@ -10,7 +10,7 @@
 
 class SystemParameters {
 public:
-  const int randomSeed = 200;
+  const int randomSeed = 500;
   const std::string relayType = "Surface";
   const std::string topologyType = "Tree";  // "Tree", "Mesh"
   const double minHeightForRelay_m = 5.0;
