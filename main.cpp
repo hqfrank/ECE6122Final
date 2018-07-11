@@ -122,7 +122,7 @@ int main() {
   std::string dataNodeNeighbors = "../Data/Node_Neighbors/Data_NodeNeighbors_" + std::to_string(sysParams.randomSeed)
                                   + "_" + std::to_string(numRelays)
                                   + "_" + std::to_string(numBSs)
-                                  + "_" + std::to_string((int) (sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
+                                  + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
   std::ifstream fileConnect(dataNodeNeighbors);
   std::vector<std::vector<int>> nodeNeighborList;
   if (fileConnect.good()){
@@ -155,7 +155,7 @@ int main() {
   std::string dataPhyLinks = "../Data/Physical_Links/Data_PhyLinks_" + std::to_string(sysParams.randomSeed)
                              + "_" + std::to_string(numRelays)
                              + "_" + std::to_string(numBSs) + "_" + std::to_string(selectedGrids.size())
-                             + "_" + std::to_string((int) (sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
+                             + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
   std::ifstream filePhyLinks(dataPhyLinks);
   bool writePhyLinks = false;
   if (!filePhyLinks.good()) {
@@ -173,7 +173,7 @@ int main() {
                                     + std::to_string(sysParams.randomSeed)
                                     + "_" + std::to_string(numRelays)
                                     + "_" + std::to_string(numBSs) + "_" + std::to_string(selectedGrids.size())
-                                    + "_" + std::to_string((int) (sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
+                                    + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
   std::ifstream fileConsecutive(dataConsecLinkPairs);
   std::vector<int> consecLinkPairSet;
   bool writeConsecutive;
@@ -217,11 +217,11 @@ int main() {
   std::string dataFirstHop = "../Data/First_Hop_Set/Data_FirstHopSet_" + std::to_string(sysParams.randomSeed)
                              + "_" + std::to_string(treeConnections.size())
                              + "_" + std::to_string(phyLinkSet.size())
-                             + "_" + std::to_string((int) (sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
+                             + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
   std::string dataLastHop = "../Data/Last_Hop_Set/Data_LastHopSet_" + std::to_string(sysParams.randomSeed)
                             + "_" + std::to_string(treeConnections.size())
                             + "_" + std::to_string(phyLinkSet.size())
-                            + "_" + std::to_string((int) (sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
+                            + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
   std::vector<std::vector<int>> firstHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
   std::vector<std::vector<int>> lastHopSet(treeConnections.size(), std::vector<int>(phyLinkSet.size()));
   std::ifstream fileFirstHop(dataFirstHop);
@@ -238,7 +238,7 @@ int main() {
   std::string dataMutualInterference = "../Data/Mutual_Interference/Data_MutualInterference_"
                                        + std::to_string(sysParams.randomSeed)
                                        + "_" + std::to_string(phyLinkSet.size())
-                                       + "_" + std::to_string((int) (sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
+                                       + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
   std::ifstream fileMutualInt(dataMutualInterference);
   bool writeMutualInt = false;
   if (!fileMutualInt.good()) writeMutualInt = true;
