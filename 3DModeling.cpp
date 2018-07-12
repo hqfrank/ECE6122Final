@@ -635,6 +635,19 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vect
   bsLocation = bsLocationTemp;
 }
 
+void writeBSsLoactionToFile(const std::vector<std::vector<int>>& bsLocations, const std::string& dataBSsGrid){
+    std::ofstream fileBSsGrid;
+    fileBSsGrid.open(dataBSsGrid, std::ios_base::app);
+    if (!fileBSsGrid.is_open()) {
+        cerr << "Error!!!The file to store the grid indices of base stations is not open!!" << endl;
+        exit(errno);
+    }
+    for(auto bsGrid : bsLocations) {
+        fileBSsGrid << bsGrid[0] << "\t" << bsGrid[1] << endl;
+    }
+    fileBSsGrid.close();
+}
+
 void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<int>>& bsGridMap,
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,

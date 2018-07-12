@@ -70,6 +70,8 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vect
                               std::vector<std::vector<int>>& numRelaysInGrid,
                               std::string& dataBSs, bool write, SystemParameters& parameters);
 
+void writeBSsLoactionToFile(const std::vector<std::vector<int>>& bsLocations, const std::string& dataBSsGrid);
+
 /* Read node information from file. */
 void readNodeInfoFromFile(std::vector<Point_t>& nodes, const std::string& fileDataNodes, std::string& type);
 

@@ -94,6 +94,10 @@ int main() {
                         + "_" + std::to_string(numRelays)
                         + "_" + std::to_string(sysParams.gridSize_m)
                         + "_" + std::to_string(sysParams.minRelayNumInGrid) +".txt";
+  std::string dataBSInGrid = "../Data/Base_Stations_Grid/Data_BSInGrid_" + std::to_string(sysParams.randomSeed)
+                             + "_" + std::to_string(numRelays)
+                             + "_" + std::to_string((int) round(sysParams.gridSize_m))
+                             + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
   std::vector<Point_t> roofTopRelays;  // An Point_t vector to store all relays on the roof top.
   std::vector<Point_t> bsSet;
   std::ifstream fileBSs(dataBSs);
@@ -108,6 +112,10 @@ int main() {
   std::vector<std::vector<int>> bsGridMap;   // Stores the index of base station (i.e. 'i' in bsSet[i]) in each grid.
   std::vector<std::vector<int>> bsLocation;  // Stores the indices of row and column of the grid where each base station sits.
   selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, dataBSs, !fileBSs.good(), sysParams);
+  std::ifstream fileBSsGrid(dataBSInGrid);
+  if (!fileBSsGrid.good()){
+    writeBSsLoactionToFile(bsLocation, dataBSInGrid);
+  }
   int numBSs = bsSet.size();
   std::vector<Point_t> allNodes = allRelays;
   allNodes.insert(allNodes.end(), bsSet.begin(), bsSet.end());
