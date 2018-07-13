@@ -1256,21 +1256,37 @@ bool blockageTest(const std::vector<Building_t>& buildingSet, const Line_t& sd){
 void getRelayNeighborInfoFromFile(std::vector<std::vector<int>>& relayNeighborList, std::string dataRelayNeighbors){
   std::ifstream fileIn(dataRelayNeighbors);
   std::string str;
-  std::vector<int>* data = new std::vector<int>();
-  while (std::getline(fileIn, str, '\t'))
-  {
-    if (str.find('\n') != std::string::npos){
-//      data.push_back(str.substr(0, str.find('\n')));
-      relayNeighborList.push_back(*data);
-      data = new std::vector<int>();
-      std::string temp = str.substr(str.find('\n')+1);
-      if (temp != "") {
-        data->push_back(std::stoi(str.substr(str.find('\n')+1)));
-      }
-    } else {
-      data->push_back(std::stoi(str));
+  while (std::getline(fileIn, str)) {
+    std::vector<int> data;
+    if (str.length() == 0) {
+      relayNeighborList.push_back(data);
+      continue;
     }
+    while (str.find('\t') != std::string::npos) {
+      // as long as the str contains '\t'
+      std::string front = str.substr(0, str.find('\t'));
+      data.push_back(std::stoi(front));
+      str = str.substr(str.find('\t') + 1);
+    }
+    if (str.length() > 0) {
+      data.push_back(std::stoi(str));
+    }
+    relayNeighborList.push_back(data);
   }
+//  while (std::getline(fileIn, str, '\t'))
+//  {
+//    if (str.find('\n') != std::string::npos){
+////      data.push_back(str.substr(0, str.find('\n')));
+//      relayNeighborList.push_back(*data);
+//      data = new std::vector<int>();
+//      std::string temp = str.substr(str.find('\n')+1);
+//      if (temp != "") {
+//        data->push_back(std::stoi(str.substr(str.find('\n')+1)));
+//      }
+//    } else {
+//      data->push_back(std::stoi(str));
+//    }
+//  }
 
   cout << "(*) Node connectivity information loaded!" << endl;
 }
@@ -1518,7 +1534,7 @@ bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId,
  * Dijkstra algorithm.
  */
 std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, const std::vector<Point_t>& nodes,
-                          std::string pathFile, std::string type){
+                          int srcId, std::string pathFile, std::string type){
   /* Set up for drawing src and dst */
 //  StdDraw.point(nodes[nodes.length-2].x,nodes[nodes.length-2].y);
 //  StdDraw.point(nodes[nodes.length-1].x,nodes[nodes.length-1].y);
@@ -1540,7 +1556,8 @@ std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, con
     unvisitedSet.push_back(i);    // add node i into unvisited node set.
   }
   /* Distance from source to source is zero. */
-  distToSrc[nodes.size() - 2] = 0;
+  distToSrc[srcId] = 0;
+//  distToSrc[nodes.size() - 2] = 0;
   /* Test each node in the unvisited set. */
   while (!unvisitedSet.empty()){
     /* Find the node in unvisitedSet with the min distToSrc[] */
@@ -1556,7 +1573,8 @@ std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, con
     }
 
     if (indexOfUnvisitedSetMin == -1) {
-      cout << "There are " + std::to_string(unvisitedSet.size()) + " nodes unvisited, but they are not reachable.\n";
+      cout << "There are " + std::to_string(unvisitedSet.size()) + " nodes unvisited, but they are not reachable."
+                                                                   << endl;
       break;
     }
 
@@ -1582,7 +1600,7 @@ std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, con
         prevIndex[nodeNeighborList.at(i)] = nodeIndexDistMin;
       }
       if (alt > 1.0E10) {
-        cout << "Warning: The distance 'alt' is larger than 1.0E10.\n";
+        cout << "Warning: The distance 'alt' is larger than 1.0E10." << endl;
         break;
       }
     }
@@ -1590,10 +1608,10 @@ std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, con
 
   std::vector<int> path;
   int currentIndex = nodes.size() - 1; // destination node
-  while (currentIndex != (nodes.size()-2)){
+  while (currentIndex != (srcId)){
     path.push_back(currentIndex);
     if (prevIndex[currentIndex] == -1){
-      cout << "There is no path to the destination, because the current node does not have previous hop.\n";
+      cout << "There is no path to the destination, because the current node does not have previous hop." << endl;
       path.clear();
       break;
     }

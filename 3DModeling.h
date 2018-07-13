@@ -149,7 +149,7 @@ bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId,
 
 /* Dijkstra algorithm to find the shortest path. */
 std::vector<int> Dijkstra(const std::vector<std::vector<int>>& neighborList, const std::vector<Point_t>& nodes,
-                          std::string pathFile, std::string type);
+                          int srcId, std::string pathFile, std::string type);
 
 /* Estimate the link capacity based on Shannon Equation. */
 double calculateLinkCapacity_Gbps(double linkLength_m, SystemParameters& parameters);

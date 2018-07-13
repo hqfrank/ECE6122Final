@@ -136,8 +136,21 @@ int main() {
   if (fileConnect.good()){
     // read the relay neighborList
     getRelayNeighborInfoFromFile(nodeNeighborList, dataNodeNeighbors);
+    assert(nodeNeighborList.size() == allNodes.size());
   } else {
     exploreConnectivity(nodeNeighborList, allNodes, buildingSet, dataNodeNeighbors);
+  }
+
+  /* Get the line-of-sight neighboring information of all base stations. */
+  std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)
+                                + "_" + std::to_string(numBSs)
+                                + ".txt";
+  std::ifstream fileBSConnect(dataBSNeighbors);
+  std::vector<std::vector<int>> bsNeighborList;
+  if (fileBSConnect.good()) {
+      getRelayNeighborInfoFromFile(bsNeighborList, dataBSNeighbors);
+  } else {
+      exploreConnectivity(bsNeighborList, bsSet, buildingSet, dataBSNeighbors);
   }
 
   /*
@@ -152,6 +165,14 @@ int main() {
   int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
                                            maxSDNodeList, nodeNeighborList, sysParams);
   cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
+
+  /*
+   * ======================================================
+   *   Evaluate the LoS multi-hop paths from mBS to sBSs.
+   * ======================================================
+   */
+  int mBSId = bsGridMap[mBSPos[0]][mBSPos[1]];
+  std::vector<int> tempmBSPath = Dijkstra(bsNeighborList, bsSet, mBSId, "../Data/Paths/mBS2BS.txt", "distance");
 
   /*
    * ==================================================
