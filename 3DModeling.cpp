@@ -479,7 +479,7 @@ std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::
 //  cout<< data.size() << endl;
   // Create each building objects and store them.
   std::vector<Building_t> buildings;
-  fileOut.open(dataBuildingVertices, std::ios_base::app);
+  fileOut.open(dataBuildingVertices, std::ios_base::trunc);
   if (fileOut.is_open()){
     cout << "Ready to write building vertices information to file." << endl;
   } else {
