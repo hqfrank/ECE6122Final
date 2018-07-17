@@ -130,8 +130,7 @@ int main() {
   /* File to store the node neighboring information. */
   std::string dataNodeNeighbors = "../Data/Node_Neighbors/Data_NodeNeighbors_" + std::to_string(sysParams.randomSeed)
                                   + "_" + std::to_string(numRelays)
-                                  + "_" + std::to_string(numBSs)
-                                  + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180)) + ".txt";
+                                  + "_" + std::to_string(numBSs) + ".txt";
   std::ifstream fileConnect(dataNodeNeighbors);
   std::vector<std::vector<int>> nodeNeighborList;
   if (fileConnect.good()){
@@ -370,7 +369,7 @@ int main() {
     for (int j = 1; caseCount <= extraHopNum; j++) {
       Path_t pathList(srcId, dstId, j);
 
-      if (j > 5) {
+      if (j > 4) {
         cout << "There is no available path." << endl;
         noPathList.push_back(i);
         if (i >= 1) {
