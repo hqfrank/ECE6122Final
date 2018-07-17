@@ -4,7 +4,8 @@
 
 #include "Building_t.h"
 
-Building_t::Building_t(double center[2], double lwhbg[5], double orientation, double threshold, double density, int randomSeed){
+Building_t::Building_t(double center[2], double lwhbg[5], double orientation, double threshold, double density,
+                       int randomSeed, int minNumRelaysPerFace){
   this->Center = Point_t(center[0], center[1], 0);
   this->Length = lwhbg[0];
   this->Width  = lwhbg[1];
@@ -13,7 +14,7 @@ Building_t::Building_t(double center[2], double lwhbg[5], double orientation, do
   this->GroundLevel = lwhbg[4];
   this->Orientation = orientation;
   VertexGenerator();
-  this->Relays = RelayGenerator(threshold, density, randomSeed);
+  this->Relays = RelayGenerator(threshold, density, randomSeed, minNumRelaysPerFace);
   this->NumRelays = Relays.size();
   this->hasBS = false;
 }
@@ -101,7 +102,9 @@ void Building_t::setHasBS(bool has) {
   this->hasBS = has;
 }
 
-std::vector<Point_t> Building_t::GenerateRelayOnFace(const Point_t& va, const Point_t& vb, const Point_t& vc, const Point_t& vd, double density, int randomSeed){
+std::vector<Point_t> Building_t::GenerateRelayOnFace(const Point_t& va, const Point_t& vb, const Point_t& vc,
+                                                     const Point_t& vd, double density, int randomSeed,
+                                                     int minNumRelaysPerFace){
   // va and vb are two bottom vertices, vd and vc are two top vertices, and (va->vb).(vb->vc) = 0
   /*
    *   (vd) *--------* (vc)
@@ -115,7 +118,7 @@ std::vector<Point_t> Building_t::GenerateRelayOnFace(const Point_t& va, const Po
   double side1 = sqrt( pow(va.getX()-vb.getX(), 2.0) + pow(va.getY()-vb.getY(), 2.0) + pow(va.getZ()-vb.getZ(), 2.0) );
   double side2 = sqrt( pow(vb.getX()-vc.getX(), 2.0) + pow(vb.getY()-vc.getY(), 2.0) + pow(vb.getZ()-vc.getZ(), 2.0) );
   // Every face has at least one relay, the number of additional relays are generated based on density.
-  int numRelayOnFace = (int) floor(density * side1 * side2) + 1;
+  int numRelayOnFace = (int) floor(density * side1 * side2) + minNumRelaysPerFace;
   // Initialize relayPosOnFace to store the pointers to each relay node.
   std::vector<Point_t> relayPosOnFace;
   // Random generator
@@ -145,12 +148,12 @@ std::vector<Point_t> Building_t::GenerateRelayOnFace(const Point_t& va, const Po
   return relayPosOnFace;
 }
 
-std::vector<Point_t> Building_t::RelayGenerator(double threshold, double density, int randomSeed) {
+std::vector<Point_t> Building_t::RelayGenerator(double threshold, double density, int randomSeed, int minNumRelaysPerFace) {
   // {Ab, Bb, Bt, At}, {Bb, Cb, Ct, Bt}, {Cb, Db, Dt, Ct}, {Db, Ab, At, Dt}, and {At, Bt, Ct, Dt}
-  std::vector<Point_t> relayF1 = GenerateRelayOnFace((this->Vbs.at(0)), (this->Vbs.at(1)), (this->Vts.at(1)), (this->Vts.at(0)), density, randomSeed * 5 + 1);
-  std::vector<Point_t> relayF2 = GenerateRelayOnFace((this->Vbs.at(1)), (this->Vbs.at(2)), (this->Vts.at(2)), (this->Vts.at(1)), density, randomSeed * 5 + 2);
-  std::vector<Point_t> relayF3 = GenerateRelayOnFace((this->Vbs.at(2)), (this->Vbs.at(3)), (this->Vts.at(3)), (this->Vts.at(2)), density, randomSeed * 5 + 3);
-  std::vector<Point_t> relayF4 = GenerateRelayOnFace((this->Vbs.at(3)), (this->Vbs.at(0)), (this->Vts.at(0)), (this->Vts.at(3)), density, randomSeed * 5 + 4);
+  std::vector<Point_t> relayF1 = GenerateRelayOnFace((this->Vbs.at(0)), (this->Vbs.at(1)), (this->Vts.at(1)), (this->Vts.at(0)), density, randomSeed * 5 + 1, minNumRelaysPerFace);
+  std::vector<Point_t> relayF2 = GenerateRelayOnFace((this->Vbs.at(1)), (this->Vbs.at(2)), (this->Vts.at(2)), (this->Vts.at(1)), density, randomSeed * 5 + 2, minNumRelaysPerFace);
+  std::vector<Point_t> relayF3 = GenerateRelayOnFace((this->Vbs.at(2)), (this->Vbs.at(3)), (this->Vts.at(3)), (this->Vts.at(2)), density, randomSeed * 5 + 3, minNumRelaysPerFace);
+  std::vector<Point_t> relayF4 = GenerateRelayOnFace((this->Vbs.at(3)), (this->Vbs.at(0)), (this->Vts.at(0)), (this->Vts.at(3)), density, randomSeed * 5 + 4, minNumRelaysPerFace);
   std::vector<Point_t> relayF5;
   // There must be relays on the 4 side faces
   int numRelayOnBuilding = relayF1.size() + relayF2.size() + relayF3.size() + relayF4.size();
@@ -160,7 +163,7 @@ std::vector<Point_t> Building_t::RelayGenerator(double threshold, double density
    * the threshold.
    */
   if ((this->Height - this->HeightBase) <= threshold){
-    relayF5 = GenerateRelayOnFace((this->Vts.at(0)), (this->Vts.at(1)), (this->Vts.at(2)), (this->Vts.at(3)), density, randomSeed * 5 + 5);
+    relayF5 = GenerateRelayOnFace((this->Vts.at(0)), (this->Vts.at(1)), (this->Vts.at(2)), (this->Vts.at(3)), density, randomSeed * 5 + 5, minNumRelaysPerFace);
     numRelayOnBuilding += relayF5.size();
   }
 

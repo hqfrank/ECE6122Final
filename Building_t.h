@@ -39,14 +39,16 @@ private:
 public:
   /* === Member methods === */
   /* ------ Constructors ------ */
-  Building_t(double center[], double lwhbg[], double orientation, double threshold, double density, int randomSeed);
+  Building_t(double center[], double lwhbg[], double orientation, double threshold, double density, int randomSeed,
+             int minNumRelaysPerFace);
   /* ------ Methods ------ */
   /* Function to generate 12 vertices on the building. 4 of them are on the plane with the minimum height to deploy relays. */
   void VertexGenerator();
   /* Generate randomly (uniformly) deployed relays on the building surface. */
-  std::vector<Point_t> GenerateRelayOnFace(const Point_t& va, const Point_t& vb, const Point_t& vc, const Point_t& vd, double density, int randomSeed);
+  std::vector<Point_t> GenerateRelayOnFace(const Point_t& va, const Point_t& vb, const Point_t& vc, const Point_t& vd,
+                                           double density, int randomSeed, int minNumRelaysPerFace);
   /* Generate relays on a whole building. */
-  std::vector<Point_t> RelayGenerator(double threshold, double density, int randomSeed);
+  std::vector<Point_t> RelayGenerator(double threshold, double density, int randomSeed, int minNumRelaysPerFace);
   /* Get member variables. */
   std::vector<Point_t> getVbs() const;
   std::vector<Point_t> getVgs() const;

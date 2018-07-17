@@ -4,6 +4,68 @@
 
 #include "3DModeling.h"
 
+/*
+ * ============================
+ *   Write path data to file.
+ * ============================
+ */
+ void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::vector<int>& sequence,
+                       const std::vector<Point_t>& allNodes, SystemParameters& parameters,
+                       std::string& dataPath) {
+   if (!parameters.interPathIntControl) {
+       dataPath = dataPath + "_idp";
+   }
+   std::string filePath = dataPath + "_Paths.txt";
+   std::string fileCapacity = dataPath + "_Capacity.txt";
+   std::string fileSequence = dataPath + "_Sequence.txt";
+
+   std::ofstream outPath, outCapacity, outSequence;
+   outPath.open(filePath, std::ios_base::trunc);
+   outCapacity.open(fileCapacity, std::ios_base::trunc);
+   outSequence.open(fileSequence, std::ios_base::trunc);
+
+   if (outPath.is_open() && outCapacity.is_open() && outSequence.is_open()) {
+     int totalRelays = 0;
+     for (int i = 0; i < allPaths.size(); ++i) {
+       auto cur_seq = sequence[i];
+       auto cur_relay = allPaths[i].size() - 2;
+       totalRelays = totalRelays + cur_relay;
+       outSequence << std::to_string(cur_seq) << "\t" << std::to_string(cur_relay) << endl;
+       for (auto n : allPaths[i]) {
+         outPath << std::to_string(n) << "\t";
+       }
+       outPath << endl;
+       double pre_cap = 0;
+       double path_cap = 10000;
+       for (int j = 0; j < allPaths[i].size() - 1; ++j) {
+         Point_t p0 = allNodes[allPaths[i][j]];
+         Point_t p1 = allNodes[allPaths[i][j+1]];
+         double dist = p0.distanceTo(p1);
+         double cur_cap = calculateLinkCapacity_Gbps(dist, parameters);
+         if (allPaths[i].size() == 2) {
+           path_cap = cur_cap;
+           outCapacity << std::to_string(path_cap) << endl;
+         } else if (j > 0) {
+           double cur_cc = pre_cap * cur_cap / (pre_cap + cur_cap);
+           if (cur_cc < path_cap) {
+             path_cap = cur_cc;
+           }
+         }
+         pre_cap = cur_cap;
+       }
+       if (allPaths[i].size() > 2) {
+         outCapacity << std::to_string(path_cap) << endl;
+       }
+     }
+     outSequence << std::to_string(-1) << "\t" << std::to_string(totalRelays) << endl;
+   } else {
+     cout << "(E) Some files cannot open." << endl;
+   }
+   outCapacity.close();
+   outPath.close();
+   outSequence.close();
+ }
+
 
 /*
  * =========================================================
@@ -494,7 +556,9 @@ std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::
     double lwhbg[] {length_m, width_m, topHeight_m, baseLevel_m + parameters.minHeightForRelay_m, parameters.groundLevel_m};
     double orientation_rad = (std::stod(data.at(i+6)))/180.0*M_PI;
     /* Generate each building object. */
-    Building_t newBuilding(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m, parameters.densityRelayOnBuilding, buildings.size());
+    Building_t newBuilding(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m,
+                           parameters.densityRelayOnBuilding, buildings.size() * parameters.randomSeed,
+                           parameters.minNumRelaysPerFace);
     buildings.push_back(newBuilding);
     fileOut << (buildings.at(buildings.size()-1).toStringData()+"\n");
 //    cout << buildings.at(buildings.size()-1)->toStringData() << endl;

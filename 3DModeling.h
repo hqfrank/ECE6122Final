@@ -32,6 +32,10 @@ public:
   const double l1000g800 = 4*0.43 + 5*0.49 + 6*0.06 + 7*0.02;
 };
 
+void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::vector<int>& sequence,
+                      const std::vector<Point_t>& allNodes, SystemParameters& parameters,
+                      std::string& dataPath);
+
 void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<int>>& bsGridMap,
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,

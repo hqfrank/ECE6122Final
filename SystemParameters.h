@@ -10,7 +10,7 @@
 
 class SystemParameters {
 public:
-  const int randomSeed = 900;
+  const int randomSeed = 700;
   const std::string relayType = "Surface";
   const std::string topologyType = "Tree";  // "Tree", "Mesh"
   const double minHeightForRelay_m = 5.0;
@@ -19,6 +19,7 @@ public:
   const double maxHeightForBS_m = 50.0;
   const double groundLevel_m = 290.0;
   const double densityRelayOnBuilding = 0.0001;
+  const int minNumRelaysPerFace = 1;
   const double areaXRange_m[2] {-100, 1700};
   const double areaYRange_m[2] {-1700, 100};
   const double gridSize_m = 200.0;
@@ -28,7 +29,7 @@ public:
   const double bsDistanceRange_m[2] {20,1000};
   const int numBSPairs = 100;
   const double antennaGain_dBi = 21.87;
-  const double antennaBeamWidth_phi = 7.0/180.0*M_PI;
+  const double antennaBeamWidth_phi = 11.0/180.0*M_PI;
   const double antennaIsoSpan_phi = M_PI/6.0;
   const double lambda_m = 0.005;   // 5*10^-3 m
   const double alpha = 16E-3;
@@ -43,7 +44,7 @@ public:
   const bool relaySharingControl = true;
   const bool interPathIntControl = true;
   const bool bsFewRelaysControl = true;  // If the number of relays is smaller than the threshold, the bs is disabled.
-  const unsigned int minRelayNumInGrid = 0;  // The minimum number of relays in a grid to support the activation of a BS.
+  const unsigned int minRelayNumInGrid = 5;  // The minimum number of relays in a grid to support the activation of a BS.
   double lowerBound_Gbps = 0;
   string simStartTime = "NULL";
 };

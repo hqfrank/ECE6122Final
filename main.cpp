@@ -70,7 +70,8 @@ int main() {
   /* File to store the relay nodes. */
   std::string dataRelays = "../Data/Relays/Data_Relays_" + sysParams.relayType
                            + "_" + std::to_string(sysParams.randomSeed)
-                           + "_" + std::to_string(sysParams.densityRelayOnBuilding) + ".txt";
+                           + "_" + std::to_string(sysParams.densityRelayOnBuilding)
+                           + "_" + std::to_string(sysParams.minNumRelaysPerFace) + ".txt";
   std::ifstream fileRelays(dataRelays);
   std::vector<Point_t> allRelays;
   if (fileRelays.good()){
@@ -445,6 +446,17 @@ int main() {
     numRelaysNeeded += (allPaths[i * (extraHopNum + 1)].size() - 2);
   }
   cout << "In total, " << numRelaysNeeded << " relays need to be deployed." << endl;
+
+  std::string dataPaths = "../Data/Paths/Data_Results_" + std::to_string(sysParams.randomSeed)
+                          + "_" + std::to_string(numRelays)
+                          + "_" + std::to_string(numBSs)
+                          + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi/M_PI*180));
+
+  if (allPaths.size() == treeConnections.size()) {
+      writePathsToFile(allPaths, sequence, allNodes, sysParams, dataPaths);
+  }
+
+
 
   std::map<int, std::vector<int>> nodeCheckMinHop;
   std::map<int, std::vector<int>>::iterator it;
