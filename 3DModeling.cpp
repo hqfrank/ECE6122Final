@@ -732,7 +732,7 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
   /* Connect the mBS to its 8 neighbors. */
   for (int i = mBSPos[0] - 1; i <= mBSPos[0] + 1; ++i) {
     for (int j = mBSPos[1] - 1; j <= mBSPos[1] + 1; ++j) {
-      if (i != mBSPos[0] || j != mBSPos[1]) {
+      if ((i != mBSPos[0] || j != mBSPos[1]) && bsGridMap[i][j] > -1) {
         std::vector<int> curConnection;
         curConnection.push_back(bsGridMap[mBSPos[0]][mBSPos[1]]);  // add the mBS
         curConnection.push_back(bsGridMap[i][j]);  // add the sBS

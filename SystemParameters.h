@@ -10,7 +10,7 @@
 
 class SystemParameters {
 public:
-  const int randomSeed = 700;
+  int randomSeed = 505;
   const std::string relayType = "Surface";
   const std::string topologyType = "Tree";  // "Tree", "Mesh"
   const double minHeightForRelay_m = 5.0;
@@ -40,9 +40,9 @@ public:
   const int hopLimit = 10; // the maximum hop number allowed
   const int maxNumPhyLinks = 10000;
   const int minConnectionsAtMBs = 5;
-  const bool firstHopControl = false;
-  const bool relaySharingControl = false;
-  const bool interPathIntControl = false;
+  const bool firstHopControl = true;
+  const bool relaySharingControl = true;
+  const bool interPathIntControl = true;
   const bool bsFewRelaysControl = true;  // If the number of relays is smaller than the threshold, the bs is disabled.
   const unsigned int minRelayNumInGrid = 5;  // The minimum number of relays in a grid to support the activation of a BS.
   double lowerBound_Gbps = 0;
