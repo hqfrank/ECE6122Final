@@ -55,7 +55,7 @@ int main() {
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
-  for (int rnd = 701; rnd < 800; rnd++) {
+  for (int rnd = 540; rnd < 560; rnd++) {
       sysParams.randomSeed = rnd;
       /*
        * ========================================
