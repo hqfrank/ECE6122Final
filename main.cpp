@@ -55,7 +55,7 @@ int main() {
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
-  for (int rnd = 540; rnd < 560; rnd++) {
+  for (int rnd = 500; rnd < 700; rnd++) {
       sysParams.randomSeed = rnd;
       /*
        * ========================================
@@ -543,6 +543,16 @@ int main() {
           cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
       }
   }
+
+  /*
+   * ========================================================
+   *   Data collection
+   * ========================================================
+   */
+//  std::string path = "../Data/Paths";
+//  for (auto& p : std::filesystem::directory_iterator(path))
+//      std::cout << p << std::endl;
+  // Read the
   cout << "==================================" << endl;
   cout << "This is the end of the simulation." << endl;
   cout << "==================================" << endl;

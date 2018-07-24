@@ -606,13 +606,16 @@ std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buil
       // Read all 4 top vertices of building i
       std::vector<Point_t> topVertices = buildingSet.at(i).getVts();
       std::vector<Point_t> baseVertices = buildingSet.at(i).getVbs();
-      Point_t newBS(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      Point_t newBS(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId) % 4), pro));
       poolBS.push_back(newBS);
-      Point_t newRelay0(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      caseId++;
+      Point_t newRelay0(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId) % 4), pro));
+      caseId++;
       roofTopRelays.push_back(newRelay0);
-      Point_t newRelay1(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      Point_t newRelay1(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId) % 4), pro));
+      caseId++;
       roofTopRelays.push_back(newRelay1);
-      Point_t newRelay2(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId++) % 4), pro));
+      Point_t newRelay2(proportionalPoint(baseVertices.at(caseId % 4), topVertices.at((caseId) % 4), pro));
       roofTopRelays.push_back(newRelay2);
       // System.out.println("No. "+ countBS+ "\t BS candidate position at " + candiBS);
       // StdDraw.point(candiBS.x, candiBS.y);
