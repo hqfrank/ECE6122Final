@@ -715,6 +715,17 @@ void writeBSsLoactionToFile(const std::vector<std::vector<int>>& bsLocations, co
     fileBSsGrid.close();
 }
 
+void writeSpaceDiversityToFile(int randomSeed, int numRelays, int spaceDiversity, const std::string& dataSpaceDiversity){
+    std::ofstream fileSpaceDiversity;
+    fileSpaceDiversity.open(dataSpaceDiversity, std::ios_base::app);
+    if (!fileSpaceDiversity.is_open()) {
+        cerr << "Error!!!The file to store the space diversity of base stations is not open!!" << endl;
+        exit(errno);
+    }
+    fileSpaceDiversity << randomSeed << "\t" << numRelays << "\t" << spaceDiversity << endl;
+    fileSpaceDiversity.close();
+}
+
 void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<int>>& bsGridMap,
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,

@@ -18,8 +18,8 @@ public:
   const double minHeightForBS_m = 10.0; // Only deploy BSs on the rooftop of buildings with height between [min,max].
   const double maxHeightForBS_m = 50.0;
   const double groundLevel_m = 290.0;
-  const double densityRelayOnBuilding = 0.0001;
-  const int minNumRelaysPerFace = 1;
+  const double densityRelayOnBuilding = 0.0002;
+  const int minNumRelaysPerFace = 2;
   const double areaXRange_m[2] {-100, 1700};
   const double areaYRange_m[2] {-1700, 100};
   const double gridSize_m = 200.0;

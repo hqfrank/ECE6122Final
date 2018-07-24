@@ -55,7 +55,7 @@ int main() {
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
-  for (int rnd = 500; rnd < 700; rnd++) {
+  for (int rnd = 500; rnd < 510; rnd++) {
       sysParams.randomSeed = rnd;
       /*
        * ========================================
@@ -169,6 +169,7 @@ int main() {
       int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
                                                maxSDNodeList, nodeNeighborList, sysParams);
       cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
+      writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity.txt");
 
       /*
        * ======================================================

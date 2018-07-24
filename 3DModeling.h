@@ -76,6 +76,8 @@ void selectBaseStationPerGrid(std::vector<Point_t>& bsSet, std::vector<std::vect
 
 void writeBSsLoactionToFile(const std::vector<std::vector<int>>& bsLocations, const std::string& dataBSsGrid);
 
+void writeSpaceDiversityToFile(int randomSeed, int numRelays, int spaceDiversity, const std::string& dataSpaceDiversity);
+
 /* Read node information from file. */
 void readNodeInfoFromFile(std::vector<Point_t>& nodes, const std::string& fileDataNodes, std::string& type);
 
