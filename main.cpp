@@ -55,7 +55,7 @@ int main() {
   /* File to store the time stamp of the simulation corresponding to each pair of source and destination base stations. */
   std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
-  for (int rnd = 500; rnd < 510; rnd++) {
+  for (int rnd = 500; rnd < 570; rnd++) {
       sysParams.randomSeed = rnd;
       /*
        * ========================================
@@ -165,11 +165,11 @@ int main() {
       int mBSPos[2] = {4, 5};
       cout << "The macro-cell base station is in grid row " << mBSPos[0] << ", column " << mBSPos[1] << endl;
       /* Find the space diversity of macro cell base station. */
-      std::vector<int> maxSDNodeList;
-      int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
-                                               maxSDNodeList, nodeNeighborList, sysParams);
-      cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
-      writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity.txt");
+//      std::vector<int> maxSDNodeList;
+//      int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
+//                                               maxSDNodeList, nodeNeighborList, sysParams);
+//      cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
+//      writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity.txt");
 
       /*
        * ======================================================
@@ -462,7 +462,7 @@ int main() {
           }
           cout << "In total, " << numRelaysNeeded << " relays need to be deployed." << endl;
 
-          std::string dataPaths = "../Data/Paths/Data_Results_" + std::to_string(sysParams.randomSeed)
+          std::string dataPaths = std::to_string(sysParams.randomSeed)
                                   + "_" + std::to_string(numRelays)
                                   + "_" + std::to_string(numBSs)
                                   + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi / M_PI * 180));

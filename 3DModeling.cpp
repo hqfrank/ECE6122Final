@@ -12,8 +12,11 @@
  void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::vector<int>& sequence,
                        const std::vector<Point_t>& allNodes, SystemParameters& parameters,
                        std::string& dataPath) {
+
    if (!parameters.interPathIntControl) {
-       dataPath = dataPath + "_idp";
+       dataPath = "../Data/Paths/Idp/Data_Results_" + dataPath;
+   } else {
+       dataPath = "../Data/Paths/Data_Results_" + dataPath;
    }
    std::string filePath = dataPath + "_Paths.txt";
    std::string fileCapacity = dataPath + "_Capacity.txt";
