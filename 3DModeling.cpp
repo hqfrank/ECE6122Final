@@ -2102,7 +2102,8 @@ int evaluateSpaceDiversityAtNode(const int nodeId, const std::vector<Point_t>& n
 /* Bron-Kerbosch algorithm with pivoting to list all maximal cliques in an arbitrary graph. */
 void BronKerboschPivoting(const std::vector<std::vector<int>>& graph, const std::vector<int>& R, std::vector<int> P,
                           std::vector<int> X, std::vector<std::vector<int>>& allMaximalCliques, int& maxDegree){
-  /* if P and X are both empty:  */
+  if (maxDegree >= 15) return;
+    /* if P and X are both empty:  */
   if (P.empty() && X.empty()) {
     /* report R as a maximal clique */
     if (R.size() > maxDegree) {
