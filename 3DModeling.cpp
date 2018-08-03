@@ -1401,22 +1401,36 @@ std::vector<std::vector<Point_t>> generateBaseStationPairs(const std::vector<Poi
 }
 
 std::vector<std::vector<int>> addNodeToConnectivityList(const std::vector<std::vector<int>>& relayNeighborList,
-                                                                      const Point_t& newNode, const std::vector<Point_t>& oldNodes,
-                                                                      const std::vector<Building_t>& buildings){
+                                                        const Point_t& newNode, const std::vector<Point_t>& oldNodes,
+                                                        const std::vector<Building_t>& buildings){
   std::vector<std::vector<int>> currentList = relayNeighborList;
   /* Vector which stores the index of nodes which are connected to the new node */
   std::vector<int> nonBlockNodes;
   /* Test the connection between the new node and each of the old node. */
-  for (int i=0; i<oldNodes.size(); i++){
-    Line_t sd(newNode, oldNodes.at(i));
+  for (int i = 0; i < oldNodes.size(); i++){
+    Line_t sd(newNode, oldNodes[i]);
     bool blockTest = blockageTest(buildings, sd);
     if (!blockTest){
       nonBlockNodes.push_back(i);
-      currentList.at(i).push_back(oldNodes.size());
+      currentList[i].push_back(oldNodes.size());
     }
   }
   currentList.push_back(nonBlockNodes);
   return currentList;
+}
+
+void writeVectorDataToFile(const string& filename, const std::vector<std::vector<int>>& data) {
+    std::ofstream fileOut;
+    fileOut.open(filename, std::ios_base::trunc);
+    if (fileOut.is_open()) {
+        for (auto row : data){
+            for (auto element : row) {
+                fileOut << element << '\t';
+            }
+            fileOut << '\n';
+        }
+    }
+    fileOut.close();
 }
 
 

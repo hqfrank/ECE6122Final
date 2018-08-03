@@ -59,7 +59,7 @@ int main() {
      * ===========  Main simultions  =============
      * ===========================================
      */
-    for (int rnd = 500; rnd < 510; rnd++) {
+    for (int rnd = 500; rnd < 501; rnd++) {
         sysParams.randomSeed = rnd;
         /*
          * ========================================
@@ -93,99 +93,127 @@ int main() {
         countRelaysPerGrid(allRelays, numRelaysInGrid, sysParams);
 
         /*
-         * ==================================================================================================================
-         * Check if connectivity information exists, if not, generate connectivity information; otherwise, read existed info.
-         * ==================================================================================================================
+         * ================================================================================================
+         *   Generate candidate base station locations randomly.
+         *   'dataBSs': base stations coordinations
+         *   'dataBSInGrid': each line stores a BS's grid indices.
+         *   'roofTopRelays': the vector to store all relays on the roof top vertices.
+         *   'bsSet': all base stations (Point_t)
+         *   'bsGridMap': stores the index of base station (i.e. 'i' in bsSet[i]) in each grid.
+         *   'bsLocation': stores the indices of row and column of the grid where each base station sits.
+         * ================================================================================================
          */
-        std::string dataRelayNeighbors = "../Data/Relay_Neighbors/Data_RelayNeighbors_"
-                                         + std::to_string(sysParams.randomSeed)
-                                         + "_" + std::to_string(numRelays) + ".txt";
-        std::ifstream fileConnects(dataRelayNeighbors);
-        std::vector<std::vector<int>> relayNeighborList;
-        if (fileConnects.good()){
-            // read the relay neighborList
-            getRelayNeighborInfoFromFile(relayNeighborList, dataRelayNeighbors);
+        std::string dataBSs = "../Data/Base_Stations/Data_BSSet_" + std::to_string(sysParams.randomSeed)
+                              + "_" + std::to_string(numRelays)
+                              + "_" + std::to_string(sysParams.gridSize_m)
+                              + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
+        std::string dataBSInGrid = "../Data/Base_Stations_Grid/Data_BSInGrid_" + std::to_string(sysParams.randomSeed)
+                                   + "_" + std::to_string(numRelays)
+                                   + "_" + std::to_string((int) round(sysParams.gridSize_m))
+                                   + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
+        std::vector<Point_t> roofTopRelays;
+        std::vector<Point_t> bsSet;
+        std::ifstream fileBSs(dataBSs);
+        if (fileBSs.good()) {
+            // read the selected BSs
+            std::string type = "base station";
+            readNodeInfoFromFile(bsSet, dataBSs, type);
         } else {
-            exploreConnectivity(relayNeighborList, allRelays, buildingSet, dataRelayNeighbors);
+            bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
+        }
+        /*  Select base stations based on the grid. Each grid has at most 1 base station.  */
+        std::vector<std::vector<int>> bsGridMap;
+        std::vector<std::vector<int>> bsLocation;
+        selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, dataBSs, !fileBSs.good(), sysParams);
+        std::ifstream fileBSsGrid(dataBSInGrid);
+        if (!fileBSsGrid.good()) {
+            writeBSsLoactionToFile(bsLocation, dataBSInGrid);
+        }
+        int numBSs = bsSet.size();
+        /* Get the line-of-sight neighboring information of all base stations. */
+        std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)
+                                      + "_" + std::to_string(numBSs)
+                                      + ".txt";
+        std::ifstream fileBSConnect(dataBSNeighbors);
+        std::vector<std::vector<int>> bsNeighborList;
+        if (fileBSConnect.good()) {
+            getRelayNeighborInfoFromFile(bsNeighborList, dataBSNeighbors);
+        } else {
+            exploreConnectivity(bsNeighborList, bsSet, buildingSet, dataBSNeighbors);
+        }
+
+        std::vector<Point_t> allNodes;
+        std::vector<std::vector<int>> relayNeighborList;
+        std::vector<std::vector<int>> nodeNeighborList;
+        if (sysParams.relayNeighborEvaluation) {
+            /*
+             * ========================================================================================
+             *   Check if connectivity information exists, if not, generate connectivity information;
+             *   otherwise, read existed info.
+             * ========================================================================================
+             */
+            std::string dataRelayNeighbors = "../Data/Relay_Neighbors/Data_RelayNeighbors_"
+                                             + std::to_string(sysParams.randomSeed)
+                                             + "_" + std::to_string(numRelays) + ".txt";
+            std::ifstream fileConnects(dataRelayNeighbors);
+            if (fileConnects.good()){
+                // read the relay neighborList
+                getRelayNeighborInfoFromFile(relayNeighborList, dataRelayNeighbors);
+            } else {
+                exploreConnectivity(relayNeighborList, allRelays, buildingSet, dataRelayNeighbors);
+            }
+            /*
+             * ==================================================================
+             *   Add source and destination bss to "nodes" and "neighbor list".
+             * ==================================================================
+             */
+            nodeNeighborList = relayNeighborList;
+            allNodes = allRelays;
+            for (auto bs : bsSet){
+                nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, bs, allNodes, buildingSet);
+                allNodes.push_back(bs);
+            }
+            std::string dataNodeNeighbors = "../Data/Node_Neighbors_Two_Steps/Data_NodeNeighbors"
+                                            + std::to_string(sysParams.randomSeed)
+                                            + "_" + std::to_string(numRelays)
+                                            + "_" + std::to_string(numBSs) + ".txt";
+            writeVectorDataToFile(dataNodeNeighbors, nodeNeighborList);
+        } else {
+            allNodes = allRelays;
+            allNodes.insert(allNodes.end(), bsSet.begin(), bsSet.end());
+            cout << "(*) There are " << allNodes.size() << " wireless nodes in the area." << endl;
+            /*
+             * ===============================================================
+             *   Evaluate the connectivity between different wireless nodes.
+             * ===============================================================
+             */
+            /* File to store the node neighboring information. */
+            std::string dataNodeNeighbors = "../Data/Node_Neighbors/Data_NodeNeighbors_"
+                                            + std::to_string(sysParams.randomSeed)
+                                            + "_" + std::to_string(numRelays)
+                                            + "_" + std::to_string(numBSs) + ".txt";
+            std::ifstream fileConnect(dataNodeNeighbors);
+            if (fileConnect.good()) {
+                // read the relay neighborList
+                getRelayNeighborInfoFromFile(nodeNeighborList, dataNodeNeighbors);
+                assert(nodeNeighborList.size() == allNodes.size());
+            } else {
+                exploreConnectivity(nodeNeighborList, allNodes, buildingSet, dataNodeNeighbors);
+            }
         }
 
 
 
 
 
-//        /*
-//         * =======================================================
-//         *   Generate candidate base station locations randomly.
-//         *   'dataBSs': base stations coordinations
-//         *   'dataBSInGrid': each line stores a BS's grid indices.
-//         *   'roofTopRelays': the vector to store all relays on the roof top vertices.
-//         *   'bsSet': all base stations (Point_t)
-//         *   'bsGridMap': stores the index of base station (i.e. 'i' in bsSet[i]) in each grid.
-//         *   'bsLocation': stores the indices of row and column of the grid where each base station sits.
-//         * =======================================================
-//         */
-//        std::string dataBSs = "../Data/Base_Stations/Data_BSSet_" + std::to_string(sysParams.randomSeed)
-//                              + "_" + std::to_string(numRelays)
-//                              + "_" + std::to_string(sysParams.gridSize_m)
-//                              + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
-//        std::string dataBSInGrid = "../Data/Base_Stations_Grid/Data_BSInGrid_" + std::to_string(sysParams.randomSeed)
-//                                   + "_" + std::to_string(numRelays)
-//                                   + "_" + std::to_string((int) round(sysParams.gridSize_m))
-//                                   + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
-//        std::vector<Point_t> roofTopRelays;
-//        std::vector<Point_t> bsSet;
-//        std::ifstream fileBSs(dataBSs);
-//        if (fileBSs.good()) {
-//            // read the selected BSs
-//            std::string type = "base station";
-//            readNodeInfoFromFile(bsSet, dataBSs, type);
-//        } else {
-//            bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
-//        }
-//        /*  Select base stations based on the grid. Each grid has at most 1 base station.  */
-//        std::vector<std::vector<int>> bsGridMap;
-//        std::vector<std::vector<int>> bsLocation;
-//        selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, dataBSs, !fileBSs.good(), sysParams);
-//        std::ifstream fileBSsGrid(dataBSInGrid);
-//        if (!fileBSsGrid.good()) {
-//            writeBSsLoactionToFile(bsLocation, dataBSInGrid);
-//        }
-//        int numBSs = bsSet.size();
-//        std::vector<Point_t> allNodes = allRelays;
-//        allNodes.insert(allNodes.end(), bsSet.begin(), bsSet.end());
-//        cout << "(*) There are " << allNodes.size() << " wireless nodes in the area." << endl;
+
+
+
+
+
+
 //
-//        /*
-//         * ===============================================================
-//         *   Evaluate the connectivity between different wireless nodes.
-//         * ===============================================================
-//         */
-//        /* File to store the node neighboring information. */
-//        std::string dataNodeNeighbors = "../Data/Node_Neighbors/Data_NodeNeighbors_"
-//                                        + std::to_string(sysParams.randomSeed)
-//                                        + "_" + std::to_string(numRelays)
-//                                        + "_" + std::to_string(numBSs) + ".txt";
-//        std::ifstream fileConnect(dataNodeNeighbors);
-//        std::vector<std::vector<int>> nodeNeighborList;
-//        if (fileConnect.good()) {
-//            // read the relay neighborList
-//            getRelayNeighborInfoFromFile(nodeNeighborList, dataNodeNeighbors);
-//            assert(nodeNeighborList.size() == allNodes.size());
-//        } else {
-//            exploreConnectivity(nodeNeighborList, allNodes, buildingSet, dataNodeNeighbors);
-//        }
-//
-//        /* Get the line-of-sight neighboring information of all base stations. */
-//        std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)
-//                                      + "_" + std::to_string(numBSs)
-//                                      + ".txt";
-//        std::ifstream fileBSConnect(dataBSNeighbors);
-//        std::vector<std::vector<int>> bsNeighborList;
-//        if (fileBSConnect.good()) {
-//            getRelayNeighborInfoFromFile(bsNeighborList, dataBSNeighbors);
-//        } else {
-//            exploreConnectivity(bsNeighborList, bsSet, buildingSet, dataBSNeighbors);
-//        }
+
 //
 //        /*
 //         * =======================================
@@ -383,17 +411,7 @@ int main() {
 
 
 
-  /*
-   * ==============================================================
-   * Add source and destination bss to "nodes" and "neighbor list".
-   * ==============================================================
-   */
-//  nodeNeighborList = relayNeighborList;
-//  allNodes = allRelays;
-//  for (auto bs : bsSet){
-//    nodeNeighborList = addNodeToConnectivityList(nodeNeighborList, bs, allNodes, buildingSet);
-//    allNodes.push_back(bs);
-//  }
+
       /*
        * ========================================
        *   Test the space diversity of each BS.
