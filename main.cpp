@@ -59,7 +59,7 @@ int main() {
      * ===========  Main simultions  =============
      * ===========================================
      */
-    for (int rnd = 501; rnd < 540; rnd++) {
+    for (int rnd = 500; rnd < 600; rnd++) {
         sysParams.randomSeed = rnd;
         /*
          * ========================================
@@ -217,7 +217,7 @@ int main() {
         int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
                                                  maxSDNodeList, nodeNeighborList, sysParams);
         cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
-        writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity.txt");
+        writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity_1.txt");
         /*
          * ======================================================
          *   Evaluate the LoS multi-hop paths from mBS to sBSs.
@@ -324,7 +324,7 @@ int main() {
         }
         cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
         std::ofstream fileOutNumLOSLinks;
-        fileOutNumLOSLinks.open("../Data/Number_LOS_Links/Data_NumLOSLinks_2.txt", std::ios_base::app);
+        fileOutNumLOSLinks.open("../Data/Number_LOS_Links/Data_NumLOSLinks_3.txt", std::ios_base::app);
         fileOutNumLOSLinks << rnd << "\t" << treeConnections.size() - numLOSLinks << "\t"  << countIntPairs << "\t" << treeConnections.size() << endl;
         fileOutNumLOSLinks.close();
         /*
