@@ -525,50 +525,49 @@ Vector_t normalize(const Vector_t& v) {
 }
 
 /*
- * Read in building information from data files.
+ * =================================================
+ *   Read in building information from data files.
+ * =================================================
  */
-std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::string dataBuildingVertices, SystemParameters& parameters) {
+ void getBuildingInfoFromFile(std::vector<Building_t>& buildings, std::string dataBuildings,
+                              std::string dataBuildingVertices, SystemParameters& parameters) {
   std::ifstream fileIn(dataBuildings);
   std::ofstream fileOut;
   std::string str;
   std::vector<std::string> data;
-  while (std::getline(fileIn, str, '\t'))
-  {
-    if (str.find('\n') != std::string::npos){
+  while (std::getline(fileIn, str, '\t')) {
+    if (str.find('\n') != std::string::npos) {
       data.push_back(str.substr(0, str.find('\n')));
       data.push_back(str.substr(str.find('\n')+1));
     } else {
       data.push_back(str);
     }
   }
-//  cout<< data.size() << endl;
+
   // Create each building objects and store them.
-  std::vector<Building_t> buildings;
   fileOut.open(dataBuildingVertices, std::ios_base::trunc);
-  if (fileOut.is_open()){
-    cout << "Ready to write building vertices information to file." << endl;
+  if (fileOut.is_open()) {
+    cout << "(O) Ready to write building vertices information to file." << endl;
   } else {
-    cout << "Fail to open the file where building vertices information should be stored." << endl;
+    cout << "(E) Fail to open the file in function getBuildingInfoFromFile()." << endl;
   }
-  for (int i = 0; i < data.size(); i = i+7){
-    double center[2] {std::stod(data.at(i)), std::stod(data.at(i+1))};
-    double length_m = std::stod(data.at(i+2));
-    double width_m = std::stod(data.at(i+3));
-    double topHeight_m = std::stod(data.at(i+4));
-    double baseLevel_m = std::stod(data.at(i+5));
-    double lwhbg[] {length_m, width_m, topHeight_m, baseLevel_m + parameters.minHeightForRelay_m, parameters.groundLevel_m};
-    double orientation_rad = (std::stod(data.at(i+6)))/180.0*M_PI;
+  for (int i = 0; i < data.size(); i = i+7) {
+    double center[2] {std::stod(data[i]), std::stod(data[i+1])};  //  the center of a building i
+    double length_m = std::stod(data[i+2]);  // the length of the rectangle (i.e., building)
+    double width_m = std::stod(data[i+3]);   // the width of the rectangle (i.e., building)
+    double topHeight_m = std::stod(data[i+4]);  // the height of the top ceiling of a building
+    double baseLevel_m = std::stod(data[i+5]);  // the height of the base of a building
+    double lwhbg[] {length_m, width_m, topHeight_m, baseLevel_m + parameters.minHeightForRelay_m,
+                    parameters.groundLevel_m};  // calculate the min height to deploy relays on the building
+    double orientation_rad = (std::stod(data[i+6]))/180.0*M_PI;
     /* Generate each building object. */
     Building_t newBuilding(center, lwhbg, orientation_rad, parameters.maxHeightForRelay_m,
-                           parameters.densityRelayOnBuilding, buildings.size() * parameters.randomSeed,
-                           parameters.minNumRelaysPerFace);
+                           parameters.densityRelayOnBuilding, i/7*parameters.randomSeed,
+                           parameters.minNumRelaysPerFace);  // do not deploy relay on top face above 200 m
     buildings.push_back(newBuilding);
-    fileOut << (buildings.at(buildings.size()-1).toStringData()+"\n");
-//    cout << buildings.at(buildings.size()-1)->toStringData() << endl;
+    fileOut << (buildings[buildings.size()-1].toStringData()+"\n");
   }
-
   fileOut.close();
-  return buildings;
 }
 
 std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buildingSet, std::vector<Point_t>& roofTopRelays, SystemParameters& parameters){
@@ -912,8 +911,8 @@ void countRelaysPerGrid(std::vector<Point_t>& relays, std::vector<std::vector<in
   cout << "-----------------------------------------------------------------------------" << endl;
 }
 
-std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, const std::string& fileDataRelays){
-  std::vector<Point_t> allRelays;
+void collectAllRelays(std::vector<Point_t>& allRelays, const std::vector<Building_t>& buildings,
+                      const std::string& fileDataRelays) {
   for (const Building_t& bldg : buildings){
     std::vector<Point_t> curRelays = bldg.getRelays();
     allRelays.insert(allRelays.begin(), curRelays.begin(), curRelays.end());
@@ -921,7 +920,7 @@ std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, 
 
   /* Write the relays collected out into the file. */
   std::ofstream fileOut;
-  fileOut.open(fileDataRelays, std::ios_base::app);
+  fileOut.open(fileDataRelays, std::ios_base::trunc);
   if (fileOut.is_open()){
     cout << "Ready to write relays' information to file." << endl;
   } else {
@@ -931,8 +930,8 @@ std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, 
     fileOut << relay.toStringData() << "\n";
   }
   fileOut.close();
-  cout << "(*) There are " + to_string(allRelays.size()) + " candidate relays generated on the surfaces of buildings." << endl;
-  return allRelays;
+  cout << "(*) There are " + to_string(allRelays.size()) + " candidate relays generated on the surfaces of buildings."
+       << endl;
 }
 
 void readNodeInfoFromFile(std::vector<Point_t>& nodes, const std::string& fileDataNodes, std::string& type){

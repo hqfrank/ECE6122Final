@@ -29,7 +29,7 @@ public:
   const double bsDistanceRange_m[2] {20,1000};
   const int numBSPairs = 100;
   const double antennaGain_dBi = 21.87;
-  const double antennaBeamWidth_phi = 13.0/180.0*M_PI;
+  const double antennaBeamWidth_phi = 15.0/180.0*M_PI;
   const double antennaIsoSpan_phi = M_PI/6.0;
   const double lambda_m = 0.005;   // 5*10^-3 m
   const double alpha = 16E-3;
@@ -48,6 +48,7 @@ public:
   double lowerBound_Gbps = 0;
   string simStartTime = "NULL";
   const bool relayNeighborEvaluation = true; // If the program generate relay neighboring information.
+  const double extraHeightMBS = 30.0;  // the additional height of a macro-cell base stataion
 };
 
 

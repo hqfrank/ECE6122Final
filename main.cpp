@@ -18,55 +18,56 @@
 using namespace std;
 
 int main() {
-    /*
-     *  ***************************************
-     *  ************ MAIN FUNCTION ************
-     *  ***************************************
-     */
-    /*
-     * ===================================================================================
-     *   Get current time, which is used to identify the name of the simulation results.
-     * ===================================================================================
-     */
-    std::chrono::microseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
-    std::string strTime = std::to_string(ms.count()/1000);  // "strTime" is the current time in string type.
+  /*
+   *  ***************************************
+   *  ************ MAIN FUNCTION ************
+   *  ***************************************
+   */
+  /*
+   * ===================================================================================
+   *   Get current time, which is used to identify the name of the simulation results.
+   * ===================================================================================
+   */
+  std::chrono::microseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(
+    std::chrono::system_clock::now().time_since_epoch());
+  std::string strTime = std::to_string(ms.count()/1000);  // "strTime" is the current time in string type.
 
-    /*
-     * ===============================================
-     *   Set up simulation configuration parameters.
-     * ===============================================
-     */
-    SystemParameters sysParams;        // Create the system parameter object.
-    sysParams.simStartTime = strTime;  // Update the simulation start time using "strTime".
-    EstimatedHop eHops;                // Create the variable which records the distance-estimated hop number mapping.
+  /*
+   * ===============================================
+   *   Set up simulation configuration parameters.
+   * ===============================================
+   */
+  SystemParameters sysParams;        // Create the system parameter object.
+  sysParams.simStartTime = strTime;  // Update the simulation start time using "strTime".
+  EstimatedHop eHops;                // Create the variable which records the distance-estimated hop number mapping.
 
-    /*
-     * ===========================================================================
-     * ===========================  File information.  ===========================
-     *   'strDataBuildings': building raw data extracted from google earth.
-     *   'strDataBuildingVertices': file to store the vertices of each building.
-     *   'strTimeStampFile': file to store the time stamp of the simulation.
-     * ===========================================================================
-     */
-    std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
-    std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices.txt";
-    std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
+  /*
+   * ===========================================================================
+   * ===========================  File information.  ===========================
+   *   'strDataBuildings': building raw data extracted from google earth.
+   *   'strDataBuildingVertices': file to store the vertices of each building.
+   *   'strTimeStampFile': file to store the time stamp of the simulation.
+   * ===========================================================================
+   */
+  std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
+  std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices.txt";
+  std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
+  /*
+   * ===========================================
+   * ===========  Main simultions  =============
+   * ===========================================
+   */
+  for (int rnd = 500; rnd < 510; rnd++) {
+    sysParams.randomSeed = rnd;
     /*
-     * ===========================================
-     * ===========  Main simultions  =============
-     * ===========================================
+     * ========================================
+     *   Construct all buildings in the area.
+     *   Building vertices information is flushed every time.
+     * ========================================
      */
-    for (int rnd = 500; rnd < 600; rnd++) {
-        sysParams.randomSeed = rnd;
-        /*
-         * ========================================
-         *   Construct all buildings in the area.
-         * ========================================
-         */
-        std::vector<Building_t> buildingSet = getBuildingInfoFromFile(strDataBuildings, strDataBuildingVertices, sysParams);
+    std::vector<Building_t> buildingSet;
+    getBuildingInfoFromFile(buildingSet, strDataBuildings, strDataBuildingVertices, sysParams);
 
         /*
          * =========================================================
@@ -86,7 +87,7 @@ int main() {
             std::string type = "relay";
             readNodeInfoFromFile(allRelays, dataRelays, type);
         } else {
-            allRelays = collectAllRelays(buildingSet, dataRelays);
+            collectAllRelays(allRelays, buildingSet, dataRelays);
         }
         int numRelays = allRelays.size();
         std::vector<std::vector<int>> numRelaysInGrid;
@@ -217,7 +218,24 @@ int main() {
         int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
                                                  maxSDNodeList, nodeNeighborList, sysParams);
         cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
-        writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity_1.txt");
+//        writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
+        /*
+         * =====================================================
+         *   Change the height of the macro-cell base station.
+         * =====================================================
+         */
+        if (mBSSD <= 7) {
+          auto originalHeight = allNodes[allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]]].getZ();
+          auto newHeight = originalHeight + sysParams.extraHeightMBS;
+          allNodes[allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]]].setZ(newHeight);
+          cout << "The original height of the MBS is " << originalHeight << ", and the new height is " << newHeight << endl;
+          auto newSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
+                                                    maxSDNodeList, nodeNeighborList, sysParams);
+          cout << "The original space diversity is " << mBSSD << ", and the new space diversity is " << newSD << endl;
+          writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
+          writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, newSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
+        }
+        continue;
         /*
          * ======================================================
          *   Evaluate the LoS multi-hop paths from mBS to sBSs.

@@ -32,6 +32,13 @@ public:
   const double l1000g800 = 4*0.43 + 5*0.49 + 6*0.06 + 7*0.02;
 };
 
+void getBuildingInfoFromFile(std::vector<Building_t>& buildings, std::string dataBuildings,
+                             std::string dataBuildingVertices, SystemParameters& parameters);
+
+/* Collect all relays on the surfaces of buildings. */
+void collectAllRelays(std::vector<Point_t>& allRelays, const std::vector<Building_t>& buildings,
+                      const std::string& fileDataRelays);
+
 void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::vector<int>& sequence,
                       const std::vector<Point_t>& allNodes, SystemParameters& parameters,
                       std::string& dataPath);
@@ -65,7 +72,7 @@ Vector_t cross(const Vector_t& v1, const Vector_t& v2);
 
 Vector_t normalize(const Vector_t& v);
 
-std::vector<Building_t> getBuildingInfoFromFile(std::string dataBuildings, std::string dataBuildingVertices, SystemParameters& parameters);
+
 
 /* Generate candidate base station locations randomly, and it also generates the locations of all relays located at the roof top corners. */
 std::vector<Point_t> generateCandidateBaseStations(std::vector<Building_t>& buildingSet, std::vector<Point_t>& roofTopRelays, SystemParameters& parameters);
@@ -82,9 +89,6 @@ void writeSpaceDiversityToFile(int randomSeed, int numRelays, int spaceDiversity
 
 /* Read node information from file. */
 void readNodeInfoFromFile(std::vector<Point_t>& nodes, const std::string& fileDataNodes, std::string& type);
-
-/* Collect all relays on the surfaces of buildings. */
-std::vector<Point_t> collectAllRelays(const std::vector<Building_t>& buildings, const std::string& fileDataRelays);
 
 /* Select roof top relays based on the grid constraint. */
 void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters);
