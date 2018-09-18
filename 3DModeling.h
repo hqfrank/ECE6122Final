@@ -49,7 +49,7 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,
                              std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
-                             std::vector<std::vector<Point_t>>& bsPairs);
+                             std::vector<std::vector<Point_t>>& bsPairs, const SystemParameters& parameters);
 
 void printConnections(const std::vector<std::vector<int>>& nodeConnections);
 

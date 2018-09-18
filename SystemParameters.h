@@ -49,6 +49,7 @@ public:
   string simStartTime = "NULL";
   const bool relayNeighborEvaluation = true; // If the program generate relay neighboring information.
   const double extraHeightMBS = 30.0;  // the additional height of a macro-cell base stataion
+  const bool splitMacroBS = true;  // Control the splitting of the macro-cell base station.
 };
 
 
