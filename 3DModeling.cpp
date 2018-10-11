@@ -15,10 +15,14 @@
 
    if (!parameters.interPathIntControl) {
      dataPath = "../Data/Paths/Idp/Data_Results_" + dataPath;
-   } else if (parameters.splitMacroBS) {
+   } else if (parameters.splitMacroBS && !parameters.limitMacroCell) {
      dataPath = "../Data/Paths/Double_MBS/Data_Results_" + dataPath;
+   } else if (parameters.splitMacroBS && parameters.limitMacroCell) {
+       dataPath = "../Data/Paths/Double_MBS_LimitedArea/Data_Results_" + dataPath;
+   } else if (!parameters.splitMacroBS && parameters.limitMacroCell) {
+       dataPath = "../Data/Paths/Single_MBS_LimitedArea/Data_Results_" + dataPath;
    } else {
-     dataPath = "../Data/Paths/Data_Results_" + dataPath;
+     dataPath = "../Data/Paths/Single_MBS/Data_Results_" + dataPath;
    }
    std::string filePath = dataPath + "_Paths.txt";
    std::string fileCapacity = dataPath + "_Capacity.txt";
@@ -730,24 +734,37 @@ void writeSpaceDiversityToFile(int randomSeed, int numRelays, int spaceDiversity
     fileSpaceDiversity.close();
 }
 
-void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<int>>& bsGridMap,
+void treeTopologyMeshAtlanta(const int mBSPos[2], std::vector<std::vector<int>>& bsGridMap,
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,
                              std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
                              std::vector<std::vector<Point_t>>& bsPairs, const SystemParameters& parameters){
-  /* The grid where the macro cell base station locates is indicated by mBSPos[2] */
-  assert(bsGridMap[mBSPos[0]][mBSPos[1]] >= 0);  // The mBS should be valid.
-  /* Initialization. */
-  std::vector<int> selectedBS;
-  selectedBS.push_back(bsGridMap[mBSPos[0]][mBSPos[1]]);  // First to select the mBS
-  int nextRootIndex = 0;
-  int nextRoot = selectedBS[nextRootIndex];
-  nextRootIndex++;
-  if (parameters.splitMacroBS) {
-    selectedBS.push_back((int) bsSet.size() - 1);
+    /* The grid where the macro cell base station locates is indicated by mBSPos[2] */
+    assert(bsGridMap[mBSPos[0]][mBSPos[1]] >= 0);  // The mBS should be valid.
+    /* In case, the area is limited. */
+    if (parameters.limitMacroCell) {
+        int numSmallCells = (int) floor(parameters.macroCellSize_m/parameters.gridSize_m + 0.5);
+        int numExtraCells = (numSmallCells - 1)/2;
+        for (int i = 0; i < (int) bsGridMap.size(); i++) {
+            for (int j = 0; j < (int) bsGridMap[0].size(); j++) {
+                if (i < mBSPos[0] - numExtraCells || i > mBSPos[0] + numExtraCells ||
+                    j < mBSPos[1] - numExtraCells || j > mBSPos[1] + numExtraCells) {
+                    bsGridMap[i][j] = -1;
+                }
+            }
+        }
+    }
+    /* Initialization. */
+    std::vector<int> selectedBS;
+    selectedBS.push_back(bsGridMap[mBSPos[0]][mBSPos[1]]);  // First to select the mBS
+    int nextRootIndex = 0;
+    int nextRoot = selectedBS[nextRootIndex];
     nextRootIndex++;
-  }
-  /* Connect the mBS to its 8 neighbors. */
+    if (parameters.splitMacroBS) {
+        selectedBS.push_back((int) bsSet.size() - 1);
+        nextRootIndex++;
+    }
+    /* Connect the mBS to its 8 neighbors. */
   for (int i = mBSPos[0] - 1; i <= mBSPos[0] + 1; ++i) {
     for (int j = mBSPos[1] - 1; j <= mBSPos[1] + 1; ++j) {
       if ((i != mBSPos[0] || j != mBSPos[1]) && bsGridMap[i][j] > -1) {
@@ -800,7 +817,10 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
       if (selectedBS.size() > numSelectedBS) break;
     }
     nextRootIndex++;
-
+    /*
+     * The following code handles the case where there are still unselected BSs which are cannot be connected by the
+     * non-rooted bs.
+     */
     if (nextRootIndex == selectedBS.size()) {
       // find an unselected bs.
       for (int i = 0; i < bsSet.size(); i++) {
@@ -808,6 +828,9 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<
         // i is an unselected BS.
         int iX = bsLocation[i][0];
         int iY = bsLocation[i][1];
+        if (parameters.limitMacroCell) {
+            if (bsGridMap[iX][iY] < 0) continue;
+        }
         for (int j = iX - 1; j <= iX + 1; j++) {
           if (j < 0 || j > bsGridMap[0].size() - 1) continue;
           for (int k = iY - 1; k <= iY + 1; k++) {

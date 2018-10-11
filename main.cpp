@@ -58,8 +58,17 @@ int main() {
    * ===========  Main simultions  =============
    * ===========================================
    */
-  for (int rnd = 501; rnd < 600; rnd++) {
-    sysParams.randomSeed = rnd;
+//  int rnds[]{19, 23, 25, 35, 39, 55, 68, 74, 76, 81, 82, 84, 89, 92};
+//  int rnds[]{9, 16, 19, 23, 24, 25, 30, 32, 39, 43, 44, 45, 48, 52, 55, 63, 68, 69, 73, 74, 76, 82, 84, 89, 92, 100};
+//  int rnds[]{7, 11, 23, 24, 25, 26, 30, 32, 39, 41, 43, 44, 45, 46, 48, 51, 53, 55, 56, 57, 60, 62, 63, 68, 69, 73,
+//             74, 76, 77, 82, 84, 87, 89, 90, 96, 97, 98, 100};
+  int rnds[]{3, 5, 8, 9, 11, 20, 21, 22, 23, 24, 25, 26, 30, 32, 34, 35, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+             50, 51, 52, 53, 55, 56, 57, 60, 61, 62, 63, 66, 68, 69, 73, 74, 75, 76, 79, 81, 82, 84, 87, 88, 89, 90,
+             92, 96, 98, 99, 100};
+  for (int iRnd = 0; iRnd < 58; iRnd++) {
+      sysParams.randomSeed = rnds[iRnd] - 1 + 500;
+//  for (int rnd = 500; rnd < 501; rnd++) {
+//    sysParams.randomSeed = rnd;
     /*
      * ========================================
      *   Construct all buildings in the area.
@@ -159,7 +168,7 @@ int main() {
     }
     treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs, sysParams);
     printConnections(nodeConnections);
-    writeTopologyToFile(dataTopology, treeConnections, numRelays);
+//    writeTopologyToFile(dataTopology, treeConnections, numRelays);
 //    /* Get the line-of-sight neighboring information of all base stations. */
 //    std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)
 //                                  + "_" + std::to_string(numBSs)

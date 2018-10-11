@@ -23,6 +23,7 @@ public:
   const double areaXRange_m[2] {-100, 1700};
   const double areaYRange_m[2] {-1700, 100};
   const double gridSize_m = 200.0;
+  const double macroCellSize_m = 1000.0;
   const int maxNumRelaysInGrid = 1;
   const double maxLengthLOSLinkBSs_m = 100.0;
   const double phyLinkDistMax_m = 300;
@@ -43,13 +44,14 @@ public:
   const bool firstHopControl = true;
   const bool relaySharingControl = true;
   const bool interPathIntControl = true;
-  const bool bsFewRelaysControl = true;  // If the number of relays is smaller than the threshold, the bs is disabled.
+  const bool bsFewRelaysControl = true;      // If the number of relays is smaller than the threshold, the bs is disabled.
   const unsigned int minRelayNumInGrid = 5;  // The minimum number of relays in a grid to support the activation of a BS.
   double lowerBound_Gbps = 0;
   string simStartTime = "NULL";
   const bool relayNeighborEvaluation = true; // If the program generate relay neighboring information.
-  const double extraHeightMBS = 30.0;  // the additional height of a macro-cell base stataion
-  const bool splitMacroBS = true;  // Control the splitting of the macro-cell base station.
+  const double extraHeightMBS = 30.0;        // the additional height of a macro-cell base stataion
+  const bool splitMacroBS = true;            // Control the splitting of the macro-cell base station.
+  const bool limitMacroCell = true;          // The area of a Macro-cell is limited to 1000m * 1000m.
 };
 
 

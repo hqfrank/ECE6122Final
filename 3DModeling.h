@@ -45,7 +45,7 @@ void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::
 
 void writeVectorDataToFile(const string& filename, const std::vector<std::vector<int>>& data);
 
-void treeTopologyMeshAtlanta(const int mBSPos[2], const std::vector<std::vector<int>>& bsGridMap,
+void treeTopologyMeshAtlanta(const int mBSPos[2], std::vector<std::vector<int>>& bsGridMap,
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,
                              std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
