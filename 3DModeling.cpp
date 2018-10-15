@@ -12,17 +12,17 @@
  void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::vector<int>& sequence,
                        const std::vector<Point_t>& allNodes, SystemParameters& parameters,
                        std::string& dataPath) {
-
+   std::string gridSize = std::to_string((int) floor(parameters.gridSize_m + 0.5));
    if (!parameters.interPathIntControl) {
-     dataPath = "../Data/Paths/Idp/Data_Results_" + dataPath;
+     dataPath = "../Data/Paths/Idp/" + gridSize + "/Data_Results_" + dataPath;
    } else if (parameters.splitMacroBS && !parameters.limitMacroCell) {
-     dataPath = "../Data/Paths/Double_MBS/Data_Results_" + dataPath;
+     dataPath = "../Data/Paths/Double_MBS/" + gridSize + "/Data_Results_" + dataPath;
    } else if (parameters.splitMacroBS && parameters.limitMacroCell) {
-       dataPath = "../Data/Paths/Double_MBS_LimitedArea/Data_Results_" + dataPath;
+       dataPath = "../Data/Paths/Double_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
    } else if (!parameters.splitMacroBS && parameters.limitMacroCell) {
-       dataPath = "../Data/Paths/Single_MBS_LimitedArea/Data_Results_" + dataPath;
+       dataPath = "../Data/Paths/Single_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
    } else {
-     dataPath = "../Data/Paths/Single_MBS/Data_Results_" + dataPath;
+     dataPath = "../Data/Paths/Single_MBS/" + gridSize + "/Data_Results_" + dataPath;
    }
    std::string filePath = dataPath + "_Paths.txt";
    std::string fileCapacity = dataPath + "_Capacity.txt";

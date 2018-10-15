@@ -62,13 +62,18 @@ int main() {
 //  int rnds[]{9, 16, 19, 23, 24, 25, 30, 32, 39, 43, 44, 45, 48, 52, 55, 63, 68, 69, 73, 74, 76, 82, 84, 89, 92, 100};
 //  int rnds[]{7, 11, 23, 24, 25, 26, 30, 32, 39, 41, 43, 44, 45, 46, 48, 51, 53, 55, 56, 57, 60, 62, 63, 68, 69, 73,
 //             74, 76, 77, 82, 84, 87, 89, 90, 96, 97, 98, 100};
-  int rnds[]{3, 5, 8, 9, 11, 20, 21, 22, 23, 24, 25, 26, 30, 32, 34, 35, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-             50, 51, 52, 53, 55, 56, 57, 60, 61, 62, 63, 66, 68, 69, 73, 74, 75, 76, 79, 81, 82, 84, 87, 88, 89, 90,
-             92, 96, 98, 99, 100};
-  for (int iRnd = 0; iRnd < 58; iRnd++) {
-      sysParams.randomSeed = rnds[iRnd] - 1 + 500;
-//  for (int rnd = 500; rnd < 501; rnd++) {
-//    sysParams.randomSeed = rnd;
+//  int rnds[]{3, 5, 8, 9, 11, 20, 21, 22, 23, 24, 25, 26, 30, 32, 34, 35, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+//             50, 51, 52, 53, 55, 56, 57, 60, 61, 62, 63, 66, 68, 69, 73, 74, 75, 76, 79, 81, 82, 84, 87, 88, 89, 90,
+//             92, 96, 98, 99, 100};
+
+//  int rnds[]{8, 9, 20, 23, 24, 25, 32, 34, 38, 45, 46, 47, 48, 49, 51, 52, 53, 56, 60, 61, 62, 63, 68, 69, 73, 74, 76,
+//             87, 88, 89, 90, 92, 96, 98, 99, 100};
+//  int rnds[]{7, 23, 24, 25, 32, 43, 45, 46, 48, 51, 53, 60, 62, 63, 68, 73, 74, 76, 87, 96, 97, 98, 100};
+//  int rnds[]{9, 16, 23, 24, 25, 32, 43, 45, 48, 63, 68, 74, 76};
+//  for (int iRnd = 0; iRnd < 23; iRnd++) {
+//      sysParams.randomSeed = rnds[iRnd] - 1 + 500;
+  for (int rnd = 500; rnd < 600; rnd++) {
+    sysParams.randomSeed = rnd;
     /*
      * ========================================
      *   Construct all buildings in the area.
@@ -79,12 +84,11 @@ int main() {
     getBuildingInfoFromFile(buildingSet, strDataBuildings, strDataBuildingVertices, sysParams);
 
     /*
-     * =========================================================
-     * =======  Collect all candidate relays in the area  ======
-     *   'dataRelays': file to store relay coordinations.
-     *   'allRelays': all relays.
-     *   'numRelaysInGrid': the number of relays in each grid.
-     * =========================================================
+     * =======================================================================================================
+     *     Collect all candidate relays in the area. Relays are generated per case, per density of relays.
+     *     If the relay file corresponding to the current case exists, just read the relay infomation
+     *     from the file.
+     * =======================================================================================================
      */
     std::string dataRelays = "../Data/Relays/Data_Relays_" + sysParams.relayType
                              + "_" + std::to_string(sysParams.randomSeed)
@@ -142,7 +146,7 @@ int main() {
      * ===========================
      */
     /* Define macro-cell base station. */
-    int mBSPos[2] = {4, 5};
+    int mBSPos[2] = {2, 3};
     cout << "The macro-cell base station is in grid row " << mBSPos[0] << ", column " << mBSPos[1] << endl;
     /* Define variables to store the topology information. */
     std::vector<std::vector<int>> nodeConnections(numBSs + 1, std::vector<int>());  // Each row is a list of connections.
@@ -160,7 +164,7 @@ int main() {
                                  + "_" + std::to_string(numRelays)
                                  + "_" + std::to_string(numBSs) + ".txt";
     } else {
-      dataTopology = "../Data/Topology/Data_Topology_" + sysParams.topologyType
+      dataTopology = "../Data/Topology/Single_MBS/Data_Topology_" + sysParams.topologyType
                                  + "_" + std::to_string(sysParams.randomSeed)
                                  + "_" + std::to_string(numRelays)
                                  + "_" + std::to_string(numBSs) + ".txt";
@@ -168,7 +172,7 @@ int main() {
     }
     treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs, sysParams);
     printConnections(nodeConnections);
-//    writeTopologyToFile(dataTopology, treeConnections, numRelays);
+    writeTopologyToFile(dataTopology, treeConnections, numRelays);
 //    /* Get the line-of-sight neighboring information of all base stations. */
 //    std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)
 //                                  + "_" + std::to_string(numBSs)
