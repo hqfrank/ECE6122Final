@@ -18,11 +18,11 @@ public:
   const double minHeightForBS_m = 10.0; // Only deploy BSs on the rooftop of buildings with height between [min,max].
   const double maxHeightForBS_m = 50.0;
   const double groundLevel_m = 290.0;
-  const double densityRelayOnBuilding = 0.0003;
-  const int minNumRelaysPerFace = 3;
+  const double densityRelayOnBuilding = 0.0002;
+  const int minNumRelaysPerFace = 2;
   const double areaXRange_m[2] {-100, 1700};
   const double areaYRange_m[2] {-1700, 100};
-  const double gridSize_m = 300.0;
+  const double gridSize_m = 200.0;
   const double macroCellSize_m = 1000.0;
   const int maxNumRelaysInGrid = 1;
   const double maxLengthLOSLinkBSs_m = 100.0;
@@ -30,7 +30,7 @@ public:
   const double bsDistanceRange_m[2] {20,1000};
   const int numBSPairs = 100;
   const double antennaGain_dBi = 21.87;
-  const double antennaBeamWidth_phi = 7.0/180.0*M_PI;
+  const double antennaBeamWidth_phi = 15.0/180.0*M_PI;
   const double antennaIsoSpan_phi = M_PI/6.0;
   const double lambda_m = 0.005;   // 5*10^-3 m
   const double alpha = 16E-3;
@@ -50,8 +50,8 @@ public:
   string simStartTime = "NULL";
   const bool relayNeighborEvaluation = true; // If the program generate relay neighboring information.
   const double extraHeightMBS = 30.0;        // the additional height of a macro-cell base stataion
-  const bool splitMacroBS = true;            // Control the splitting of the macro-cell base station.
-  const bool limitMacroCell = false;          // The area of a Macro-cell is limited to 1000m * 1000m.
+  const bool splitMacroBS = false;            // Control the splitting of the macro-cell base station.
+  const bool limitMacroCell = true;          // The area of a Macro-cell is limited to 1000m * 1000m.
 };
 
 
