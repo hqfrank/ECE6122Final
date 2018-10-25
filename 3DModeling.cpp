@@ -1900,6 +1900,204 @@ bool checkInterPathInterference(const int s1i, const int d1i, const std::map<int
 
 }
 
+void calculatePathThroughputPhyIntModel(const std::string& thoughputFile, const std::string& pathFile,
+                                        const std::string& capacityFile, const std::vector<Point_t>& allNodes,
+                                        const std::vector<std::vector<int>>& nodeNeighborList,
+                                        const SystemParameters& parameters) {
+    std::ifstream readCapFile(capacityFile);
+    if(!readCapFile.good()){
+        cout << "(W) Failed to read the file " << capacityFile << endl;
+        return;
+    }
+
+    std::ofstream writeToFile;
+    writeToFile.open(thoughputFile, std::ios_base::app);  // Write new data to the end of the file.
+    if(!writeToFile.is_open()) {
+        cout << "(E) Failed to open the file " << thoughputFile << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // Read the original capacity for each path.
+    std::string capData;
+    std::vector<double> origialCapacity;
+    while (std::getline(readCapFile, capData)) {
+        double origianlCap = std::stod(capData);
+        origialCapacity.push_back(origianlCap);
+    }
+    std::ifstream readFromFile(pathFile);
+    if(!readFromFile.good()){
+        cout << "(W) Failed to read the file " << pathFile << endl;
+        return;
+    }
+    std::string str;
+    std::vector<PhyLink> phyLinkSet;
+    std::vector<int> pathPhyLinkIndex;
+    int count = 0;
+    while (std::getline(readFromFile, str)) {  // Read each line in the file into str.
+        std::vector<int> data;
+        if (str.length() == 0) {
+            continue;
+        }
+        while (str.find('\t') != std::string::npos) {
+            // as long as the str contains '\t'
+            std::string front = str.substr(0, str.find('\t'));
+            data.push_back(std::stoi(front));
+            str = str.substr(str.find('\t') + 1);
+        }
+        if (str.length() > 0) {
+            data.push_back(std::stoi(str));
+        }
+        // Data stores the id of each node in a path.
+        for (int i = 0; i < data.size() - 1; i++) {
+            int linkId = count;
+            int node1Id = data[i];
+            int node2Id = data[i+1];
+            Point_t node1 = allNodes[node1Id];
+            Point_t node2 = allNodes[node2Id];
+            PhyLink pLink(linkId, node1Id, node2Id, node1, node2);
+            phyLinkSet.push_back(pLink);
+            count++;
+        }
+        pathPhyLinkIndex.push_back(count-1);
+    }
+    cout << "(I) There are in total " << count << " physical links in the network." << endl;
+    // Parameters
+    double pt_w = parameters.pt_w;
+    double pt_dBm = 10.0 * log10(pt_w * 1000.0); // dBm = 10*log10(w*1000)
+    double eirp_dBm = pt_dBm + parameters.antennaGain_dBi;
+
+    // Iterate each path;
+    for (int i = 0; i < pathPhyLinkIndex.size(); i++) {
+        cout << "(I) Path " << i << "'s original capacity is " << origialCapacity[i] << " Gbps!" << endl;
+        int pLinkStartId;
+        if (i == 0) pLinkStartId = 0;
+        else pLinkStartId = pathPhyLinkIndex[i-1] + 1;
+        int pLinkEndId = pathPhyLinkIndex[i];
+        std::vector<double> capPerLink;
+        // Calculate the capacity of each physical link.
+        for (int j = pLinkStartId; j < pLinkEndId + 1; j++) {
+            PhyLink pLink = phyLinkSet[j];
+            // Calculate the accumulated interference.
+            double interferenceNode1_mW = 0;
+            double interferenceNode2_mW = 0;
+            for (int k = 0; k < phyLinkSet.size(); k++) {
+                if (k == j) continue;  // A physical link do not interfere with itself.
+                if (k == j+1 && k <= pLinkEndId) continue;  // A physical link do not interfere with its neighboring
+                if (k == j-1 && k >= pLinkStartId) continue;// physical link within the same path.
+                PhyLink intLink = phyLinkSet[k];
+                double newIntAtN1, newIntAtN2;
+                bool pLN1IsBs = false;
+                if (j == pLinkStartId) pLN1IsBs = true;
+                calculateMutualInterferenceTwoPhyLinks(newIntAtN1, newIntAtN2, pLink, intLink, pLN1IsBs, true,
+                                                       nodeNeighborList[pLink.node1Id], nodeNeighborList[pLink.node2Id],
+                                                       parameters, pt_dBm);
+                double intN1_mW = pow(10.0, newIntAtN1/10.0);
+                double intN2_mW = pow(10.0, newIntAtN2/10.0);
+                interferenceNode1_mW += intN1_mW;
+                interferenceNode2_mW += intN2_mW;
+            }
+            double interference_mW = interferenceNode1_mW;
+            if (interference_mW < interferenceNode2_mW) interference_mW = interferenceNode2_mW;
+            double linkLength_m = pLink.dir12.mod();
+            double pathLoss_dB = parameters.exponent * 10.0 * log10(4.0 * M_PI * linkLength_m / parameters.lambda_m);
+            double pr_dBm = eirp_dBm - pathLoss_dB - parameters.alpha * linkLength_m - parameters.linkMargin_dB + parameters.antennaGain_dBi;
+            double nr_dBm = 10.0 * log10(pow(10.0, parameters.noise_dBm/10.0) + interference_mW);
+            double sinr_dB = pr_dBm - nr_dBm;
+            if (sinr_dB > 50.0) sinr_dB = 50.0;
+            double sinr = pow(10.0, sinr_dB/10.0);
+            double capacity_Gbps = 2.16 * log2(1 + sinr);
+            capPerLink.push_back(capacity_Gbps);
+        }
+        double adjustCap_Gbps = 0;
+        if (pLinkEndId == pLinkStartId) { // LOS path
+            cout << "(I) Path " << i << "'s adjusted capacity is " << capPerLink[0] << " Gbps!" << endl;
+            adjustCap_Gbps =  capPerLink[0];
+        } else {
+            double pathCap = 100;
+            for (int j = 0; j < capPerLink.size()-1; j++) {
+                double cap1 = capPerLink[j];
+                double cap2 = capPerLink[j+1];
+                double conCap = cap1*cap2/(cap1+cap2);
+                if (conCap < pathCap) pathCap = conCap;
+            }
+            cout << "(I) Path " << i << "'s adjusted capacity is " << pathCap << " Gbps!" << endl;
+            adjustCap_Gbps = pathCap;
+        }
+        writeToFile << origialCapacity[i] << "\t" << adjustCap_Gbps << "\t" << (origialCapacity[i]-adjustCap_Gbps)/origialCapacity[i] << endl;
+    }
+    writeToFile.close();
+}
+
+void calculateMutualInterferenceTwoPhyLinks(double& intAtN1, double& intAtN2,
+                                            const PhyLink& pLink, const PhyLink& pLinkInt,
+                                            const bool pLN1IsBs, const bool pLIntN2IsBs,
+                                            const std::vector<int>& pLinkN1Neighbors,
+                                            const std::vector<int>& pLinkN2Neighbors,
+                                            const SystemParameters& parameters, const double pt_dBm){
+    int pLN1Id = pLink.node1Id;
+    Point_t pLN1 = pLink.node1;
+    Vector_t dirN1 = pLink.dir12;
+    int pLN2Id = pLink.node2Id;
+    Point_t pLN2 = pLink.node2;
+    Vector_t dirN2 = pLink.dir21;
+
+    int pLIntN1Id = pLinkInt.node1Id;
+    Point_t pLIntN1 = pLinkInt.node1;
+    Vector_t dirNInt1 = pLinkInt.dir12;
+    int pLIntN2Id = pLinkInt.node2Id;
+    Point_t pLIntN2 = pLinkInt.node2;
+    Vector_t dirNInt2 = pLinkInt.dir21;
+
+    double int_NInt1_N1 = calculateMutualInterferenceTwoNodes(pLN1Id, pLN1, dirN1, pLN1IsBs, pLIntN1Id, pLIntN1, dirNInt1,
+                                                              false, parameters, pt_dBm, pLinkN1Neighbors);
+    double int_NInt2_N1 = calculateMutualInterferenceTwoNodes(pLN1Id, pLN1, dirN1, pLN1IsBs, pLIntN2Id, pLIntN2, dirNInt2,
+                                                              pLIntN2IsBs, parameters, pt_dBm, pLinkN1Neighbors);
+    double int_NInt1_N2 = calculateMutualInterferenceTwoNodes(pLN2Id, pLN2, dirN2, false, pLIntN1Id, pLIntN1, dirNInt1,
+                                                              false, parameters, pt_dBm, pLinkN2Neighbors);
+    double int_NInt2_N2 = calculateMutualInterferenceTwoNodes(pLN2Id, pLN2, dirN2, false, pLIntN2Id, pLIntN2, dirNInt2,
+                                                              pLIntN2IsBs, parameters, pt_dBm, pLinkN2Neighbors);
+    intAtN1 = int_NInt1_N1;
+    if (intAtN1 < int_NInt2_N1) intAtN1 = int_NInt2_N1;
+    intAtN2 = int_NInt1_N2;
+    if (intAtN2 < int_NInt2_N2) intAtN2 = int_NInt2_N2;
+
+}
+
+double calculateMutualInterferenceTwoNodes(const int nId, const Point_t& n, const Vector_t& dirN, const bool nIsBS,
+                                           const int nIntId, const Point_t& nInt, const Vector_t& dirNInt,
+                                           const bool nIntIsBS, const SystemParameters& parameters,
+                                           const double pt_dBm,
+                                           const std::vector<int>& nNeighbors){
+    Vector_t nInt2n(nInt,n);
+    double distNInt2n = nInt2n.mod();
+
+    if (nId == nIntId) {// Two nodes are the same node.
+        //assert(nIsBS && nIntIsBS);
+        double pathLoss_dB = 0;  // There is no path loss.
+        double a_n2nInt = acos(dirN.dot(dirNInt)/dirN.mod()/dirNInt.mod()); // the angle between two beam directions
+        if (a_n2nInt >= parameters.antennaIsoSpan_phi) {
+            return -100;
+        } else {
+            cout << "(W) Attention, very large interference is on the BS." << endl;
+            return pt_dBm; // very large!
+        }
+    } else { // Two nodes are different nodes.
+        double a_alphaAtN = acos(-1*dirN.dot(nInt2n)/dirN.mod()/nInt2n.mod());
+        double a_alphaAtNInt = acos(dirNInt.dot(nInt2n)/dirNInt.mod()/nInt2n.mod());
+        double gainAtN_dBi, gainAtNInt_dBi;
+        if (a_alphaAtN > parameters.antennaBeamWidth_phi/2) gainAtN_dBi = 0;
+        else gainAtN_dBi = parameters.antennaGain_dBi;
+        if (a_alphaAtNInt > parameters.antennaBeamWidth_phi/2) gainAtNInt_dBi = 0;
+        else gainAtNInt_dBi = parameters.antennaGain_dBi;
+        double pathLoss_dB = parameters.exponent * 10.0 * log10(4.0 * M_PI * distNInt2n / parameters.lambda_m);
+        double pr_dBm = pt_dBm  - pathLoss_dB - parameters.alpha * distNInt2n + 2 * parameters.antennaIsoGain_dBi;
+        if (std::find(nNeighbors.begin(),nNeighbors.end(),nIntId)==nNeighbors.end()) {// blocked
+            pr_dBm = pr_dBm - 100;
+        }
+        return pr_dBm;
+    }
+}
+
 bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,
                                const std::vector<Point_t>& sd1, const std::vector<Point_t>& sd2,
                                const std::vector<std::vector<int>>& nodeNeighborList,

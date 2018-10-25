@@ -21,7 +21,26 @@
 #include "SystemParameters.h"
 #include "Plane_t.h"
 #include "Path_t.h"
+#include "PhyLink.h"
 #include "UtilityMethods.h"
+
+void calculatePathThroughputPhyIntModel(const std::string& thoughputFile, const std::string& pathFile,
+                                        const std::string& capacityFile, const std::vector<Point_t>& allNodes,
+                                        const std::vector<std::vector<int>>& nodeNeighborList,
+                                        const SystemParameters& parameters);
+
+double calculateMutualInterferenceTwoNodes(const int nId, const Point_t& n, const Vector_t& dirN, const bool nIsBS,
+                                           const int nIntId, const Point_t& nInt, const Vector_t& dirNInt,
+                                           const bool nIntIsBS, const SystemParameters& parameters,
+                                           const double pt_dBm,
+                                           const std::vector<int>& nNeighbors);
+
+void calculateMutualInterferenceTwoPhyLinks(double& intAtN1, double& intAtN2,
+                                            const PhyLink& pLink, const PhyLink& pLinkInt,
+                                            const bool pLN1IsBs, const bool pLIntN2IsBs,
+                                            const std::vector<int>& pLinkN1Neighbors,
+                                            const std::vector<int>& pLinkN2Neighbors,
+                                            const SystemParameters& parameters, const double pt_dBm);
 
 class EstimatedHop {
 public:

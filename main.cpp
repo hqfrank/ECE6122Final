@@ -58,13 +58,14 @@ int main() {
    * ===========  Main simultions  =============
    * ===========================================
    */
-  int rnds[]{1,  6,  7,  8,  25, 27, 32, 34, 38,
-             41, 42, 43, 45, 46, 48, 49, 50, 52, 61, 62, 63, 64,
-             65, 68, 69, 70, 73, 74, 76, 79, 81, 84, 87, 88, 89, 90, 92, 96, 98, 99, 100};
-  for (int iRnd = 0; iRnd < 41; iRnd++) {
-      sysParams.randomSeed = rnds[iRnd] - 1 + 500;
-//  for (int rnd = 500; rnd < 600; rnd++) {
-//    sysParams.randomSeed = rnd;
+//  int rnds[]{1,  6,  7,  8,  17, 25, 27, 32, 38,
+//             41, 42, 43, 45, 46, 48, 50, 52, 53, 61, 62, 63, 64,
+//             65, 69, 70, 74, 76, 84, 87, 90, 96, 99, 100};
+//  int rnds[]{2,26,67,85};
+//  for (int iRnd = 0; iRnd < 4; iRnd++) {
+//      sysParams.randomSeed = rnds[iRnd] - 1 + 500;
+  for (int rnd = 500; rnd < 600; rnd++) {
+    sysParams.randomSeed = rnd;
     /*
      * ========================================
      *   Construct all buildings in the area.
@@ -137,7 +138,7 @@ int main() {
      * ===========================
      */
     /* Define macro-cell base station. */
-    int mBSPos[2] = {4, 5};
+    int mBSPos[2] = {2, 3};
     cout << "The macro-cell base station is in grid row " << mBSPos[0] << ", column " << mBSPos[1] << endl;
     /* Define variables to store the topology information. */
     std::vector<std::vector<int>> nodeConnections(numBSs + 1, std::vector<int>());  // Each row is a list of connections.
@@ -245,6 +246,35 @@ int main() {
         exploreConnectivity(nodeNeighborList, allNodes, buildingSet, dataNodeNeighbors);
       }
     }
+
+
+    /*
+     *
+     */
+    std::string dataPath = std::to_string(sysParams.randomSeed)
+                            + "_" + std::to_string(numRelays)
+                            + "_" + std::to_string(numBSs)
+                            + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi / M_PI * 180));
+    std::string dataPath2 = dataPath;
+    std::string gridSize = std::to_string((int) floor(sysParams.gridSize_m + 0.5));
+    if (!sysParams.interPathIntControl) {
+        dataPath = "../Data/Paths/Idp/" + gridSize + "/Data_Results_" + dataPath;
+    } else if (sysParams.splitMacroBS && !sysParams.limitMacroCell) {
+          dataPath = "../Data/Paths/Double_MBS/" + gridSize + "/Data_Results_" + dataPath;
+    } else if (sysParams.splitMacroBS && sysParams.limitMacroCell) {
+          dataPath = "../Data/Paths/Double_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
+    } else if (!sysParams.splitMacroBS && sysParams.limitMacroCell) {
+          dataPath = "../Data/Paths/Single_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
+    } else {
+          dataPath = "../Data/Paths/Single_MBS/" + gridSize + "/Data_Results_" + dataPath;
+    }
+    std::string pathFile = dataPath + "_Paths.txt";
+    std::string capacityFile = dataPath + "_Capacity.txt";
+    dataPath = "../Data/Throughput_Comparison/Single_MBS/" + gridSize + "/ZeroISO/Data_Results_" + dataPath2;
+    std::string throughputFile = dataPath + "_" + std::to_string((int) floor(sysParams.antennaIsoGain_dBi+0.5) * -1) + "_CapComp.txt";
+    calculatePathThroughputPhyIntModel(throughputFile, pathFile, capacityFile, allNodes, nodeNeighborList,sysParams);
+
+    continue;
 
     /*
      * =======================================
