@@ -73,8 +73,8 @@ fclose(fileID);
 fc_GHz = 60;
 B_Hz = 2.16 * 10^9;
 pt_dBm = 30;
-gt_dBi = 21.4;
-gr_dBi = 21.4;
+gt_dBi = 26.4;
+gr_dBi = 26.4;
 
 noise_dBm = noiseWhiteGaussian(B_Hz);
 
@@ -132,7 +132,7 @@ mBS = BSs(idxMBs + 1, :);               % the coordination of macro-cell BS
 subtree = ones(numBSs, 1);
 demand = zeros(numBSs, 2);
 if isSingleMBs
-    leaves = 1:numBSs;             % index + 1
+    leaves = sort(unique(bsIndex)+1);             % index + 1
     for i = 1:length(bsIndex(:,1)) % iterate each logical link
         curBS = bsIndex(i,1) + 1;
         leaves = leaves(find(leaves~=curBS)); 
@@ -165,27 +165,24 @@ if isSingleMBs
         end
         leaves = unique(parent);
     end
-    %
-    demand
-    subtree
 else
 end
 
 % 5) Plot paths
-idx = 1;
-for i = 1:numPaths
-    n = numNodeHop(1,i);
-    nodes = pNodes(idx:idx+n-1,:);
-    plot3(nodes(:,1),nodes(:,2),nodes(:,3),'LineWidth',1.5); hold on;
-    idx = idx + n;
-    if i == 1
-        scatter3(nodes(1,1),nodes(1,2),nodes(1,3),40,'s','filled','MarkerFaceColor','r');
-    else
-        scatter3(nodes(end,1),nodes(end,2),nodes(end,3),30,'o','filled','MarkerFaceColor','b');
-    end
-    if n > 2
-        scatter3(nodes(2:end-1,1),nodes(2:end-1,2),nodes(2:end-1,3),20,'^','filled','MarkerFaceColor','k');
-    end
-end
+% idx = 1;
+% for i = 1:numPaths
+%     n = numNodeHop(1,i);
+%     nodes = pNodes(idx:idx+n-1,:);
+%     plot3(nodes(:,1),nodes(:,2),nodes(:,3),'LineWidth',1.5); hold on;
+%     idx = idx + n;
+%     if i == 1
+%         scatter3(nodes(1,1),nodes(1,2),nodes(1,3),40,'s','filled','MarkerFaceColor','r');
+%     else
+%         scatter3(nodes(end,1),nodes(end,2),nodes(end,3),30,'o','filled','MarkerFaceColor','b');
+%     end
+%     if n > 2
+%         scatter3(nodes(2:end-1,1),nodes(2:end-1,2),nodes(2:end-1,3),20,'^','filled','MarkerFaceColor','k');
+%     end
+% end
 end
 

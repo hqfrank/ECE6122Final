@@ -14,6 +14,7 @@ d_2D_m = d_3D_m;
 % LOS
 if d_2D_m < 10
     warning("The 2D distance between two nodes is shorter than 10 meters, and the 3GPP Umi Street Canyon path loss model is not accurate.");
+    pathLoss_LOS_dB = 32.4 + 21 * log10(10) + 20 * log10(fc_GHz);
 elseif d_2D_m <= d_BP_m
     pathLoss_LOS_dB = 32.4 + 21 * log10(d_3D_m) + 20 * log10(fc_GHz);
 elseif d_2D_m <= 5000
@@ -26,6 +27,7 @@ end
 % NLOS
 if d_2D_m < 10 || d_2D_m > 5000
     warning("The 2D distance between two nodes is shorter than 10 meters or longer than 5000m, and the 3GPP Umi Street Canyon path loss model is not accurate.");
+    pathLoss_NLOS_dB = 35.3 * log10(10) + 22.4 + 21.3 * log10(fc_GHz) - 0.3 * (h_UT_m - 1.5);
 else
     pathLoss_NLOS_dB = 35.3 * log10(d_3D_m) + 22.4 + 21.3 * log10(fc_GHz) - 0.3 * (h_UT_m - 1.5);       
 end
