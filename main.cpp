@@ -18,153 +18,111 @@
 using namespace std;
 
 int main() {
-  /*
-   *  ***************************************
-   *  ************ MAIN FUNCTION ************
-   *  ***************************************
-   */
-  /*
-   * ===================================================================================
-   *   Get current time, which is used to identify the name of the simulation results.
-   * ===================================================================================
-   */
-  std::chrono::microseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(
-    std::chrono::system_clock::now().time_since_epoch());
-  std::string strTime = std::to_string(ms.count()/1000);  // "strTime" is the current time in string type.
+    // Get the starting time of a simulation run, which will be used to index simulation results.
+    std::chrono::microseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(
+        std::chrono::system_clock::now().time_since_epoch());
+    std::string strTime = std::to_string(ms.count()/1000);  // "strTime" is the current time in string type.
+    // Set up simulation parameters.
+    SystemParameters sysParams;
+    sysParams.simStartTime = strTime;  // simulation start time
+    EstimatedHop eHops;                // distance-estimated hop number mapping
 
-  /*
-   * ===============================================
-   *   Set up simulation configuration parameters.
-   * ===============================================
-   */
-  SystemParameters sysParams;        // Create the system parameter object.
-  sysParams.simStartTime = strTime;  // Update the simulation start time using "strTime".
-  EstimatedHop eHops;                // Create the variable which records the distance-estimated hop number mapping.
+    // File information.
+    // 'strDataBuildings': building raw data extracted from google earth.
+    // 'strDataBuildingVertices': file to store the vertices of each building.
+    // 'strTimeStampFile': file to store the time stamp of the simulation.
+    std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
+    std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices.txt";
+    std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
-  /*
-   * ===========================================================================
-   * ===========================  File information.  ===========================
-   *   'strDataBuildings': building raw data extracted from google earth.
-   *   'strDataBuildingVertices': file to store the vertices of each building.
-   *   'strTimeStampFile': file to store the time stamp of the simulation.
-   * ===========================================================================
-   */
-  std::string strDataBuildings = "../Data/Data_BuildingInfo_ATL.txt";
-  std::string strDataBuildingVertices = "../Data/Building_Vertices/Data_BuildingVertices.txt";
-  std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
+    // Main simulation procedure: runs 100 sets of simulation instances, distinguished by random seed 'rnd'
+    for (int rnd = 500; rnd < 600; rnd++) {
+        sysParams.randomSeed = rnd;
+        // constructs buildings in the modeled area
+        std::vector<Building_t> buildingSet;
+        getBuildingInfoFromFile(buildingSet, strDataBuildings, strDataBuildingVertices, sysParams);
 
-  /*
-   * ===========================================
-   * ===========  Main simultions  =============
-   * ===========================================
-   */
-//  int rnds[]{1,  6,  7,  8,  17, 25, 27, 32, 38,
-//             41, 42, 43, 45, 46, 48, 50, 52, 53, 61, 62, 63, 64,
-//             65, 69, 70, 74, 76, 84, 87, 90, 96, 99, 100};
-//  int rnds[]{2,26,67,85};
-//  for (int iRnd = 0; iRnd < 4; iRnd++) {
-//      sysParams.randomSeed = rnds[iRnd] - 1 + 500;
-  for (int rnd = 500; rnd < 600; rnd++) {
-    sysParams.randomSeed = rnd;
-    /*
-     * ========================================
-     *   Construct all buildings in the area.
-     *   Building vertices information is flushed every time.
-     * ========================================
-     */
-    std::vector<Building_t> buildingSet;
-    getBuildingInfoFromFile(buildingSet, strDataBuildings, strDataBuildingVertices, sysParams);
+        // collects all candidate relays in the area
+        // If the relay file exists, just loads the relay information from the file.
+        std::string dataRelays = "../Data/Relays/Data_Relays_" + sysParams.relayType
+                               + "_" + std::to_string(sysParams.randomSeed)
+                               + "_" + std::to_string(sysParams.densityRelayOnBuilding)
+                               + "_" + std::to_string(sysParams.minNumRelaysPerFace) + ".txt";
+        std::ifstream fileRelays(dataRelays);
+        std::vector<Point_t> allRelays;
+        collectAllRelays(allRelays, buildingSet, dataRelays);
+        int numRelays = (int) allRelays.size();
+        // counts the number of relays in each grid (i.e., small cell)
+        std::vector<std::vector<int>> numRelaysInGrid;
+        countRelaysPerGrid(allRelays, numRelaysInGrid, sysParams);
 
-    /*
-     * =======================================================================================================
-     *     Collect all candidate relays in the area. Relays are generated per case, per density of relays.
-     *     If the relay file corresponding to the current case exists, just read the relay infomation
-     *     from the file.
-     * =======================================================================================================
-     */
-    std::string dataRelays = "../Data/Relays/Data_Relays_" + sysParams.relayType
-                             + "_" + std::to_string(sysParams.randomSeed)
-                             + "_" + std::to_string(sysParams.densityRelayOnBuilding)
-                             + "_" + std::to_string(sysParams.minNumRelaysPerFace) + ".txt";
-    std::ifstream fileRelays(dataRelays);
-    std::vector<Point_t> allRelays;
-    collectAllRelays(allRelays, buildingSet, dataRelays);
-    int numRelays = (int) allRelays.size();
-    std::vector<std::vector<int>> numRelaysInGrid;
-    countRelaysPerGrid(allRelays, numRelaysInGrid, sysParams);
+        // generates candidate locations of base stations randomly
+        // 'dataBSs': base stations coordinates
+        std::string dataBSs = "../Data/Base_Stations/Data_BSSet_" + std::to_string(sysParams.randomSeed)
+                + "_" + std::to_string(numRelays)
+                + "_" + std::to_string(sysParams.gridSize_m)
+                + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
+        // 'dataBSInGrid': each line stores a BS's grid indices. (starts at 0)
+        std::string dataBSInGrid = "../Data/Base_Stations_Grid/Data_BSInGrid_" + std::to_string(sysParams.randomSeed)
+                + "_" + std::to_string(numRelays)
+                + "_" + std::to_string((int) round(sysParams.gridSize_m))
+                + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
+        std::vector<Point_t> roofTopRelays;  // stores all relays on the roof top vertices.
+        std::vector<Point_t> bsSet;          // all base stations
+        std::ifstream fileBSs(dataBSs);
+        if (fileBSs.good()) {
+            // read the selected BSs
+            std::string type = "base station";
+            readNodeInfoFromFile(bsSet, dataBSs, type);
+        } else {
+            bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
+        }
+        // selects 1 base station per grid
+        std::vector<std::vector<int>> bsGridMap;  // the index of base station (i.e. 'i' in bsSet[i]) in each grid.
+        std::vector<std::vector<int>> bsLocation; // the indices of row and column of the grid
+        selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, dataBSs, !fileBSs.good(), sysParams);
+        std::ifstream fileBSsGrid(dataBSInGrid);
+        if (!fileBSsGrid.good()) {
+            writeBSsLoactionToFile(bsLocation, dataBSInGrid);
+        }
+        int numBSs = (int) bsSet.size();
 
-    /*
-     * ================================================================================================
-     *   Generate candidate base station locations randomly.
-     *   'dataBSs': base stations coordinations
-     *   'dataBSInGrid': each line stores a BS's grid indices.
-     *   'roofTopRelays': the vector to store all relays on the roof top vertices.
-     *   'bsSet': all base stations (Point_t)
-     *   'bsGridMap': stores the index of base station (i.e. 'i' in bsSet[i]) in each grid.
-     *   'bsLocation': stores the indices of row and column of the grid where each base station sits.
-     * ================================================================================================
-     */
-    std::string dataBSs = "../Data/Base_Stations/Data_BSSet_" + std::to_string(sysParams.randomSeed)
-                          + "_" + std::to_string(numRelays)
-                          + "_" + std::to_string(sysParams.gridSize_m)
-                          + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
-    std::string dataBSInGrid = "../Data/Base_Stations_Grid/Data_BSInGrid_" + std::to_string(sysParams.randomSeed)
-                               + "_" + std::to_string(numRelays)
-                               + "_" + std::to_string((int) round(sysParams.gridSize_m))
-                               + "_" + std::to_string(sysParams.minRelayNumInGrid) + ".txt";
-    std::vector<Point_t> roofTopRelays;
-    std::vector<Point_t> bsSet;
-    std::ifstream fileBSs(dataBSs);
-    if (fileBSs.good()) {
-      // read the selected BSs
-      std::string type = "base station";
-      readNodeInfoFromFile(bsSet, dataBSs, type);
-    } else {
-      bsSet = generateCandidateBaseStations(buildingSet, roofTopRelays, sysParams);
-    }
-    /*  Select base stations based on the grid. Each grid has at most 1 base station.  */
-    std::vector<std::vector<int>> bsGridMap;
-    std::vector<std::vector<int>> bsLocation;
-    selectBaseStationPerGrid(bsSet, bsGridMap, bsLocation, numRelaysInGrid, dataBSs, !fileBSs.good(), sysParams);
-    std::ifstream fileBSsGrid(dataBSInGrid);
-    if (!fileBSsGrid.good()) {
-      writeBSsLoactionToFile(bsLocation, dataBSInGrid);
-    }
-    int numBSs = (int) bsSet.size();
-
-    /*
-     * ===========================
-     *   Generate mesh topology.
-     * ===========================
-     */
-    /* Define macro-cell base station. */
-    int mBSPos[2] = {2, 3};
-    cout << "The macro-cell base station is in grid row " << mBSPos[0] << ", column " << mBSPos[1] << endl;
-    /* Define variables to store the topology information. */
-    std::vector<std::vector<int>> nodeConnections(numBSs + 1, std::vector<int>());  // Each row is a list of connections.
-    std::vector<std::vector<int>> treeConnections;  // Each row is a connection between two base stations.
-    std::vector<std::vector<Point_t>> bsPairs;  // Each row is a pair of base stations.
-    std::string dataTopology;
-    if (sysParams.splitMacroBS) {
-      // Deploy an additional macro cell base station at a high level.
-      Point_t mBS = bsSet[bsGridMap[mBSPos[0]][mBSPos[1]]];  // Read the original macro-BS.
-      Point_t mBSNew(mBS.getX(), mBS.getY(), mBS.getZ()+sysParams.extraHeightMBS);  // Generate a new mBS
-      bsSet.push_back(mBSNew);  // Add the new mBS to the list of base stations.
-      // file to store the mesh topology (each row is a pair of node ids)
-      dataTopology = "../Data/Topology/Double_MBS/Data_Topology_" + sysParams.topologyType
-                                 + "_" + std::to_string(sysParams.randomSeed)
-                                 + "_" + std::to_string(numRelays)
-                                 + "_" + std::to_string(numBSs) + ".txt";
-    } else {
-      dataTopology = "../Data/Topology/Single_MBS/Data_Topology_" + sysParams.topologyType
-                                 + "_" + std::to_string(sysParams.randomSeed)
-                                 + "_" + std::to_string(numRelays)
-                                 + "_" + std::to_string(numBSs) + ".txt";
-      nodeConnections.pop_back();
-    }
-    treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs, sysParams);
-    printConnections(nodeConnections);
-//    writeTopologyToFile(dataTopology, treeConnections, numRelays);
+        // generate mesh topology.
+        // sets macro-cell base station.
+        int mBSPos[2] = {2, 3};  // grid size is 300 m
+        if (sysParams.gridSize_m <= 250.0) {  // grid size is 200 m
+            mBSPos[0] = 3;
+            mBSPos[1] = 4;
+        }
+        cout << "The macro-cell base station is in grid row " << mBSPos[0] << ", column " << mBSPos[1] << endl;
+        // 'nodeConnections': the i-th vector stores the indices of destination BSs of logical links starting from BS bsSet[i-1]
+        // there are numBSs+1 vectors as the additional BS is used in the splitMacroBS case.
+        std::vector<std::vector<int>> nodeConnections(numBSs + 1, std::vector<int>());
+        std::vector<std::vector<int>> treeConnections;  // Each row is a connection between two base stations.
+        std::vector<std::vector<Point_t>> bsPairs;      // Each row is a pair of base stations.
+        std::string dataTopology;
+        if (sysParams.splitMacroBS) {
+            // Deploy an additional macro cell base station at a high level.
+            Point_t mBS = bsSet[bsGridMap[mBSPos[0]][mBSPos[1]]];  // Read the original macro-BS.
+            Point_t mBSNew(mBS.getX(), mBS.getY(), mBS.getZ()+sysParams.extraHeightMBS);  // Generate a new mBS
+            bsSet.push_back(mBSNew);  // Add the new mBS to the list of base stations.
+            // file to store the mesh topology (each row is a pair of node ids)
+            dataTopology = "../Data/Topology/Double_MBS/Data_Topology_" + sysParams.topologyType
+                         + "_" + std::to_string(sysParams.randomSeed)
+                         + "_" + std::to_string(numRelays)
+                         + "_" + std::to_string(numBSs) + ".txt";
+        } else {
+            dataTopology = "../Data/Topology/Single_MBS/Data_Topology_" + sysParams.topologyType
+                         + "_" + std::to_string(sysParams.randomSeed)
+                         + "_" + std::to_string(numRelays)
+                         + "_" + std::to_string(numBSs) + ".txt";
+            nodeConnections.pop_back();  // the additional vector is useless and removed.
+        }
+        // generates the tree topology of backhaul logical links
+        treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs, sysParams);
+        printConnections(nodeConnections);
+        writeTopologyToFile(dataTopology, treeConnections, numRelays);
+        continue;
 //    /* Get the line-of-sight neighboring information of all base stations. */
 //    std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)
 //                                  + "_" + std::to_string(numBSs)

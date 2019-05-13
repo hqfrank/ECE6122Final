@@ -864,17 +864,17 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], std::vector<std::vector<int>>&
 }
 
 void writeTopologyToFile(std::string& dataTopology, const std::vector<std::vector<int>>& connections, int& numRelays) {
-  ofstream outFile;
-  outFile.open(dataTopology, std::ios_base::trunc);
-  if (!outFile.is_open()) {
-    cout << "(E) Failed to open the file where topology information should be stored!" << endl;
-  } else {
-    cout << "(*) Ready to write the topology information into file." << endl;
-    for (auto connection : connections) {
-      outFile << connection[0] + numRelays << "\t" << connection[1] + numRelays << "\n";
+    ofstream outFile;
+    outFile.open(dataTopology, std::ios_base::trunc);
+    if (!outFile.is_open()) {
+        cout << "(E) Failed to open the file where topology information should be stored!" << endl;
+    } else {
+        cout << "(*) Ready to write the topology information into file." << endl;
+        for (auto connection : connections) {
+            outFile << connection[0] + numRelays << "\t" << connection[1] + numRelays << "\n";
+        }
     }
-  }
-  outFile.close();
+    outFile.close();
 }
 
 void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& parameters){
@@ -906,39 +906,40 @@ void selectRelayPerGrid(std::vector<Point_t>& relays, SystemParameters& paramete
   cout << "(5) There are " + to_string(relays.size()) + " candidate roof top relays being selected." << endl;
 }
 
-void countRelaysPerGrid(std::vector<Point_t>& relays, std::vector<std::vector<int>>& numRelaysInGrid, SystemParameters& parameters){
-  /* Number of grids. */
-  auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
-  auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
-  /* Initialize the Map for indicating whether there is a BS in the grid. */
-  for (int i = 0; i < numGridAlongX; i++){
-    std::vector<int> gridPerRow;
-    for (int j = 0; j < numGridAlongY; j++){
-      gridPerRow.push_back(0);
+void countRelaysPerGrid(std::vector<Point_t>& relays, std::vector<std::vector<int>>& numRelaysInGrid,
+                        SystemParameters& parameters) {
+    // Number of grids
+    auto numGridAlongX = (unsigned int) ((parameters.areaXRange_m[1]-parameters.areaXRange_m[0])/parameters.gridSize_m);
+    auto numGridAlongY = (unsigned int) ((parameters.areaYRange_m[1]-parameters.areaYRange_m[0])/parameters.gridSize_m);
+    // initiates the number of relays in each grid
+    for (int i = 0; i < numGridAlongX; i++) {
+        std::vector<int> gridPerRow;
+        for (int j = 0; j < numGridAlongY; j++) {
+            gridPerRow.push_back(0);
+        }
+        numRelaysInGrid.push_back(gridPerRow);
     }
-    numRelaysInGrid.push_back(gridPerRow);
-  }
-  /* Iterating each candidate relay. */
-  for (auto relay : relays){
-    auto gridIndexX = (unsigned int) floor((relay.getX() - parameters.areaXRange_m[0])/parameters.gridSize_m);
-    auto gridIndexY = (unsigned int) floor((relay.getY() - parameters.areaYRange_m[0])/parameters.gridSize_m);
-    numRelaysInGrid[gridIndexX][gridIndexY]++;
-
-  }
-  cout << "===================== The number of relays in every grid ====================" << endl;
-  for (int j = 0; j < numGridAlongX; j++){
-    for (int k = 0; k < numGridAlongY; k++) {
-      if (numRelaysInGrid[j][k] == 0) {
-        cout << "NULL\t";
-      } else if (numRelaysInGrid[j][k] < 10) {
-        cout << "0" << numRelaysInGrid[j][k] << "Rs\t";
-      } else {
-        cout << numRelaysInGrid[j][k] << "Rs\t";
-      }
+    // iterates each relay in the topology and updates the number of relays in each grid
+    for (auto relay : relays) {
+        auto gridIndexX = (unsigned int) floor((relay.getX() - parameters.areaXRange_m[0])/parameters.gridSize_m);
+        auto gridIndexY = (unsigned int) floor((relay.getY() - parameters.areaYRange_m[0])/parameters.gridSize_m);
+        numRelaysInGrid[gridIndexX][gridIndexY]++;
     }
-    cout << endl;
-  }
-  cout << "-----------------------------------------------------------------------------" << endl;
+    // print out the layout
+    cout << "===================== The number of relays in every grid ====================" << endl;
+    for (int j = 0; j < numGridAlongX; j++) {
+        for (int k = 0; k < numGridAlongY; k++) {
+            if (numRelaysInGrid[j][k] == 0) {
+                cout << "NULL\t";
+            } else if (numRelaysInGrid[j][k] < 10) {
+                cout << "0" << numRelaysInGrid[j][k] << "Rs\t";
+            } else {
+                cout << numRelaysInGrid[j][k] << "Rs\t";
+            }
+        }
+        cout << endl;
+    }
+    cout << "-----------------------------------------------------------------------------" << endl;
 }
 
 void collectAllRelays(std::vector<Point_t>& allRelays, const std::vector<Building_t>& buildings,
@@ -965,30 +966,30 @@ void collectAllRelays(std::vector<Point_t>& allRelays, const std::vector<Buildin
 }
 
 void readNodeInfoFromFile(std::vector<Point_t>& nodes, const std::string& fileDataNodes, std::string& type){
-  std::ifstream fileIn(fileDataNodes);
-  std::string str;
-  while (std::getline(fileIn, str))
-  {
-    /* str stores the string version of a node's coordination. */
-    size_t pos = 0;
-    std::string token;
-    std::vector<double> data;
-    while (true) {
-      pos = str.find(',');
-      if (pos != std::string::npos) {
-        token = str.substr(0, pos);
-        data.push_back(std::stod(token));
-        str = str.substr(pos + 1);
-      } else if (str.length() > 0) {
-        data.push_back(std::stod(str));
-        break;
-      }
+    std::ifstream fileIn(fileDataNodes);
+    std::string str;
+    while (std::getline(fileIn, str))
+    {
+        /* str stores the string version of a node's coordination. */
+        size_t pos = 0;
+        std::string token;
+        std::vector<double> data;
+        while (true) {
+            pos = str.find(',');
+            if (pos != std::string::npos) {
+                token = str.substr(0, pos);
+                data.push_back(std::stod(token));
+                str = str.substr(pos + 1);
+            } else if (str.length() > 0) {
+                data.push_back(std::stod(str));
+                break;
+            }
+        }
+        assert(data.size() == 3);
+        Point_t node(data[0], data[1], data[2]);
+        nodes.push_back(node);
     }
-    assert(data.size() == 3);
-    Point_t node(data[0], data[1], data[2]);
-    nodes.push_back(node);
-  }
-  cout << "(*) Node information loaded! " << nodes.size() << " " << type << "s are read." << endl;
+    cout << "(*) Node information loaded! " << nodes.size() << " " << type << "s are read." << endl;
 }
 
 void exploreConnectivity(std::vector<std::vector<int>>& neighborList,
