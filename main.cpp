@@ -6,6 +6,7 @@
 #include <ctime>
 #include <memory>
 #include <map>
+#include <unordered_set>
 #include "Point_t.h"
 #include "Vector_t.h"
 #include "Line_t.h"
@@ -119,9 +120,12 @@ int main() {
             nodeConnections.pop_back();  // the additional vector is useless and removed.
         }
         // generates the tree topology of backhaul logical links
-        treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs, sysParams);
+        std::vector<double> demandLink;
+        treeTopologyMeshAtlanta(mBSPos, bsGridMap, bsLocation, bsSet, nodeConnections, treeConnections, bsPairs, demandLink, sysParams);
         printConnections(nodeConnections);
         writeTopologyToFile(dataTopology, treeConnections, numRelays);
+
+        continue;
 
 //        // the line-of-sight neighboring information of all base stations. */
 //        std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)

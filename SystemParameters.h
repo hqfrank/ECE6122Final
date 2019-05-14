@@ -23,7 +23,7 @@ public:
   const double areaXRange_m[2] {-100, 1700};
   const double areaYRange_m[2] {-1700, 100};
   const double gridSize_m = 300.0;
-  const double macroCellSize_m = 1000.0;
+  const double macroCellSize_m = 1000.0;  // Only is used in Limited_Area scenarios
   const int maxNumRelaysInGrid = 1;
   const double maxLengthLOSLinkBSs_m = 100.0;
   const double phyLinkDistMax_m = 300;
@@ -53,6 +53,7 @@ public:
   const double extraHeightMBS = 30.0;        // the additional height of a macro-cell base stataion
   const bool splitMacroBS = false;            // Control the splitting of the macro-cell base station.
   const bool limitMacroCell = false;          // The area of a Macro-cell is limited to 1000m * 1000m.
+  const double trafficDemandBS_Gbps = 2;
 };
 
 

@@ -738,13 +738,14 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], std::vector<std::vector<int>>&
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,
                              std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
-                             std::vector<std::vector<Point_t>>& bsPairs, const SystemParameters& parameters){
-    /* The grid where the macro cell base station locates is indicated by mBSPos[2] */
+                             std::vector<std::vector<Point_t>>& bsPairs, std::vector<double>& demandLink,
+                             const SystemParameters& parameters){
+    /* The grid where the macro cell base station locates is indicated by mBSPos[] */
     assert(bsGridMap[mBSPos[0]][mBSPos[1]] >= 0);  // The mBS should be valid.
     /* In case, the area is limited. */
     if (parameters.limitMacroCell) {
-        int numSmallCells = (int) floor(parameters.macroCellSize_m/parameters.gridSize_m + 0.5);
-        int numExtraCells = (numSmallCells - 1)/2;
+        int numSmallCells = (int) floor(parameters.macroCellSize_m/parameters.gridSize_m + 0.5);  // # of s-cells along a side
+        int numExtraCells = (numSmallCells - 1)/2;  // # of s-cells to each direction from the m-cell BS
         for (int i = 0; i < (int) bsGridMap.size(); i++) {
             for (int j = 0; j < (int) bsGridMap[0].size(); j++) {
                 if (i < mBSPos[0] - numExtraCells || i > mBSPos[0] + numExtraCells ||
@@ -761,106 +762,172 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], std::vector<std::vector<int>>&
     int nextRoot = selectedBS[nextRootIndex];
     nextRootIndex++;
     if (parameters.splitMacroBS) {
-        selectedBS.push_back((int) bsSet.size() - 1);
+        selectedBS.push_back((int) bsSet.size() - 1);  // the additional Mbs is the last one in the bsSet
         nextRootIndex++;
     }
     /* Connect the mBS to its 8 neighbors. */
-  for (int i = mBSPos[0] - 1; i <= mBSPos[0] + 1; ++i) {
-    for (int j = mBSPos[1] - 1; j <= mBSPos[1] + 1; ++j) {
-      if ((i != mBSPos[0] || j != mBSPos[1]) && bsGridMap[i][j] > -1) {
-        std::vector<int> curConnection;
-        int mBSId = bsGridMap[mBSPos[0]][mBSPos[1]];
-        if (parameters.splitMacroBS && !(i == mBSPos[0] || j == mBSPos[1])) {
-          // use the last BS in the bsSet as the macro-cell base station
-          mBSId = (int) bsSet.size() - 1;
-        }
-        curConnection.push_back(mBSId);  // add the mBS
-        curConnection.push_back(bsGridMap[i][j]);  // add the sBS
-        selectedBS.push_back(bsGridMap[i][j]);
-        tree.push_back(curConnection);  // add the logical link into the tree topology
-        connections[mBSId].push_back(bsGridMap[i][j]);  // add the sBS to the 'neighbor' of mBS
-        connections[bsGridMap[i][j]].push_back(mBSId);
-        std::vector<Point_t> curBSPair;
-        curBSPair.push_back(bsSet[mBSId]);
-        curBSPair.push_back(bsSet[bsGridMap[i][j]]);
-        bsPairs.push_back(curBSPair);
-      }
-    }
-  }
-
-  while (selectedBS.size() < bsSet.size()) {
-    int numSelectedBS = (int) selectedBS.size();
-    nextRoot = selectedBS[nextRootIndex];
-    int rootX = bsLocation[nextRoot][0];
-    int rootY = bsLocation[nextRoot][1];
-    for (int i = rootX - 1; i <= rootX + 1; i++) {
-      if (i < 0 || i > bsGridMap[0].size() - 1) continue;
-      for (int j = rootY - 1; j <= rootY + 1; j++) {
-        if (j < 0 || j > bsGridMap.size() - 1) continue;
-        if (bsGridMap[i][j] < 0) continue;  // no bs at the grid
-        auto it = std::find(selectedBS.begin(),selectedBS.end(),bsGridMap[i][j]);
-        if (it != selectedBS.end()) continue;  // the bs has been selected
-        // connect nextRoot to this bs;
-        std::vector<int> curConnection;
-        curConnection.push_back(nextRoot);
-        curConnection.push_back(bsGridMap[i][j]);
-        selectedBS.push_back(bsGridMap[i][j]);
-        tree.push_back(curConnection);
-        connections[nextRoot].push_back(bsGridMap[i][j]);
-        connections[bsGridMap[i][j]].push_back(nextRoot);
-        std::vector<Point_t> curBSPair;
-        curBSPair.push_back(bsSet[nextRoot]);
-        curBSPair.push_back(bsSet[bsGridMap[i][j]]);
-        bsPairs.push_back(curBSPair);
-        break;
-      }
-      if (selectedBS.size() > numSelectedBS) break;
-    }
-    nextRootIndex++;
-    /*
-     * The following code handles the case where there are still unselected BSs which are cannot be connected by the
-     * non-rooted bs.
-     */
-    if (nextRootIndex == selectedBS.size()) {
-      // find an unselected bs.
-      for (int i = 0; i < bsSet.size(); i++) {
-        if (std::find(selectedBS.begin(),selectedBS.end(),i) != selectedBS.end()) continue;
-        // i is an unselected BS.
-        int iX = bsLocation[i][0];
-        int iY = bsLocation[i][1];
-        if (parameters.limitMacroCell) {
-            if (bsGridMap[iX][iY] < 0) continue;
-        }
-        for (int j = iX - 1; j <= iX + 1; j++) {
-          if (j < 0 || j > bsGridMap[0].size() - 1) continue;
-          for (int k = iY - 1; k <= iY + 1; k++) {
-            if (k < 0 || k > bsGridMap.size() - 1) continue;
-            if (bsGridMap[j][k] < 0) continue;
-            auto it = std::find(selectedBS.begin(), selectedBS.end(), bsGridMap[j][k]);
-            if (it != selectedBS.end()) {
-              std::vector<int> curConnection;
-              curConnection.push_back(bsGridMap[j][k]);
-              curConnection.push_back(i);
-              selectedBS.push_back(i);
-              tree.push_back(curConnection);
-              connections[i].push_back(bsGridMap[j][k]);
-              connections[bsGridMap[j][k]].push_back(i);
-              std::vector<Point_t> curBSPair;
-              curBSPair.push_back(bsSet[bsGridMap[j][k]]);
-              curBSPair.push_back(bsSet[i]);
-              bsPairs.push_back(curBSPair);
-              break;
+    for (int i = mBSPos[0] - 1; i <= mBSPos[0] + 1; ++i) {
+        for (int j = mBSPos[1] - 1; j <= mBSPos[1] + 1; ++j) {
+            if ((i != mBSPos[0] || j != mBSPos[1]) && bsGridMap[i][j] > -1) {
+                std::vector<int> curConnection;
+                int mBSId = bsGridMap[mBSPos[0]][mBSPos[1]];
+                if (parameters.splitMacroBS && !(i == mBSPos[0] || j == mBSPos[1])) {
+                    // use the last BS in the bsSet as the macro-cell base station
+                    mBSId = (int) bsSet.size() - 1;
+                }
+                curConnection.push_back(mBSId);  // add the mBS
+                curConnection.push_back(bsGridMap[i][j]);  // add the sBS
+                selectedBS.push_back(bsGridMap[i][j]);
+                tree.push_back(curConnection);  // add the logical link into the tree topology
+                connections[mBSId].push_back(bsGridMap[i][j]);  // add the sBS to the 'neighbor' of mBS
+                connections[bsGridMap[i][j]].push_back(mBSId);
+                std::vector<Point_t> curBSPair;
+                curBSPair.push_back(bsSet[mBSId]);
+                curBSPair.push_back(bsSet[bsGridMap[i][j]]);
+                bsPairs.push_back(curBSPair);
             }
-          }
-          if (selectedBS.size() > numSelectedBS) break;
         }
-        if (selectedBS.size() > numSelectedBS) break;
-      }
     }
-    if (selectedBS.size() == numSelectedBS && nextRootIndex == selectedBS.size()) break;
-  }
 
-  cout << "The number of connected BS is " << selectedBS.size() << endl;
+    while (selectedBS.size() < bsSet.size()) {
+        int numSelectedBS = (int) selectedBS.size();
+        nextRoot = selectedBS[nextRootIndex];
+        int rootX = bsLocation[nextRoot][0];
+        int rootY = bsLocation[nextRoot][1];
+        for (int i = rootX - 1; i <= rootX + 1; i++) {
+            if (i < 0 || i > bsGridMap[0].size() - 1) continue;
+            for (int j = rootY - 1; j <= rootY + 1; j++) {
+                if (j < 0 || j > bsGridMap.size() - 1) continue;
+                if (bsGridMap[i][j] < 0) continue;  // no bs at the grid
+                auto it = std::find(selectedBS.begin(),selectedBS.end(),bsGridMap[i][j]);
+                if (it != selectedBS.end()) continue;  // the bs has been selected
+                // connect nextRoot to this bs;
+                std::vector<int> curConnection;
+                curConnection.push_back(nextRoot);
+                curConnection.push_back(bsGridMap[i][j]);
+                selectedBS.push_back(bsGridMap[i][j]);
+                tree.push_back(curConnection);
+                connections[nextRoot].push_back(bsGridMap[i][j]);
+                connections[bsGridMap[i][j]].push_back(nextRoot);
+                std::vector<Point_t> curBSPair;
+                curBSPair.push_back(bsSet[nextRoot]);
+                curBSPair.push_back(bsSet[bsGridMap[i][j]]);
+                bsPairs.push_back(curBSPair);
+                break;
+            }
+            if (selectedBS.size() > numSelectedBS) break;
+        }
+        nextRootIndex++;
+        // The following code handles the case where there are still unselected BSs which are cannot be connected by the
+        // non-rooted bs.
+        if (nextRootIndex == selectedBS.size()) {
+            // find an unselected bs.
+            for (int i = 0; i < bsSet.size(); i++) {
+                if (std::find(selectedBS.begin(),selectedBS.end(),i) != selectedBS.end()) continue;
+                // i is an unselected BS.
+                int iX = bsLocation[i][0];
+                int iY = bsLocation[i][1];
+                if (parameters.limitMacroCell) {
+                    if (bsGridMap[iX][iY] < 0) continue;
+                }
+                for (int j = iX - 1; j <= iX + 1; j++) {
+                    if (j < 0 || j > bsGridMap[0].size() - 1) continue;
+                    for (int k = iY - 1; k <= iY + 1; k++) {
+                        if (k < 0 || k > bsGridMap.size() - 1) continue;
+                        if (bsGridMap[j][k] < 0) continue;
+                        auto it = std::find(selectedBS.begin(), selectedBS.end(), bsGridMap[j][k]);
+                        if (it != selectedBS.end()) {
+                            std::vector<int> curConnection;
+                            curConnection.push_back(bsGridMap[j][k]);
+                            curConnection.push_back(i);
+                            selectedBS.push_back(i);
+                            tree.push_back(curConnection);
+                            connections[i].push_back(bsGridMap[j][k]);
+                            connections[bsGridMap[j][k]].push_back(i);
+                            std::vector<Point_t> curBSPair;
+                            curBSPair.push_back(bsSet[bsGridMap[j][k]]);
+                            curBSPair.push_back(bsSet[i]);
+                            bsPairs.push_back(curBSPair);
+                            break;
+                        }
+                    }
+                    if (selectedBS.size() > numSelectedBS) break;
+                }
+                if (selectedBS.size() > numSelectedBS) break;
+            }
+        }
+        if (selectedBS.size() == numSelectedBS && nextRootIndex == selectedBS.size()) break;
+    }
+    cout << "The number of connected BS is " << selectedBS.size() << endl;
+
+    // generates the traffic demand on each small cell BS
+    if (!parameters.splitMacroBS) { // single MBS
+        int mBSIdx = bsGridMap[mBSPos[0]][mBSPos[1]];
+        std::vector<int> subtree;  // records the size of subtree rooted at each BS
+        // collects all leaf BSs
+        std::unordered_set<int> leaves;
+        std::unordered_set<int>::iterator it_leaves;
+        for (int i = 0; i < bsSet.size(); ++i) {
+            leaves.insert(i);
+            subtree.push_back(1);
+        }
+        for (auto logicalLink:tree) { // removes src BSs from leaves
+            leaves.erase(logicalLink[0]);
+        }
+        while (!leaves.empty()) { // as long as there are leaf BSs unvisited
+            std::unordered_set<int> parents; // parents is empty
+            for (auto leaf:leaves) { // iterates each leaf BS
+                int count_link = 0;
+                int linkIdx = -1;
+                int temp_parent = -1;
+                for (int i = 0; i < tree.size(); ++i) {
+                    if (leaf == tree[i][1]) {
+                        count_link++;
+                        linkIdx = i;
+                        temp_parent = tree[i][0];
+                    }
+                }
+                assert(count_link == 1); // each leaf should only have one parent node
+                subtree[temp_parent] += subtree[leaf];
+                while (true) {
+                    count_link = 0;
+                    linkIdx = -1;
+                    int next_parent = -1;
+                    for (int i = 0; i < tree.size(); ++i) {
+                        if (temp_parent == tree[i][0]) {
+                            count_link++;
+                        }
+                    }
+                    if (count_link == 1) { // the parent BS only has 1 child
+                        int count_link_2 = 0;
+                        for (int i = 0; i < tree.size(); ++i) {
+                            if (temp_parent == tree[i][1]) {
+                                linkIdx = i;
+                                count_link_2++;
+                                next_parent = tree[i][0];
+                            }
+                        }
+                        assert(count_link_2 == 1);
+                        subtree[next_parent] += subtree[temp_parent];
+                        temp_parent = next_parent;
+                    } else {
+                        break;
+                    }
+                }
+                if (temp_parent != mBSIdx) { // haven't reached the macro-cell BS
+                    if (leaves.find(temp_parent) == leaves.end()) {
+                        parents.insert(temp_parent);
+                    }
+                }
+            }
+            leaves = parents;
+        }
+        cout << "================== Traffic demand on each logical link =================" << endl;
+        for (auto logicalLink:tree) {
+            demandLink.push_back(subtree[logicalLink[1]]*parameters.trafficDemandBS_Gbps);
+            cout << "BS " << logicalLink[0] << " --> BS " << logicalLink[1] << "\t" << demandLink.back() << " Gbps." << endl;
+        }
+    }
 }
 
 void writeTopologyToFile(std::string& dataTopology, const std::vector<std::vector<int>>& connections, int& numRelays) {

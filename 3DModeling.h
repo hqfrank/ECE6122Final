@@ -14,6 +14,7 @@
 #include <chrono>
 #include <algorithm>
 #include <map>
+#include <unordered_set>
 #include "Point_t.h"
 #include "Vector_t.h"
 #include "Line_t.h"
@@ -68,7 +69,8 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], std::vector<std::vector<int>>&
                              const std::vector<std::vector<int>>& bsLocation,
                              const std::vector<Point_t>& bsSet,
                              std::vector<std::vector<int>>& connections, std::vector<std::vector<int>>& tree,
-                             std::vector<std::vector<Point_t>>& bsPairs, const SystemParameters& parameters);
+                             std::vector<std::vector<Point_t>>& bsPairs, std::vector<double>& demandLink,
+                             const SystemParameters& parameters);
 
 void printConnections(const std::vector<std::vector<int>>& nodeConnections);
 
