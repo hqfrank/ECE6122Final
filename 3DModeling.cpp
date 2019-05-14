@@ -1997,8 +1997,8 @@ void calculatePathThroughputPhyIntModel(const std::string& thoughputFile, const 
                 interferenceNode1_mW += intN1_mW;
                 interferenceNode2_mW += intN2_mW;
             }
-            double interference_mW = interferenceNode1_mW;
-            if (interference_mW < interferenceNode2_mW) interference_mW = interferenceNode2_mW;
+            double interference_mW = interferenceNode2_mW;
+            if (interference_mW < interferenceNode1_mW) interference_mW = interferenceNode1_mW;
             double linkLength_m = pLink.dir12.mod();
             double pathLoss_dB = parameters.exponent * 10.0 * log10(4.0 * M_PI * linkLength_m / parameters.lambda_m);
             double pr_dBm = eirp_dBm - pathLoss_dB - parameters.alpha * linkLength_m - parameters.linkMargin_dB + parameters.antennaGain_dBi;
@@ -2057,10 +2057,12 @@ void calculateMutualInterferenceTwoPhyLinks(double& intAtN1, double& intAtN2,
                                                               false, parameters, pt_dBm, pLinkN2Neighbors);
     double int_NInt2_N2 = calculateMutualInterferenceTwoNodes(pLN2Id, pLN2, dirN2, false, pLIntN2Id, pLIntN2, dirNInt2,
                                                               pLIntN2IsBs, parameters, pt_dBm, pLinkN2Neighbors);
-    intAtN1 = int_NInt1_N1;
-    if (intAtN1 < int_NInt2_N1) intAtN1 = int_NInt2_N1;
+//    intAtN1 = int_NInt1_N1;
+//    if (intAtN1 < int_NInt2_N1) intAtN1 = int_NInt2_N1;
+//    intAtN2 = int_NInt1_N2;
+//    if (intAtN2 < int_NInt2_N2) intAtN2 = int_NInt2_N2;
     intAtN2 = int_NInt1_N2;
-    if (intAtN2 < int_NInt2_N2) intAtN2 = int_NInt2_N2;
+    intAtN1 = intAtN2;
 
 }
 

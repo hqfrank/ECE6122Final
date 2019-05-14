@@ -1,4 +1,4 @@
-function [capPath, demand, subtree] = getPathInfo(pathSeqPath,relayPath,bsPath, bsNeighborPath, pathPath, isSingleMBs)
+function [capPath, demand, totalDemand, subtree] = getPathInfo(pathSeqPath,relayPath,bsPath, bsNeighborPath, pathPath, isSingleMBs)
 %GETPATHINFO Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -131,8 +131,10 @@ idxMBs = bsIndex(find(pathSeq == 0),1); % index is from 0
 mBS = BSs(idxMBs + 1, :);               % the coordination of macro-cell BS
 subtree = ones(numBSs, 1);
 demand = zeros(numBSs, 2);
+numBSsEffective = 0;
 if isSingleMBs
     leaves = sort(unique(bsIndex)+1);             % index + 1
+    numBSsEffective = length(leaves);
     for i = 1:length(bsIndex(:,1)) % iterate each logical link
         curBS = bsIndex(i,1) + 1;
         leaves = leaves(find(leaves~=curBS)); 
@@ -168,6 +170,7 @@ if isSingleMBs
 else
 end
 
+totalDemand = demand .* (numBSsEffective - 1);
 % 5) Plot paths
 % idx = 1;
 % for i = 1:numPaths

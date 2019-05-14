@@ -187,67 +187,48 @@ int main() {
             }
         }
 
-        continue;
+        // Throughput comparison between simplified model and physical model.
+//        std::string dataPath = std::to_string(sysParams.randomSeed)
+//                             + "_" + std::to_string(numRelays)
+//                             + "_" + std::to_string(numBSs)
+//                             + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi / M_PI * 180));
+//        std::string dataPath2 = dataPath;
+//        std::string gridSize = std::to_string((int) floor(sysParams.gridSize_m + 0.5));
+//        if (!sysParams.interPathIntControl) {  // searches each path individually
+//            dataPath = "../Data/Paths/Idp/" + gridSize + "/Data_Results_" + dataPath;
+//        } else if (sysParams.splitMacroBS && !sysParams.limitMacroCell) { // two Mbs, large macro-cell area
+//            dataPath = "../Data/Paths/Double_MBS/" + gridSize + "/Data_Results_" + dataPath;
+//        } else if (sysParams.splitMacroBS && sysParams.limitMacroCell) { // two Mbs, smaller macro-cell area
+//            dataPath = "../Data/Paths/Double_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
+//        } else if (!sysParams.splitMacroBS && sysParams.limitMacroCell) {  // single Mbs, smaller macro-cell area
+//            dataPath = "../Data/Paths/Single_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
+//        } else {  // single Mbs, large macro-cell area
+//            dataPath = "../Data/Paths/Single_MBS/" + gridSize + "/Data_Results_" + dataPath;
+//        }
+//        std::string pathFile = dataPath + "_Paths.txt";
+//        std::string capacityFile = dataPath + "_Capacity.txt";
+//        dataPath = "../Data/Throughput_Comparison/Single_MBS/" + gridSize + "/Downlink/Data_Results_" + dataPath2;
+//        std::string throughputFile = dataPath + "_" + std::to_string((int) floor(sysParams.antennaIsoGain_dBi+0.5) * -1) + "_CapComp.txt";
+//        calculatePathThroughputPhyIntModel(throughputFile, pathFile, capacityFile, allNodes, nodeNeighborList,sysParams);
 
-    /*
-     *
-     */
-    std::string dataPath = std::to_string(sysParams.randomSeed)
-                            + "_" + std::to_string(numRelays)
-                            + "_" + std::to_string(numBSs)
-                            + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi / M_PI * 180));
-    std::string dataPath2 = dataPath;
-    std::string gridSize = std::to_string((int) floor(sysParams.gridSize_m + 0.5));
-    if (!sysParams.interPathIntControl) {
-        dataPath = "../Data/Paths/Idp/" + gridSize + "/Data_Results_" + dataPath;
-    } else if (sysParams.splitMacroBS && !sysParams.limitMacroCell) {
-          dataPath = "../Data/Paths/Double_MBS/" + gridSize + "/Data_Results_" + dataPath;
-    } else if (sysParams.splitMacroBS && sysParams.limitMacroCell) {
-          dataPath = "../Data/Paths/Double_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
-    } else if (!sysParams.splitMacroBS && sysParams.limitMacroCell) {
-          dataPath = "../Data/Paths/Single_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
-    } else {
-          dataPath = "../Data/Paths/Single_MBS/" + gridSize + "/Data_Results_" + dataPath;
-    }
-    std::string pathFile = dataPath + "_Paths.txt";
-    std::string capacityFile = dataPath + "_Capacity.txt";
-    dataPath = "../Data/Throughput_Comparison/Single_MBS/" + gridSize + "/ZeroISO/Data_Results_" + dataPath2;
-    std::string throughputFile = dataPath + "_" + std::to_string((int) floor(sysParams.antennaIsoGain_dBi+0.5) * -1) + "_CapComp.txt";
-    calculatePathThroughputPhyIntModel(throughputFile, pathFile, capacityFile, allNodes, nodeNeighborList,sysParams);
-
-    continue;
-
-    /*
-     * =======================================
-     *   Select the macro-cell base station.
-     * =======================================
-     */
-
-    /* Find the space diversity of macro cell base station. */
-//    std::vector<int> maxSDNodeList;
-//    int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
+        // Selects the macro-cell base station
+        // Finds the space diversity of macro cell base station.
+//        std::vector<int> maxSDNodeList;
+//        int mBSSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
 //                                             maxSDNodeList, nodeNeighborList, sysParams);
-//    cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
+//        cout << "The space diversity at macro cell base station is: " << mBSSD << endl;
 //        writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
-    /*
-     * =====================================================
-     *   Change the height of the macro-cell base station.
-     * =====================================================
-     */
-//    if (mBSSD <= 7) {
-//
-//      auto newSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
+
+        // Changes the height of the macro-cell base station.
+//        if (mBSSD <= 7) {
+//            auto newSD = evaluateSpaceDiversityAtNode(allRelays.size() + bsGridMap[mBSPos[0]][mBSPos[1]], allNodes,
 //                                                maxSDNodeList, nodeNeighborList, sysParams);
-//      cout << "The original space diversity is " << mBSSD << ", and the new space diversity is " << newSD << endl;
-//      writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
-//      writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, newSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
-//    }
-//    continue;
-        /*
-         * ======================================================
-         *   Evaluate the LoS multi-hop paths from mBS to sBSs.
-         * ======================================================
-         */
+//            cout << "The original space diversity is " << mBSSD << ", and the new space diversity is " << newSD << endl;
+//            writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, mBSSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
+//            writeSpaceDiversityToFile(sysParams.randomSeed, numRelays, newSD, "../Data/Space_Diversity/Data_SpaceDiversity_Compare.txt");
+//        }
+
+        // Evaluates the LoS multi-hop paths from mBS to sBSs.
 //        int mBSId = bsGridMap[mBSPos[0]][mBSPos[1]];
 //        std::vector<int> tempmBSPath = Dijkstra(bsNeighborList, bsSet, mBSId, "../Data/Paths/mBS2BS.txt", "distance");
         /*
