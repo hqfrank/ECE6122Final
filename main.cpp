@@ -125,7 +125,6 @@ int main() {
         printConnections(nodeConnections);
         writeTopologyToFile(dataTopology, treeConnections, numRelays);
 
-        continue;
 
 //        // the line-of-sight neighboring information of all base stations. */
 //        std::string dataBSNeighbors = "../Data/BS_Neighbors/Data_BSNeighbors_" + std::to_string(sysParams.randomSeed)

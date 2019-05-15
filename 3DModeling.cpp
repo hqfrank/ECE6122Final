@@ -926,6 +926,7 @@ void treeTopologyMeshAtlanta(const int mBSPos[2], std::vector<std::vector<int>>&
         for (auto logicalLink:tree) {
             demandLink.push_back(subtree[logicalLink[1]]*parameters.trafficDemandBS_Gbps);
             cout << "BS " << logicalLink[0] << " --> BS " << logicalLink[1] << "\t" << demandLink.back() << " Gbps." << endl;
+            assert(demandLink.back() > 0);
         }
     }
 }
@@ -1537,16 +1538,14 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
                                    const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
                                    const std::map<int, Vector_t>& phyLinks,
                                    const std::vector<int>& selectedRelays){
-  /*
-   * Get source and destination of this path searching process.
-   */
-  Point_t src = nodes[paths.getSrcId()];
-  Point_t dst = nodes[paths.getDstId()];
-  /* Initialize a path with source node id in it. */
-  std::vector<int> curPath;
-  curPath.push_back(paths.getSrcId());
+    // Gets source and destination of this path searching process.
+    Point_t src = nodes[paths.getSrcId()];
+    Point_t dst = nodes[paths.getDstId()];
+    /* Initialize a path with source node id in it. */
+    std::vector<int> curPath;
+    curPath.push_back(paths.getSrcId());
 
-  searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs, phyLinks, selectedRelays);
+    searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs, phyLinks, selectedRelays);
 }
 
 
@@ -1557,18 +1556,18 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
                        const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
                        const std::map<int, Vector_t>& phyLinks,
                        const std::vector<int>& selectedRelays) {
-  /* Get the source and destination node of the path. */
-  Point_t src = nodes[paths.getSrcId()];
-  Point_t dst = nodes[paths.getDstId()];
+    /* Get the source and destination node of the path. */
+    Point_t src = nodes[paths.getSrcId()];
+    Point_t dst = nodes[paths.getDstId()];
 
-  /* Update the current hop number. The searching process starts from hop 0 at src. */
-  int curHopNum = preHopNum + 1;
-  /* If current hop exceeds the maximum hop number allowed, the searching process ends. */
-  if (curHopNum > maxHopNum) {
-    return;
-  } else {
-    /* The current hop number is valid. */
-    assert(curHopNum == curPath.size());
+    /* Update the current hop number. The searching process starts from hop 0 at src. */
+    int curHopNum = preHopNum + 1;
+    /* If current hop exceeds the maximum hop number allowed, the searching process ends. */
+    if (curHopNum > maxHopNum) {
+        return;
+    } else {
+        /* The current hop number is valid. */
+        assert(curHopNum == curPath.size());
     /* Get candidate nodes of this hop, which are the neighboring nodes of the last node in curPath. */
     int preNodeId = curPath.back();       // the last element of curPath is the index of the last selected node.
     Point_t preNode = nodes[preNodeId];   // the previous node
