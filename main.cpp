@@ -37,7 +37,9 @@ int main() {
     std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
     // Main simulation procedure: runs 100 sets of simulation instances, distinguished by random seed 'rnd'
-    for (int rnd = 500; rnd < 600; rnd++) {
+    int rnds[] = {500,506,507,522,524,525,526,527,528,529,530,531,540,541,542,543,547,548,549};
+//    for (int rnd = 547; rnd < 550; rnd++) {
+    for (auto rnd : rnds) {
         sysParams.randomSeed = rnd;
         // constructs buildings in the modeled area
         std::vector<Building_t> buildingSet;
@@ -449,7 +451,7 @@ int main() {
                     break;
                 }
                 searchPathDecodeForwardMaxHop(pathList, allNodes, nodeNeighborList, numRelays, sysParams, phyLinksAtBSs,
-                                              selectedPhysicalLinks, selectedRelays);
+                                              selectedPhysicalLinks, selectedRelays, allPaths, buildingSet);
                 if (pathList.pathList.size() > 0) {
                     caseCount++;
                     std::vector<int> tempPath;
@@ -548,6 +550,16 @@ int main() {
                 }
             }
             // Check interference cases:
+            std::ofstream outInterf;
+            std::string gSize = std::to_string((int) floor(sysParams.gridSize_m + 0.5));
+            std::string interfPath = "../Data/Paths/InterfAllowed/" + gSize + "/InterfRelation/Data_Results_"
+                                     + std::to_string(sysParams.randomSeed)
+                                     + "_" + std::to_string(numRelays)
+                                     + "_" + std::to_string(numBSs)
+                                     + "_" + std::to_string((int) round(sysParams.antennaBeamWidth_phi / M_PI * 180))
+                                     + "_IR.txt";
+            outInterf.open(interfPath, std::ios_base::trunc);
+            assert(outInterf.is_open());
             int countIntPairs = 0;
             for (int i = 0; i < treeConnections.size() - 1; ++i) {
                 std::vector<int> path1 = allPaths[i * (extraHopNum + 1)];
@@ -560,9 +572,12 @@ int main() {
                     if (intTest) {
                         cout << "Path " << i << " and Path " << j << " interfere with each other." << endl;
                         countIntPairs++;
+                        outInterf << treeConnections[i][0] << "\t" << treeConnections[i][1] << "\t"
+                                  << treeConnections[j][0] << "\t" << treeConnections[j][1] << endl;
                     }
                 }
             }
+            outInterf.close();
             cout << "In total, there are " << countIntPairs << " pairs of paths interfere with each other." << endl;
         }
     }

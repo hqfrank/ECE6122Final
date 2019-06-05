@@ -163,7 +163,9 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
                                    const int& relayNum, SystemParameters& parameters,
                                    const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
                                    const std::map<int, Vector_t>& phyLinks,
-                                   const std::vector<int>& selectedRelays);
+                                   const std::vector<int>& selectedRelays,
+                                   const std::vector<std::vector<int>>& allPaths,
+                                   const std::vector<Building_t>& buildings);
 
 /* Search the next hop along a path. */
 void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std::vector<Point_t>& nodes,
@@ -172,7 +174,10 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
                        const double& curPathThroughput, SystemParameters& parameters,
                        const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
                        const std::map<int, Vector_t>& phyLinks,
-                       const std::vector<int>& selectedRelays);
+                       const std::vector<int>& selectedRelays,
+                       const std::unordered_set<int>& interfOkPhyLinkId,
+                       const std::vector<std::vector<int>>& allPaths,
+                       const std::vector<Building_t>& buildings);
 
 /* Detect the intra path interference when a new physical link is added on the right side of the path. */
 bool intraPathInterferenceAddLink(const std::vector<int>& path, const int& lLId, const int& lRId,
@@ -193,7 +198,7 @@ double calculateWeight(double dist);
 bool checkInterPathInterference(const int s1i, const int d1i, const std::map<int, Vector_t>& phyLinks,
                                 const std::vector<Point_t>& nodes,
                                 const std::vector<std::vector<int>>& nodeNeighborList,
-                                const SystemParameters& parameters);
+                                const SystemParameters& parameters, const std::unordered_set<int>& interfOkPhyLinkId);
 
 /* Check whether two paths interfere with each other. */
 bool checkTwoPathsInterference(const std::vector<int>& path1, const std::vector<int>& path2,

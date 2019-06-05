@@ -9,71 +9,73 @@
  *   Write path data to file.
  * ============================
  */
- void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::vector<int>& sequence,
-                       const std::vector<Point_t>& allNodes, SystemParameters& parameters,
-                       std::string& dataPath) {
-   std::string gridSize = std::to_string((int) floor(parameters.gridSize_m + 0.5));
-   if (!parameters.interPathIntControl) {
-     dataPath = "../Data/Paths/Idp/" + gridSize + "/Data_Results_" + dataPath;
-   } else if (parameters.splitMacroBS && !parameters.limitMacroCell) {
-     dataPath = "../Data/Paths/Double_MBS/" + gridSize + "/Data_Results_" + dataPath;
-   } else if (parameters.splitMacroBS && parameters.limitMacroCell) {
-       dataPath = "../Data/Paths/Double_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
-   } else if (!parameters.splitMacroBS && parameters.limitMacroCell) {
-       dataPath = "../Data/Paths/Single_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
-   } else {
-     dataPath = "../Data/Paths/Single_MBS/" + gridSize + "/Data_Results_" + dataPath;
-   }
-   std::string filePath = dataPath + "_Paths.txt";
-   std::string fileCapacity = dataPath + "_Capacity.txt";
-   std::string fileSequence = dataPath + "_Sequence.txt";
+void writePathsToFile(const std::vector<std::vector<int>>& allPaths, const std::vector<int>& sequence,
+                      const std::vector<Point_t>& allNodes, SystemParameters& parameters,
+                      std::string& dataPath) {
+    std::string gridSize = std::to_string((int) floor(parameters.gridSize_m + 0.5));
+    if (!parameters.interPathIntControl) {
+        dataPath = "../Data/Paths/Idp/" + gridSize + "/Data_Results_" + dataPath;
+    } else if (parameters.interferenceAllowed) {
+        dataPath = "../Data/Paths/InterfAllowed/" + gridSize + "/Data_Results_" + dataPath;
+    } else if (parameters.splitMacroBS && !parameters.limitMacroCell) {
+        dataPath = "../Data/Paths/Double_MBS/" + gridSize + "/Data_Results_" + dataPath;
+    } else if (parameters.splitMacroBS && parameters.limitMacroCell) {
+        dataPath = "../Data/Paths/Double_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
+    } else if (!parameters.splitMacroBS && parameters.limitMacroCell) {
+        dataPath = "../Data/Paths/Single_MBS_LimitedArea/" + gridSize + "/Data_Results_" + dataPath;
+    } else {
+        dataPath = "../Data/Paths/Single_MBS/" + gridSize + "/Data_Results_" + dataPath;
+    }
+    std::string filePath = dataPath + "_Paths.txt";
+    std::string fileCapacity = dataPath + "_Capacity.txt";
+    std::string fileSequence = dataPath + "_Sequence.txt";
 
-   std::ofstream outPath, outCapacity, outSequence;
-   outPath.open(filePath, std::ios_base::trunc);
-   outCapacity.open(fileCapacity, std::ios_base::trunc);
-   outSequence.open(fileSequence, std::ios_base::trunc);
+    std::ofstream outPath, outCapacity, outSequence;
+    outPath.open(filePath, std::ios_base::trunc);
+    outCapacity.open(fileCapacity, std::ios_base::trunc);
+    outSequence.open(fileSequence, std::ios_base::trunc);
 
-   if (outPath.is_open() && outCapacity.is_open() && outSequence.is_open()) {
-     int totalRelays = 0;
-     for (int i = 0; i < allPaths.size(); ++i) {
-       auto cur_seq = sequence[i];
-       auto cur_relay = allPaths[i].size() - 2;
-       totalRelays = totalRelays + cur_relay;
-       outSequence << std::to_string(cur_seq) << "\t" << std::to_string(cur_relay) << endl;
-       for (auto n : allPaths[i]) {
-         outPath << std::to_string(n) << "\t";
-       }
-       outPath << endl;
-       double pre_cap = 0;
-       double path_cap = 10000;
-       for (int j = 0; j < allPaths[i].size() - 1; ++j) {
-         Point_t p0 = allNodes[allPaths[i][j]];
-         Point_t p1 = allNodes[allPaths[i][j+1]];
-         double dist = p0.distanceTo(p1);
-         double cur_cap = calculateLinkCapacity_Gbps(dist, parameters);
-         if (allPaths[i].size() == 2) {
-           path_cap = cur_cap;
-           outCapacity << std::to_string(path_cap) << endl;
-         } else if (j > 0) {
-           double cur_cc = pre_cap * cur_cap / (pre_cap + cur_cap);
-           if (cur_cc < path_cap) {
-             path_cap = cur_cc;
-           }
-         }
-         pre_cap = cur_cap;
-       }
-       if (allPaths[i].size() > 2) {
-         outCapacity << std::to_string(path_cap) << endl;
-       }
-     }
-     outSequence << std::to_string(-1) << "\t" << std::to_string(totalRelays) << endl;
-   } else {
-     cout << "(E) Some files cannot open." << endl;
-   }
-   outCapacity.close();
-   outPath.close();
-   outSequence.close();
- }
+    if (outPath.is_open() && outCapacity.is_open() && outSequence.is_open()) {
+        int totalRelays = 0;
+        for (int i = 0; i < allPaths.size(); ++i) {
+            auto cur_seq = sequence[i];
+            auto cur_relay = allPaths[i].size() - 2;
+            totalRelays = totalRelays + cur_relay;
+            outSequence << std::to_string(cur_seq) << "\t" << std::to_string(cur_relay) << endl;
+            for (auto n : allPaths[i]) {
+                outPath << std::to_string(n) << "\t";
+            }
+            outPath << endl;
+            double pre_cap = 0;
+            double path_cap = 10000;
+            for (int j = 0; j < allPaths[i].size() - 1; ++j) {
+                Point_t p0 = allNodes[allPaths[i][j]];
+                Point_t p1 = allNodes[allPaths[i][j+1]];
+                double dist = p0.distanceTo(p1);
+                double cur_cap = calculateLinkCapacity_Gbps(dist, parameters);
+                if (allPaths[i].size() == 2) {
+                    path_cap = cur_cap;
+                    outCapacity << std::to_string(path_cap) << endl;
+                } else if (j > 0) {
+                    double cur_cc = pre_cap * cur_cap / (pre_cap + cur_cap);
+                    if (cur_cc < path_cap) {
+                        path_cap = cur_cc;
+                    }
+                }
+                pre_cap = cur_cap;
+            }
+            if (allPaths[i].size() > 2) {
+                outCapacity << std::to_string(path_cap) << endl;
+            }
+        }
+        outSequence << std::to_string(-1) << "\t" << std::to_string(totalRelays) << endl;
+    } else {
+         cout << "(E) Some files cannot open." << endl;
+    }
+    outCapacity.close();
+    outPath.close();
+    outSequence.close();
+}
 
 
 /*
@@ -1537,15 +1539,36 @@ void searchPathDecodeForwardMaxHop(Path_t& paths, const std::vector<Point_t>& no
                                    const int& relayNum, SystemParameters& parameters,
                                    const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
                                    const std::map<int, Vector_t>& phyLinks,
-                                   const std::vector<int>& selectedRelays){
+                                   const std::vector<int>& selectedRelays,
+                                   const std::vector<std::vector<int>>& allPaths,
+                                   const std::vector<Building_t>& buildings){
     // Gets source and destination of this path searching process.
     Point_t src = nodes[paths.getSrcId()];
     Point_t dst = nodes[paths.getDstId()];
+
     /* Initialize a path with source node id in it. */
     std::vector<int> curPath;
     curPath.push_back(paths.getSrcId());
 
-    searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40, parameters, phyLinksAtBSs, phyLinks, selectedRelays);
+    std::unordered_set<int> interfOkPhyLinkId;
+    if (parameters.interferenceAllowed) {
+        // finds the already found logical links starting at src
+        for (auto logicalLink: allPaths) {
+            int srcLLink = logicalLink.front();
+            int dstLLink = logicalLink.back();
+            if (srcLLink == paths.getSrcId() || dstLLink == paths.getSrcId() || srcLLink == paths.getDstId()) {
+                for (int i = 0; i < logicalLink.size()-1; i++) {
+                    int s = logicalLink[i];
+                    int d = logicalLink[i+1];
+                    int phyLinkId = s*parameters.maxNumPhyLinks + d;
+                    interfOkPhyLinkId.insert(phyLinkId);
+                }
+            }
+        }
+    }
+
+    searchNextHopNode(paths, curPath, nodes, nodeNeighborList, relayNum, 0, paths.getMaxHopNum(), 40, 40,
+                      parameters, phyLinksAtBSs, phyLinks, selectedRelays, interfOkPhyLinkId, allPaths, buildings);
 }
 
 
@@ -1555,7 +1578,8 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
                        const double& curPathThroughput, SystemParameters& parameters,
                        const std::map<int, std::vector<Vector_t>>& phyLinksAtBSs,
                        const std::map<int, Vector_t>& phyLinks,
-                       const std::vector<int>& selectedRelays) {
+                       const std::vector<int>& selectedRelays, const std::unordered_set<int>& interfOkPhyLinkId,
+                       const std::vector<std::vector<int>>& allPaths, const std::vector<Building_t>& buildings) {
     /* Get the source and destination node of the path. */
     Point_t src = nodes[paths.getSrcId()];
     Point_t dst = nodes[paths.getDstId()];
@@ -1568,82 +1592,86 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
     } else {
         /* The current hop number is valid. */
         assert(curHopNum == curPath.size());
-    /* Get candidate nodes of this hop, which are the neighboring nodes of the last node in curPath. */
-    int preNodeId = curPath.back();       // the last element of curPath is the index of the last selected node.
-    Point_t preNode = nodes[preNodeId];   // the previous node
-    std::vector<int> candidates = nodeNeighborList[preNodeId]; // The indices of all neighbors of the previous node
-    /*
-     * Iterates each candidate node for the next node to be inserted into the path.
-     */
-    for (auto candidateId : candidates) {
-      /* The candidate nodes must only be destination BS and relays. */
-      if (candidateId >= relayNum && candidateId != paths.getDstId()) continue;
-      /* Relay sharing control */
-      if (parameters.relaySharingControl) {
-        if (std::find(selectedRelays.begin(), selectedRelays.end(), candidateId) != selectedRelays.end()) continue;
-      }
-      /* First hop control */
-      if (parameters.firstHopControl && curHopNum == 1) {
-        Point_t curNode = nodes[candidateId];
-        Vector_t firstHop(preNode, curNode);
-        if (phyLinksAtBSs.find(preNodeId) != phyLinksAtBSs.end()) {
-          bool isoOK = true;
-          for (auto phyLink : phyLinksAtBSs.at(preNodeId)) {
-            double angle = acos(firstHop.dot(phyLink)/firstHop.mod()/phyLink.mod());
-            if (angle < parameters.antennaIsoSpan_phi) {
-              isoOK = false;
-              break;
+        /* Get candidate nodes of this hop, which are the neighboring nodes of the last node in curPath. */
+        int preNodeId = curPath.back();       // the last element of curPath is the index of the last selected node.
+        Point_t preNode = nodes[preNodeId];   // the previous node
+        std::vector<int> candidates = nodeNeighborList[preNodeId]; // The indices of all neighbors of the previous node
+        /* Iterates each candidate node for the next node to be inserted into the path.*/
+        for (auto candidateId : candidates) {
+            /* The candidate nodes must only be destination BS and relays. */
+            if (candidateId >= relayNum && candidateId != paths.getDstId()) continue;
+            /* Relay sharing control */
+            if (parameters.relaySharingControl) {
+                if (std::find(selectedRelays.begin(), selectedRelays.end(), candidateId) != selectedRelays.end()) continue;
             }
-          }
-          if (!isoOK) continue;
-        }
-      }
-      /* A valid candidate should not be selected before in curPath. */
-      if (find(curPath.begin(), curPath.end(), candidateId) == curPath.end()) {
-        Point_t curNode = nodes[candidateId];
-        double linkLength_m = preNode.distanceTo(curNode); // The link to be selected is from preNode to curNode
-        double distToDst_m = curNode.distanceTo(dst);      // The distance between curNode and dst
-        /*
-         * Threshold 1: distance
-         */
-        /* If the current link length is above threshold, this candidate node will not be selected. */
-        if (linkLength_m > parameters.phyLinkDistMax_m) continue;
-        /* If the distance from the candidate node to destination is too far away, it will not be selected. */
-        if (distToDst_m > parameters.phyLinkDistMax_m * (maxHopNum - curHopNum)) continue;
-        /*
-         * Threshold 2: capacity
-         */
-        double curHopCap = calculateLinkCapacity_Gbps(linkLength_m, parameters);
-        /* The capacity threshold only takes effect when there are more than one hop in the path. */
-        double curLinkPairCap = preHopCap * curHopCap / (preHopCap + curHopCap);
-        if (curHopNum > 1) {
-          /* The current capacity of the link pair should be larger than the best path among all selected paths with more than 1 hops. */
-          if (curLinkPairCap < paths.getMultiHopMaxThroughput()) continue;
-        }
-        /*
-         * Threshold 3: interference
-         */
-        bool intraInterference = intraPathInterferenceAddLink(curPath, preNodeId, candidateId, nodes,
-                                                              nodeNeighborList, parameters);
-        if (intraInterference) continue;
-        /* Add inter path interference detection here. */
-        if (parameters.interPathIntControl) {
-          bool interInterference = checkInterPathInterference(preNodeId, candidateId, phyLinks, nodes,
-                                                              nodeNeighborList, parameters);
-          if (interInterference) continue;
-        }
+            /* First hop control */
+            if (parameters.firstHopControl && curHopNum == 1) {
+                Point_t curNode = nodes[candidateId];
+                Vector_t firstHop(preNode, curNode);
+                if (phyLinksAtBSs.find(preNodeId) != phyLinksAtBSs.end()) {
+                    bool isoOK = true;
+                    for (auto phyLink : phyLinksAtBSs.at(preNodeId)) {
+                        double angle = acos(firstHop.dot(phyLink)/firstHop.mod()/phyLink.mod());
+                        if (angle < parameters.antennaIsoSpan_phi) {
+                            isoOK = false;
+                            break;
+                        }
+                    }
+                    if (!isoOK) continue;
+                }
+            }
+            /* A valid candidate should not be selected before in curPath. */
+            if (find(curPath.begin(), curPath.end(), candidateId) == curPath.end()) {
+                Point_t curNode = nodes[candidateId];
+                double linkLength_m = preNode.distanceTo(curNode); // The link to be selected is from preNode to curNode
+                double distToDst_m = curNode.distanceTo(dst);      // The distance between curNode and dst
+                /* Threshold 1: distance */
+                /* If the current link length is above threshold, this candidate node will not be selected. */
+                if (linkLength_m > parameters.phyLinkDistMax_m) continue;
+                /* If the distance from the candidate node to destination is too far away, it will not be selected. */
+                if (distToDst_m > parameters.phyLinkDistMax_m * (maxHopNum - curHopNum)) continue;
+                /* Threshold 2: capacity */
+                double curHopCap = calculateLinkCapacity_Gbps(linkLength_m, parameters);
+                /* The capacity threshold only takes effect when there are more than one hop in the path. */
+                double curLinkPairCap = preHopCap * curHopCap / (preHopCap + curHopCap);
+                if (curHopNum > 1) {
+                    /* The current capacity of the link pair should be larger than the best path
+                     * among all selected paths with more than 1 hops. */
+                    if (curLinkPairCap < paths.getMultiHopMaxThroughput()) continue;
+                }
+                /* Threshold 3: interference */
+                bool intraInterference = intraPathInterferenceAddLink(curPath, preNodeId, candidateId, nodes,
+                                                                      nodeNeighborList, parameters);
+                if (intraInterference) continue;
+                /* Add inter path interference detection here. */
+                if (parameters.interPathIntControl) {
+                    bool interInterference = false;
+                    for (auto logicalLink: allPaths) {
+                        int srcLLink = logicalLink.front();
+                        int dstLLink = logicalLink.back();
+                        if (paths.getSrcId() == srcLLink || paths.getSrcId() == dstLLink || paths.getDstId() == srcLLink) {
+                            continue;
+                        }
+                        std::vector<int> temp_path1 = {preNodeId, candidateId};
+                        std::vector<Point_t> temp_path1_P = {nodes[preNodeId], nodes[candidateId]};
+                        std::vector<Point_t> temp_path2_P = {nodes[srcLLink], nodes[dstLLink]};
+                        interInterference = checkTwoPathsInterference(temp_path1, logicalLink, temp_path1_P,
+                                temp_path2_P, nodeNeighborList, buildings, nodes, parameters);
+                        if (interInterference) break;
+                    }
+//                    bool interInterference = checkInterPathInterference(preNodeId, candidateId, phyLinks, nodes,
+//                                                                        nodeNeighborList, parameters, interfOkPhyLinkId);
+                    if (interInterference) continue;
+                }
 
-
-        /* The searching process only continues when there is no intra path interference. */
-        /*
-         * The currently selected node is a valid candidate node which should be added into an updated path.
-         */
-        std::vector<int> updatePath = curPath;
-        updatePath.push_back(candidateId);
-        double updatePathThroughput = curPathThroughput;
-        if (curLinkPairCap < curPathThroughput) {
-          updatePathThroughput = curLinkPairCap;
-        }
+            /* The searching process only continues when there is no intra path interference. */
+            /* The currently selected node is a valid candidate node which should be added into an updated path. */
+            std::vector<int> updatePath = curPath;
+            updatePath.push_back(candidateId);
+            double updatePathThroughput = curPathThroughput;
+            if (curLinkPairCap < curPathThroughput) {
+                updatePathThroughput = curLinkPairCap;
+            }
 
         /* When currently selected node is the destination node. */
         if (candidateId == paths.getDstId()) {
@@ -1681,7 +1709,8 @@ void searchNextHopNode(Path_t& paths, const std::vector<int>& curPath, const std
         } else {
           /* The currently selected node is not the destination node and the searching process continues with an updated path. */
           searchNextHopNode(paths, updatePath, nodes, nodeNeighborList, relayNum, curHopNum, maxHopNum, curHopCap,
-                            updatePathThroughput, parameters, phyLinksAtBSs, phyLinks, selectedRelays);
+                            updatePathThroughput, parameters, phyLinksAtBSs, phyLinks, selectedRelays,
+                            interfOkPhyLinkId, allPaths, buildings);
         }
       }
       /* If the currently viewed candidate node has been selected in curPath, this node should be discarded. */
@@ -1843,7 +1872,7 @@ double calculateWeight(double dist){
 bool checkInterPathInterference(const int s1i, const int d1i, const std::map<int, Vector_t>& phyLinks,
                                 const std::vector<Point_t>& nodes,
                                 const std::vector<std::vector<int>>& nodeNeighborList,
-                                const SystemParameters& parameters) {
+                                const SystemParameters& parameters, const std::unordered_set<int>& interfOkPhyLinkId) {
 
   double halfBeam = parameters.antennaBeamWidth_phi/2.0;
   double isoSpan = parameters.antennaIsoSpan_phi;
@@ -1854,6 +1883,9 @@ bool checkInterPathInterference(const int s1i, const int d1i, const std::map<int
   Vector_t d1s1(d1,s1);
 
   for (auto phyLink : phyLinks) {
+      if (parameters.interferenceAllowed && interfOkPhyLinkId.find(phyLink.first)!= interfOkPhyLinkId.end()) {
+          continue;
+      }
     int s2i = phyLink.first / parameters.maxNumPhyLinks;
     int d2i = phyLink.first % parameters.maxNumPhyLinks;
     Point_t s2 = nodes[s2i];
