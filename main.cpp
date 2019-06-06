@@ -37,7 +37,9 @@ int main() {
     std::string strTimeStampFile = "../Data/Paths/" + strTime + ".txt";
 
     // Main simulation procedure: runs 100 sets of simulation instances, distinguished by random seed 'rnd'
-    int rnds[] = {500,506,507,522,524,525,526,527,528,529,530,531,540,541,542,543,547,548,549};
+    int rnds[] = {500,502,504,505,506,507,508,510,512,515,519,520,521,522,523,524,525,526,527,528,529,530,531,533,534,
+                  536,537,538,540,541,542,543,544,545,546,547,548,549,550,551,552,554,555,556,559,560,561,562,563,564,
+                  565,567,568,569,572,573,574,575,578,580,581,583,585,586,587,588,589,591,594,595,597,598,599};
 //    for (int rnd = 547; rnd < 550; rnd++) {
     for (auto rnd : rnds) {
         sysParams.randomSeed = rnd;
